@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;600&amp;family=Work+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#ffdad6",
+                    "background": "#fbf9f8",
+                    "primary-fixed-dim": "#b2ccc3",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f5f3f3",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#cee8df",
+                    "surface-bright": "#fbf9f8",
+                    "on-secondary-fixed-variant": "#5f4100",
+                    "on-tertiary-container": "#999996",
+                    "on-primary-fixed-variant": "#344b45",
+                    "secondary-container": "#fdbe49",
+                    "tertiary-fixed": "#e3e2e0",
+                    "on-secondary-container": "#704e00",
+                    "on-surface": "#1b1c1c",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e4e2e2",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-surface-variant": "#424846",
+                    "tertiary": "#1b1c1b",
+                    "inverse-on-surface": "#f2f0f0",
+                    "error": "#ba1a1a",
+                    "primary": "#1e352f",
+                    "surface-container": "#efeded",
+                    "secondary-fixed-dim": "#fabc46",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#c7c6c4",
+                    "on-secondary-fixed": "#271900",
+                    "on-background": "#1b1c1c",
+                    "secondary-fixed": "#ffdeab",
+                    "tertiary-container": "#30312f",
+                    "outline-variant": "#c2c8c4",
+                    "on-tertiary-fixed-variant": "#464745",
+                    "on-tertiary-fixed": "#1a1c1a",
+                    "inverse-primary": "#b2ccc3",
+                    "on-secondary": "#ffffff",
+                    "surface": "#fbf9f8",
+                    "primary-container": "#1e352f",
+                    "on-primary-fixed": "#071f1a",
+                    "surface-container-high": "#eae8e7",
+                    "outline": "#727876",
+                    "on-primary-container": "#859e96",
+                    "surface-tint": "#4b635c",
+                    "inverse-surface": "#303030",
+                    "surface-dim": "#dbd9d9",
+                    "secondary": "#d4af37"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "xl": "48px",
+                    "md": "24px",
+                    "gutter": "16px",
+                    "base": "8px",
+                    "sm": "12px",
+                    "lg": "32px",
+                    "container-margin": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "title-sm": ["Manrope"],
+                    "display-lg": ["Manrope"],
+                    "data-mono": ["Inter"],
+                    "label-caps": ["Work Sans"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .hex-pattern {
+            background-color: transparent;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill='%231e352f' fill-opacity='0.03' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.91v12.18l10.99 6.34 11-6.34V17.91l-11-6.34L3 17.91zM0 15l12.98-7.5V0h2v7.5L28 15v15l-12.98 7.5V45h-2v-7.5L0 30V15zm2 1.15v12.7L13 35.2V16.15L2 15z'/%3E%3C/svg%3E");
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-[#faf9f6] dark:bg-stone-950 text-primary dark:text-emerald-500 font-manrope font-bold tracking-tight docked full-width top-0 sticky z-50 border-b border-primary/10 dark:border-emerald-900/30 flex justify-between items-center w-full px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary dark:text-emerald-500" data-icon="hive">hive</span>
+<span class="text-xl font-black text-primary dark:text-emerald-400 uppercase tracking-widest">Apiary Logistics</span>
+</div>
+<button class="md:hidden">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</header>
+<main class="max-w-7xl mx-auto px-container-margin py-lg space-y-lg">
+<!-- Beekeeper Profile Header & Data Card -->
+<section class="relative overflow-hidden bg-white border border-primary/5 rounded-xl shadow-sm">
+<div class="absolute inset-0 hex-pattern opacity-40"></div>
+<div class="relative z-10 p-md flex flex-col items-center">
+<!-- Profile Header -->
+<div class="flex flex-col items-center gap-sm mb-lg">
+<div class="w-32 h-32 rounded-full border-4 border-secondary/20 p-1 shadow-md overflow-hidden bg-white">
+<img alt="Beekeeper Portrait" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCu1zQKb2lkLxqJdF8kflXmejwRh8ztIgUAFKQeMmddtDY2a50LHhkg_dXlzpF0fHeXl8vGpxlmTnaaXmbMr27bQGgzLwKjvk9DET1OufZdx7vPA2Of7pc0bHVv9PYMhJWtiJDVFctefG9RW_oIRJG2ULlb3Z3GNSKSIfWPWH8iDpcXaGxz5l-8Ps1loSG04UvqvebV8n72MHTTnA1c3d7VRquLHJc4CHLYXQWKkO8DanTsqcdPjeLCDaG1ViZh5kFNshHSOdZOZFN"/>
+</div>
+<div class="bg-secondary/10 text-secondary font-label-caps px-4 py-1.5 rounded-full border border-secondary/20 tracking-wider">
+                        ACTIVE PRODUCER
+                    </div>
+</div>
+<!-- Profile Name & Location -->
+<div class="text-center w-full mb-lg">
+<p class="font-label-caps text-outline mb-1 text-[10px]">PRODUCER NAME</p>
+<h1 class="font-display-lg text-primary text-2xl mb-4">Osman Besliri Claudio Sebastian</h1>
+<div class="flex flex-wrap justify-center gap-4 mb-6">
+<div class="bg-[#fef9e7] px-4 py-3 rounded-lg border border-secondary/20">
+<p class="font-label-caps text-secondary text-[10px] mb-1">COD:</p>
+<p class="font-data-mono text-secondary text-lg">A01923</p>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-4 py-3 rounded-lg">
+<span class="material-symbols-outlined text-outline" data-icon="location_on">location_on</span>
+<span class="font-body-md">30 de Agosto, Buenos Aires</span>
+</div>
+</div>
+<button class="w-full bg-primary text-background font-title-sm py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-md">
+<span class="material-symbols-outlined text-xl" data-icon="edit">edit</span>
+                        Edit Profile
+                    </button>
+</div>
+<!-- Technical Details Data Card -->
+<div class="w-full grid grid-cols-2 gap-y-6 pt-8 border-t border-primary/5">
+<div class="space-y-1 px-2">
+<p class="font-label-caps text-outline text-[10px]">DNI</p>
+<p class="font-data-mono text-on-surface text-base">23307019</p>
+</div>
+<div class="space-y-1 px-2">
+<p class="font-label-caps text-outline text-[10px]">CUIT</p>
+<p class="font-data-mono text-on-surface text-base">20-23307019-0</p>
+</div>
+<div class="space-y-1 px-2">
+<p class="font-label-caps text-outline text-[10px]">RENAPA</p>
+<p class="font-data-mono text-secondary font-bold text-base">B53579</p>
+</div>
+<div class="space-y-1 px-2">
+<p class="font-label-caps text-outline text-[10px]">TELEFONO</p>
+<p class="font-data-mono text-on-surface text-base">02392 53-8243</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Operations Summary Section -->
+<section class="space-y-gutter">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="analytics">analytics</span>
+<h2 class="font-headline-md text-primary text-lg">Resumen de Operaciones</h2>
+</div>
+<button class="text-secondary font-label-caps text-[11px] hover:underline font-bold">VIEW FULL REPORT</button>
+</div>
+<div class="grid grid-cols-1 gap-gutter">
+<!-- Miel Card -->
+<div class="bg-white p-gutter rounded-xl border border-primary/5 shadow-sm">
+<div class="flex justify-between items-start mb-base">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="fluid_med">fluid_med</span>
+</div>
+<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">+12%</span>
+</div>
+<p class="font-label-caps text-outline text-[10px]">MIEL (KG)</p>
+<p class="text-3xl font-display-lg text-primary mt-1">12.450</p>
+<div class="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 75%"></div>
+</div>
+</div>
+<!-- Tambores Card -->
+<div class="bg-white p-gutter rounded-xl border border-primary/5 shadow-sm">
+<div class="flex justify-between items-start mb-base">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</div>
+<span class="text-[10px] font-bold text-stone-400 bg-stone-50 px-2 py-0.5 rounded border border-stone-200">STABLE</span>
+</div>
+<p class="font-label-caps text-outline text-[10px]">TAMBORES</p>
+<p class="text-3xl font-display-lg text-primary mt-1">42</p>
+<div class="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 42%"></div>
+</div>
+</div>
+<!-- Alimentadores Card -->
+<div class="bg-white p-gutter rounded-xl border border-primary/5 shadow-sm">
+<div class="flex justify-between items-start mb-base">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="nest_eco_leaf">nest_eco_leaf</span>
+</div>
+<span class="text-[10px] font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded border border-secondary/20">LOW</span>
+</div>
+<p class="font-label-caps text-outline text-[10px]">ALIMENTADORES</p>
+<p class="text-3xl font-display-lg text-primary mt-1">156</p>
+<div class="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary/50" style="width: 20%"></div>
+</div>
+</div>
+<!-- Cera Card -->
+<div class="bg-white p-gutter rounded-xl border border-primary/5 shadow-sm">
+<div class="flex justify-between items-start mb-base">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+</div>
+<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">+5%</span>
+</div>
+<p class="font-label-caps text-outline text-[10px]">CERA (KG)</p>
+<p class="text-3xl font-display-lg text-primary mt-1">890</p>
+<div class="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 60%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent History Section -->
+<section class="space-y-gutter">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="history">history</span>
+<h2 class="font-headline-md text-primary text-lg">Historial Reciente</h2>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-white border border-primary/5 shadow-sm"><span class="material-symbols-outlined text-outline" data-icon="filter_list">filter_list</span></button>
+<button class="p-2 rounded-lg bg-white border border-primary/5 shadow-sm"><span class="material-symbols-outlined text-outline" data-icon="download">download</span></button>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-primary/5 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-primary text-background font-label-caps uppercase text-[9px] tracking-widest">
+<th class="px-4 py-4 font-bold">Fecha</th>
+<th class="px-4 py-4 font-bold">Tipo de Operación</th>
+<th class="px-4 py-4 font-bold">Producto</th>
+<th class="px-4 py-4 font-bold">Cant.</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-primary/5">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4 font-data-mono text-[12px] text-on-surface">12/08/2023</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="font-bold text-primary text-[13px]">Entrega</span>
+</div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface-variant text-[13px]">Miel Multifloral</td>
+<td class="px-4 py-4 font-data-mono text-primary font-bold text-[13px]">1.200 kg</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4 font-data-mono text-[12px] text-on-surface">10/08/2023</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-bold text-primary text-[13px]">Retiro</span>
+</div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface-variant text-[13px]">Tambores Vacíos</td>
+<td class="px-4 py-4 font-data-mono text-primary font-bold text-[13px]">15 Unid.</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4 font-data-mono text-[12px] text-on-surface">05/08/2023</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="font-bold text-primary text-[13px]">Entrega</span>
+</div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface-variant text-[13px]">Cera Refinada</td>
+<td class="px-4 py-4 font-data-mono text-primary font-bold text-[13px]">250 kg</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4 font-data-mono text-[12px] text-on-surface">01/08/2023</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-bold text-primary text-[13px]">Retiro</span>
+</div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface-variant text-[13px]">Insumos San.</td>
+<td class="px-4 py-4 font-data-mono text-primary font-bold text-[13px]">2 Packs</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md z-50 border-t border-stone-200 shadow-[0_-4px_12px_rgba(30,53,47,0.05)] flex justify-around items-center px-4 py-3 pb-safe">
+<a class="flex flex-col items-center justify-center text-stone-400 opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-manrope text-[10px] font-bold uppercase tracking-wider mt-1">Fleet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="person_pin_circle" style="font-variation-settings: 'FILL' 1;">person_pin_circle</span>
+<span class="font-manrope text-[10px] font-bold uppercase tracking-wider mt-1">Drivers</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-400 opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="font-manrope text-[10px] font-bold uppercase tracking-wider mt-1">Routes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-400 opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-manrope text-[10px] font-bold uppercase tracking-wider mt-1">Alerts</span>
+</a>
+</nav>
+<!-- Contextual FAB -->
+<button class="fixed right-6 bottom-24 w-14 h-14 bg-secondary text-primary rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined text-[32px] font-bold" data-icon="add">add</span>
+</button>
+</body></html>

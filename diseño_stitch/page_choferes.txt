@@ -1,0 +1,381 @@
+!DOCTYPE html
+
+html class=light lang=enhead
+meta charset=utf-8
+meta content=width=device-width, initial-scale=1.0 name=viewport
+link href=httpsfonts.googleapis.comcss2family=Manropewght@400;600;700;800&amp;family=Interwght@400;600&amp;family=Work+Sanswght@700&amp;display=swap rel=stylesheet
+link href=httpsfonts.googleapis.comcss2family=Material+Symbols+Outlinedwght,FILL@100..700,0..1&amp;display=swap rel=stylesheet
+link href=httpsfonts.googleapis.comcss2family=Material+Symbols+Outlinedwght,FILL@100..700,0..1&amp;display=swap rel=stylesheet
+script src=httpscdn.tailwindcss.complugins=forms,container-queriesscript
+script id=tailwind-config
+      tailwind.config = {
+        darkMode class,
+        theme {
+          extend {
+            colors {
+                    tertiary #1b1c1b,
+                    surface-dim #dbd9d9,
+                    on-surface #1b1c1c,
+                    tertiary-fixed #e3e2e0,
+                    surface-container-high #eae8e7,
+                    secondary-fixed #ffdeab,
+                    on-tertiary-fixed-variant #464745,
+                    on-tertiary-fixed #1a1c1a,
+                    tertiary-fixed-dim #c7c6c4,
+                    outline #727876,
+                    on-secondary-container #704e00,
+                    inverse-on-surface #f2f0f0,
+                    on-primary-fixed-variant #344b45,
+                    inverse-primary #b2ccc3,
+                    surface-bright #fbf9f8,
+                    on-secondary #ffffff,
+                    background #fbf9f8,
+                    surface-container-lowest #ffffff,
+                    surface-container-low #f5f3f3,
+                    outline-variant #c2c8c4,
+                    primary-fixed #cee8df,
+                    on-surface-variant #424846,
+                    surface-tint #4b635c,
+                    surface-container-highest #e4e2e2,
+                    on-primary-container #859e96,
+                    on-primary #ffffff,
+                    secondary-fixed-dim #fabc46,
+                    secondary #7d5700,
+                    on-tertiary-container #999996,
+                    on-background #1b1c1c,
+                    inverse-surface #303030,
+                    surface-variant #e4e2e2,
+                    tertiary-container #30312f,
+                    on-error #ffffff,
+                    error #ba1a1a,
+                    on-secondary-fixed #271900,
+                    primary-fixed-dim #b2ccc3,
+                    primary-container #1e352f,
+                    on-tertiary #ffffff,
+                    secondary-container #fdbe49,
+                    error-container #ffdad6,
+                    surface #fbf9f8,
+                    on-primary-fixed #071f1a,
+                    on-error-container #93000a,
+                    on-secondary-fixed-variant #5f4100,
+                    surface-container #efeded,
+                    primary #08201a
+            },
+            borderRadius {
+                    DEFAULT 0.25rem,
+                    lg 0.5rem,
+                    xl 0.75rem,
+                    full 9999px
+            },
+            spacing {
+                    md 24px,
+                    container-margin 20px,
+                    xs 4px,
+                    xl 48px,
+                    lg 32px,
+                    gutter 16px,
+                    sm 12px,
+                    base 8px
+            },
+            fontFamily {
+                    body-md [Inter],
+                    title-sm [Manrope],
+                    display-lg [Manrope],
+                    data-mono [Inter],
+                    label-caps [Work Sans],
+                    headline-md [Manrope],
+                    body-lg [Inter]
+            },
+            fontSize {
+                    body-md [14px, {lineHeight 20px, fontWeight 400}],
+                    title-sm [18px, {lineHeight 24px, fontWeight 600}],
+                    display-lg [32px, {lineHeight 40px, letterSpacing -0.02em, fontWeight 700}],
+                    data-mono [14px, {lineHeight 20px, letterSpacing 0.02em, fontWeight 600}],
+                    label-caps [12px, {lineHeight 16px, letterSpacing 0.05em, fontWeight 700}],
+                    headline-md [24px, {lineHeight 32px, fontWeight 600}],
+                    body-lg [16px, {lineHeight 24px, fontWeight 400}]
+            }
+          },
+        },
+      }
+    script
+style
+        .material-symbols-outlined {
+            font-variation-settings 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hex-pattern {
+            background-color #faf9f6;
+            background-image url(dataimagesvg+xml,%3Csvg xmlns='httpwww.w3.org2000svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill='%231e352f' fill-opacity='0.03' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.91v12.68l10.99 6.34 11-6.34V17.91l-11-6.34L3 17.91zM0 15l12.98-7.5V0h2v7.5L28 15v15l-12.98 7.5V49h-2v-11.5L0 30V15z'%3E%3Csvg%3E);
+        }
+    style
+style
+    body {
+      min-height max(884px, 100dvh);
+    }
+  style
+  head
+body class=bg-background font-body-md text-on-background min-h-screen pb-24 hex-pattern
+!-- TopAppBar --
+header class=bg-[#faf9f6] darkbg-stone-950 text-[#1e352f] darktext-emerald-500 docked full-width top-0 sticky z-50 border-b border-[#1e352f]10 darkborder-emerald-90030 flex justify-between items-center w-full px-6 py-4
+div class=flex items-center gap-3
+span class=material-symbols-outlined text-2xl data-icon=hivehivespan
+h1 class=text-xl font-black text-[#1e352f] darktext-emerald-400 uppercase tracking-widest font-manropeApiary Logisticsh1
+div
+div class=hidden mdflex gap-8 items-center
+nav class=flex gap-6
+a class=text-[#1e352f] font-bold font-manrope tracking-tight hoverbg-stone-100 darkhoverbg-emerald-90020 px-3 py-1 rounded transition-colors duration-200 href=#Fleeta
+a class=text-stone-500 font-manrope tracking-tight hoverbg-stone-100 darkhoverbg-emerald-90020 px-3 py-1 rounded transition-colors duration-200 href=#Driversa
+a class=text-stone-500 font-manrope tracking-tight hoverbg-stone-100 darkhoverbg-emerald-90020 px-3 py-1 rounded transition-colors duration-200 href=#Routesa
+a class=text-stone-500 font-manrope tracking-tight hoverbg-stone-100 darkhoverbg-emerald-90020 px-3 py-1 rounded transition-colors duration-200 href=#Alertsa
+nav
+div class=h-8 w-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border border-outline-variant
+img alt=Profile class=w-full h-full object-cover data-alt=Professional portrait of a logistics manager in a modern office setting with soft natural lighting src=httpslh3.googleusercontent.comaida-publicAB6AXuB-YBlrhK5I3-m8H3zczIeQICbeqDNPN1SPGohIY-AhE5QxHqTDADY3HEVIrgfbj6-z-OfjDOZ8q98Tr7JZ2HMY5tJ3-02KTj-iqyPEWfO8bBXUapCghadW216IRXiMEMHGJ8XXZUli3sz-Fo0UB7WsV6u_E30TSJatVgUWUSGkUhHgOkqhy7Dulcsgs5ViQ4PlHoJ_-COBBt5siFXOGQ1LWn0-ivn-HPT5kIXG5KVoYwI8fBWiy5bCPX9A7Qfqha1QxFIbmMe8NsOI
+div
+div
+button class=mdhidden text-primary
+span class=material-symbols-outlinedmenuspan
+button
+header
+main class=max-w-7xl mx-auto px-container-margin py-lg
+!-- Header Section --
+div class=flex flex-col mdflex-row mditems-end justify-between gap-md mb-xl
+div
+h2 class=font-display-lg text-display-lg text-primary mb-xsFleet Managementh2
+p class=font-body-lg text-body-lg text-on-surface-variantActive monitoring of 24 apiary transport vehicles.p
+div
+div class=flex gap-sm
+button class=flex items-center gap-2 bg-surface-container-highest border border-outline-variant px-md py-sm rounded-lg font-title-sm text-on-surface hoverbg-surface-dim transition-colors
+span class=material-symbols-outlined text-smfilter_listspan
+spanFilterspan
+button
+button class=flex items-center gap-2 bg-secondary-container text-on-secondary-fixed-variant px-md py-sm rounded-lg font-title-sm font-bold shadow-sm hoverbrightness-95 transition-all
+span class=material-symbols-outlined text-smadd_circlespan
+spanAdd Truckspan
+button
+div
+div
+!-- Fleet Grid (Bento Style) --
+div class=grid grid-cols-1 lggrid-cols-12 gap-gutter
+!-- Featured Truck  Active Monitor --
+div class=lgcol-span-8 bg-surface-container-lowest border border-primary5 rounded-xl p-md shadow-sm relative overflow-hidden
+div class=absolute top-0 right-0 p-md
+span class=inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-label-caps uppercase
+span class=w-2 h-2 rounded-full bg-secondary animate-pulsespan
+                        In Transit
+                    span
+div
+div class=flex flex-col mdflex-row gap-lg
+div class=w-full mdw-13 rounded-lg overflow-hidden bg-surface-container
+img alt=Scania G410 class=w-full h-full object-cover aspect-square data-alt=Heavy-duty Scania G410 logistics truck in a clean professional environment with metallic finish src=httpslh3.googleusercontent.comaida-publicAB6AXuAE6Y4dnoI9-KZXMa30qds9q5aiRysPL1Wp_oOnq59zcBjbe7TqiiUegokpIBeuSMqq4HO6B064jeX9VafMiNm3lKAFnDuc4d7_7qfG-7YIM3enm-UKJfpmmeofIT6kiCHCgSMYd1p7NQSFDBL2v-xclw8W-g1IO9Oea5-YWKseH9mAB0ry87zY4VMZLRPrQCR-2XTAqvuOky_BfHJq22Ew-EvhbBD7yzhPRrgZKNFNLX2s-DoC1mtvrXeFLHZGXVURPCxU7tixUKeG
+div
+div class=flex-1 flex flex-col justify-between
+div
+span class=font-label-caps text-label-caps text-secondary mb-1 blockPREMIUM FLEET • ID-TRK-902span
+h3 class=font-headline-md text-headline-md text-primary mb-baseScania G410 Heavy Loadh3
+div class=flex items-center gap-4 mb-md
+span class=font-data-mono text-data-mono text-on-surface-variant bg-surface-container px-2 py-1 roundedPLT APY-4402span
+span class=flex items-center gap-1 text-on-surface-variant font-body-md
+span class=material-symbols-outlined text-sm text-secondaryverifiedspan
+                                    Maintenance Good
+                                span
+div
+div
+div class=grid grid-cols-2 mdgrid-cols-4 gap-md border-t border-outline-variant pt-md
+div
+p class=font-label-caps text-label-caps text-on-surface-variant uppercase mb-1Capacityp
+p class=font-data-mono text-data-mono text-primary12,000 kgp
+div
+div
+p class=font-label-caps text-label-caps text-on-surface-variant uppercase mb-1Odometerp
+p class=font-data-mono text-data-mono text-primary42,850 kmp
+div
+div
+p class=font-label-caps text-label-caps text-on-surface-variant uppercase mb-1Fuel Levelp
+p class=font-data-mono text-data-mono text-primary78%p
+div
+div
+p class=font-label-caps text-label-caps text-on-surface-variant uppercase mb-1Honey Tempp
+p class=font-data-mono text-data-mono text-primary24.2°Cp
+div
+div
+div
+div
+div
+!-- Stats Overview Card --
+div class=lgcol-span-4 grid grid-rows-2 gap-gutter
+div class=bg-primary-container text-on-primary rounded-xl p-md flex flex-col justify-between border border-primary
+div class=flex justify-between items-start
+span class=material-symbols-outlined text-secondary-container data-icon=local_shippinglocal_shippingspan
+span class=text-label-caps opacity-70Fleet Healthspan
+div
+div
+p class=text-display-lg font-display-lg text-secondary-fixed92%p
+p class=text-body-md opacity-80Operational uptime this monthp
+div
+div
+div class=bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col justify-between shadow-sm
+div class=flex justify-between items-start
+span class=material-symbols-outlined text-primary data-icon=buildbuildspan
+span class=text-label-caps text-on-surface-variantNext Servicespan
+div
+div
+p class=text-title-sm font-title-sm text-primary2 Vehicles Pendingp
+p class=text-body-md text-error mt-1 font-semiboldTRK-801, TRK-412p
+div
+div
+div
+!-- Vehicle List (Detailed Cards) --
+div class=lgcol-span-12 grid grid-cols-1 mdgrid-cols-2 xlgrid-cols-3 gap-gutter mt-base
+!-- Truck Card 1 --
+div class=bg-surface-container-lowest border border-primary5 rounded-xl shadow-sm hovershadow-md transition-shadow
+div class=p-md border-b border-surface-container
+div class=flex justify-between items-start mb-sm
+div
+h4 class=font-title-sm text-title-sm text-primaryVolvo FH16 750h4
+p class=font-data-mono text-[13px] text-on-surface-variantPlate BZ-912-KVp
+div
+span class=px-2 py-1 rounded bg-error-container text-on-error-container text-[10px] font-bold uppercase tracking-widerNeeds Servicespan
+div
+div class=flex gap-4
+div class=flex items-center gap-1 text-on-surface-variant font-body-md
+span class=material-symbols-outlined text-smweightspan
+                                18,000 kg
+                            div
+div class=flex items-center gap-1 text-on-surface-variant font-body-md
+span class=material-symbols-outlined text-smdistancespan
+                                124k km
+                            div
+div
+div
+div class=p-md space-y-md
+div
+div class=flex justify-between text-label-caps text-on-surface-variant mb-base
+spanFUEL CAPACITYspan
+span34%span
+div
+div class=h-1.5 w-full bg-surface-container rounded-full overflow-hidden
+div class=h-full bg-error rounded-full style=width 34%div
+div
+div
+div class=flex justify-between items-center
+div class=flex flex-col
+span class=text-label-caps text-on-surface-variantASSIGNMENTspan
+span class=font-body-md font-semibold text-primaryRoute Alpine Harvestspan
+div
+button class=h-10 w-10 flex items-center justify-center rounded-full border border-outline-variant text-primary hoverbg-surface-container transition-colors
+span class=material-symbols-outlinedchevron_rightspan
+button
+div
+div
+div
+!-- Truck Card 2 --
+div class=bg-surface-container-lowest border border-primary5 rounded-xl shadow-sm hovershadow-md transition-shadow
+div class=p-md border-b border-surface-container
+div class=flex justify-between items-start mb-sm
+div
+h4 class=font-title-sm text-title-sm text-primaryMercedes Actrosh4
+p class=font-data-mono text-[13px] text-on-surface-variantPlate TR-552-LLp
+div
+span class=px-2 py-1 rounded bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold uppercase tracking-widerGood Statusspan
+div
+div class=flex gap-4
+div class=flex items-center gap-1 text-on-surface-variant font-body-md
+span class=material-symbols-outlined text-smweightspan
+                                15,500 kg
+                            div
+div class=flex items-center gap-1 text-on-surface-variant font-body-md
+span class=material-symbols-outlined text-smdistancespan
+                                89k km
+                            div
+div
+div
+div class=p-md space-y-md
+div
+div class=flex justify-between text-label-caps text-on-surface-variant mb-base
+spanFUEL CAPACITYspan
+span88%span
+div
+div class=h-1.5 w-full bg-surface-container rounded-full overflow-hidden
+div class=h-full bg-secondary rounded-full style=width 88%div
+div
+div
+div class=flex justify-between items-center
+div class=flex flex-col
+span class=text-label-caps text-on-surface-variantASSIGNMENTspan
+span class=font-body-md font-semibold text-primaryStandby Depot Bspan
+div
+button class=h-10 w-10 flex items-center justify-center rounded-full border border-outline-variant text-primary hoverbg-surface-container transition-colors
+span class=material-symbols-outlinedchevron_rightspan
+button
+div
+div
+div
+!-- Truck Card 3 --
+div class=bg-surface-container-lowest border border-primary5 rounded-xl shadow-sm hovershadow-md transition-shadow
+div class=p-md border-b border-surface-container
+div class=flex justify-between items-start mb-sm
+div
+h4 class=font-title-sm text-title-sm text-primaryMAN TGX 26h4
+p class=font-data-mono text-[13px] text-on-surface-variantPlate HK-110-XYp
+div
+span class=px-2 py-1 rounded bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold uppercase tracking-widerGood Statusspan
+div
+div class=flex gap-4
+div class=flex items-center gap-1 text-on-surface-variant font-body-md
+span class=material-symbols-outlined text-smweightspan
+                                14,000 kg
+                            div
+div class=flex items-center gap-1 text-on-surface-variant font-body-md
+span class=material-symbols-outlined text-smdistancespan
+                                12k km
+                            div
+div
+div
+div class=p-md space-y-md
+div
+div class=flex justify-between text-label-caps text-on-surface-variant mb-base
+spanFUEL CAPACITYspan
+span62%span
+div
+div class=h-1.5 w-full bg-surface-container rounded-full overflow-hidden
+div class=h-full bg-secondary rounded-full style=width 62%div
+div
+div
+div class=flex justify-between items-center
+div class=flex flex-col
+span class=text-label-caps text-on-surface-variantASSIGNMENTspan
+span class=font-body-md font-semibold text-primaryRoute Delta Bloomspan
+div
+button class=h-10 w-10 flex items-center justify-center rounded-full border border-outline-variant text-primary hoverbg-surface-container transition-colors
+span class=material-symbols-outlinedchevron_rightspan
+button
+div
+div
+div
+div
+div
+main
+!-- BottomNavBar --
+nav class=fixed bottom-0 left-0 w-full bg-white90 darkbg-stone-90095 backdrop-blur-md z-50 border-t border-stone-200 darkborder-stone-800 shadow-[0_-4px_12px_rgba(30,53,47,0.05)] flex justify-around items-center px-4 py-3 pb-safe mdhidden
+a class=flex flex-col items-center justify-center text-[#d4af37] darktext-amber-400 font-bold scale-105 href=#
+span class=material-symbols-outlined data-icon=local_shippinglocal_shippingspan
+span class=font-manrope text-[11px] font-semibold uppercase tracking-widerFleetspan
+a
+a class=flex flex-col items-center justify-center text-stone-400 darktext-stone-500 opacity-80 hovertext-[#1e352f] darkhovertext-emerald-400 href=#
+span class=material-symbols-outlined data-icon=person_pin_circleperson_pin_circlespan
+span class=font-manrope text-[11px] font-semibold uppercase tracking-widerDriversspan
+a
+a class=flex flex-col items-center justify-center text-stone-400 darktext-stone-500 opacity-80 hovertext-[#1e352f] darkhovertext-emerald-400 href=#
+span class=material-symbols-outlined data-icon=mapmapspan
+span class=font-manrope text-[11px] font-semibold uppercase tracking-widerRoutesspan
+a
+a class=flex flex-col items-center justify-center text-stone-400 darktext-stone-500 opacity-80 hovertext-[#1e352f] darkhovertext-emerald-400 href=#
+span class=material-symbols-outlined data-icon=notificationsnotificationsspan
+span class=font-manrope text-[11px] font-semibold uppercase tracking-widerAlertsspan
+a
+nav
+!-- Floating Action Button (FAB) --
+button class=fixed bottom-24 right-6 w-14 h-14 rounded-full bg-primary-container text-secondary shadow-xl flex items-center justify-center hoverscale-110 activescale-95 transition-transform mdbottom-10 mdright-10
+span class=material-symbols-outlined text-3xladdspan
+button
+bodyhtml

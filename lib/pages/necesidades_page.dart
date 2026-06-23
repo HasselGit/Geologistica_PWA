@@ -1,0 +1,644 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
+import '../backend/supabase_service.dart';
+import '../backend/productos_data.dart';
+import '../backend/design_tokens.dart';
+import '../backend/app_states.dart';
+
+class NecesidadesPageWidget extends StatefulWidget {
+  const NecesidadesPageWidget({super.key});
+
+  @override
+  State<NecesidadesPageWidget> createState() => _NecesidadesPageWidgetState();
+}
+
+class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with SingleTickerProviderStateMixin {
+  List<Map<String, dynamic>> _necesidades = [];
+  List<Map<String, dynamic>> _apicultores = [];
+  List<Map<String, dynamic>> _productos = [];
+  List<Map<String, dynamic>> _filteredNecesidades = [];
+  Map<String, String> _solicitudToViaje = {};
+  bool _loading = true;
+  String? _error;
+  late TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchData();
+    _searchController.addListener(_filterNecesidades);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final service = SupabaseService();
+      final neceData = await service.getAllNecesidades();
+      final apiData = await service.getApicultores();
+      final prodData = await service.getProductos();
+
+      // Consultar relación de solicitud_id a viaje_id desde la tabla paradas
+      final List<dynamic> paradasRaw = await Supabase.instance.client
+          .from('paradas')
+          .select('solicitud_id, viaje_id')
+          .not('solicitud_id', 'is', null);
+
+      final Map<String, String> solToViaje = {};
+      for (var p in paradasRaw) {
+        if (p['solicitud_id'] != null && p['viaje_id'] != null) {
+          solToViaje[p['solicitud_id'].toString()] = p['viaje_id'].toString();
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _necesidades = neceData;
+          _filteredNecesidades = neceData;
+          _apicultores = apiData;
+          _productos = List<Map<String, dynamic>>.from(prodData);
+          _solicitudToViaje = solToViaje;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      print('NecesidadesPage: Error en _fetchData: $e');
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
+
+  void _filterNecesidades() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredNecesidades = _necesidades.where((n) {
+        final apicultor = (n['apicultores']?['nombre'] ?? '').toString().toLowerCase();
+        final localidad = (n['localidad'] ?? n['apicultores']?['localidad'] ?? '').toString().toLowerCase();
+        final producto = (n['producto'] ?? '').toString().toLowerCase();
+        final codigo = (n['solicitud_codigo'] ?? '').toString().toLowerCase();
+        
+        return apicultor.contains(query) || 
+               localidad.contains(query) || 
+               producto.contains(query) ||
+               codigo.contains(query);
+      }).toList();
+    });
+  }
+
+  Future<void> _addNecesidad() async {
+    await _showSolicitudModal();
+  }
+
+  Future<void> _editNecesidad(Map<String, dynamic> data) async {
+    await _showSolicitudModal(data: data);
+  }
+
+  Future<void> _showSolicitudModal({Map<String, dynamic>? data}) async {
+    final bool isEdit = data != null;
+    Map<String, dynamic>? selectedApicultor;
+    if (isEdit) {
+      selectedApicultor = _apicultores.firstWhere(
+        (a) => (a['apicultor_codigo'] ?? a['id']) == data['apicultor_id'],
+        orElse: () => {'nombre': 'Apicultor ${data['apicultor_id']}', 'localidad': data['localidad'], 'id': data['apicultor_id']}
+      );
+    }
+    
+    String? selectedProducto = data?['producto'];
+    final cantidadController = TextEditingController(text: data?['cantidad']?.toString() ?? '');
+    String selectedTipo = data?['tipo'] ?? (_tabController.index == 0 ? 'Recolección' : 'Distribución');
+
+    final List<Map<String, dynamic>> productos = _productos.isNotEmpty ? _productos : ProductosData.masterCatalog;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFFBF9F8),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(isEdit ? 'Editar Solicitud' : 'Nueva Solicitud', 
+                    style: const TextStyle(fontFamily: 'Manrope', fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF08201A))),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              
+              // Apicultor Searchable Selector
+              const Text('Apicultor', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846))),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () async {
+                  final result = await showDialog<Map<String, dynamic>>(
+                    context: context,
+                    builder: (context) {
+                      String searchQuery = '';
+                      return StatefulBuilder(
+                        builder: (context, setDialogState) {
+                          final filteredApis = _apicultores.where((a) {
+                            final name = a['nombre'].toString().toLowerCase();
+                            final loc = (a['localidad'] ?? '').toString().toLowerCase();
+                            final code = (a['apicultor_codigo'] ?? '').toString().toLowerCase();
+                            final query = searchQuery.toLowerCase();
+                            return name.contains(query) || loc.contains(query) || code.contains(query);
+                          }).toList();
+                          return AlertDialog(
+                            title: const Text('Buscar Apicultor'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    decoration: const InputDecoration(hintText: 'Nombre...', prefixIcon: Icon(Icons.search)),
+                                    onChanged: (v) => setDialogState(() => searchQuery = v),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: filteredApis.length,
+                                      itemBuilder: (context, i) {
+                                        final api = filteredApis[i];
+                                        final codigo = api['apicultor_codigo'] ?? api['id']?.toString().substring(0,6).toUpperCase();
+                                        return ListTile(
+                                          title: Text(api['nombre']),
+                                          subtitle: Text('${api['localidad'] ?? ''} • Cod: $codigo'),
+                                          onTap: () => Navigator.pop(context, api),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                  if (result != null) {
+                    setModalState(() {
+                      selectedApicultor = result;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF08201A).withOpacity(0.1)),
+                  ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_search_rounded, size: 20, color: const Color(0xFF08201A).withOpacity(0.5)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            selectedApicultor != null 
+                              ? '${selectedApicultor!['nombre']} (${selectedApicultor!['apicultor_codigo'] ?? ''})' 
+                              : 'Seleccionar apicultor...', 
+                            style: TextStyle(
+                              color: selectedApicultor != null ? const Color(0xFF08201A) : Colors.black38,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Localidad (Auto)
+              if (selectedApicultor != null) ...[
+                const Text('Localidad Detectada', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846))),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF08201A).withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    selectedApicultor!['localidad'] ?? 'Sin localidad',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF08201A)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Tipo', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846))),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF08201A).withOpacity(0.1)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: selectedTipo,
+                              items: ['Recolección', 'Distribución'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                              onChanged: (v) => setModalState(() => selectedTipo = v!),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Cantidad', 
+                          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846))),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: cantidadController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                            hintText: 'Ej: 10',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Producto Searchable Selector
+              const Text('Producto', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846))),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () async {
+                  final result = await showDialog<String>(
+                    context: context,
+                    builder: (context) {
+                      String searchQuery = '';
+                      return StatefulBuilder(
+                        builder: (context, setDialogState) {
+                          final filteredProds = productos.where((p) {
+                            final code = (p['codigo'] ?? p['producto'] ?? '').toString().toLowerCase();
+                            final desc = (p['descripcion'] ?? '').toString().toLowerCase();
+                            final q = searchQuery.toLowerCase();
+                            return code.contains(q) || desc.contains(q);
+                          }).toList();
+                          return AlertDialog(
+                            title: const Text('Buscar Producto'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    decoration: const InputDecoration(hintText: 'Nombre del producto...', prefixIcon: Icon(Icons.inventory_2_rounded)),
+                                    onChanged: (v) => setDialogState(() => searchQuery = v),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: filteredProds.length,
+                                      itemBuilder: (context, i) => ListTile(
+                                        title: Text((filteredProds[i]['codigo'] ?? filteredProds[i]['producto'] ?? '').toString()),
+                                        subtitle: Text(filteredProds[i]['descripcion'] ?? ''),
+                                        trailing: Text(filteredProds[i]['unidad'] ?? '', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                        onTap: () => Navigator.pop(context, filteredProds[i]['codigo'] ?? filteredProds[i]['producto']),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                  if (result != null) {
+                    setModalState(() {
+                      selectedProducto = result;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF08201A).withOpacity(0.1)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search_rounded, size: 20, color: const Color(0xFF08201A).withOpacity(0.5)),
+                      const SizedBox(width: 12),
+                      Text(selectedProducto ?? 'Seleccionar producto...', 
+                        style: TextStyle(color: selectedProducto != null ? const Color(0xFF08201A) : Colors.black38)),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (selectedApicultor == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecciona un apicultor')));
+                      return;
+                    }
+                    if (cantidadController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingresa una cantidad estimada')));
+                      return;
+                    }
+                    if (selectedProducto == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecciona un producto')));
+                      return;
+                    }
+
+                    try {
+                      final payload = {
+                        'apicultor_id': selectedApicultor!['apicultor_codigo'] ?? selectedApicultor!['id'],
+                        'producto': selectedProducto,
+                        'cantidad': double.tryParse(cantidadController.text) ?? 0,
+                        'tipo': selectedTipo,
+                        'localidad': selectedApicultor!['localidad'],
+                        'estado': data?['estado'] ?? AppStates.pendiente,
+                      };
+
+                      if (isEdit) {
+                        await SupabaseService().updateSolicitud(data!['id'].toString(), payload);
+                      } else {
+                        payload['solicitud_codigo'] = 'SOL-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+                        await SupabaseService().createNecesidad(payload);
+                      }
+
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        _fetchData();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(isEdit ? 'Solicitud actualizada' : 'Solicitud guardada'), 
+                          backgroundColor: Colors.green
+                        ));
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                      }
+                    }
+                  },
+                  style: DesignTokens.primaryButtonStyle,
+                  child: Text(isEdit ? 'ACTUALIZAR SOLICITUD' : 'GUARDAR SOLICITUD'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Solicitud'),
+        content: const Text('¿Estás seguro de que deseas eliminar esta solicitud? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('ELIMINAR')
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await SupabaseService().deleteSolicitud(id);
+        _fetchData();
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Solicitud eliminada')));
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
+  String _getUnidad(String? producto) {
+    if (producto == null) return 'Kg';
+    final prod = _productos.firstWhere(
+      (p) => (p['codigo'] ?? p['producto']) == producto,
+      orElse: () => ProductosData.masterCatalog.firstWhere(
+        (p) => (p['codigo'] ?? p['producto']) == producto,
+        orElse: () => {'unidad': 'Kg'},
+      ),
+    );
+    final String u = prod['unidad'] ?? 'Kg';
+    if (u.toLowerCase().contains('uni')) return 'Unidades';
+    return u;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: DesignTokens.surfaceLow,
+      appBar: AppBar(
+        backgroundColor: DesignTokens.surface,
+        elevation: 0,
+        title: Text('Gestión de Solicitudes', style: DesignTokens.headlineStyle().copyWith(fontSize: 17)),
+        iconTheme: const IconThemeData(color: DesignTokens.primary),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: DesignTokens.primary,
+          indicatorColor: DesignTokens.secondary,
+          tabs: const [
+            Tab(text: 'RECOLECCIONES'),
+            Tab(text: 'DISTRIBUCIONES'),
+          ],
+        ),
+      ),
+      body: _loading 
+        ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+        : Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar apicultor, localidad o producto...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildList('Recolección'),
+                    _buildList('Distribución'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addNecesidad,
+        backgroundColor: DesignTokens.secondary,
+        foregroundColor: DesignTokens.primary,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('NUEVA SOLICITUD', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
+      ),
+    );
+  }
+
+  Widget _buildList(String tipo) {
+    final list = _filteredNecesidades.where((n) => n['tipo'] == tipo).toList();
+    
+    if (list.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black26),
+            const SizedBox(height: 16),
+            Text('No hay $tipo pendientes'.toLowerCase(), style: const TextStyle(color: Colors.black45)),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchData,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          final n = list[index];
+          final api = n['apicultores'] ?? {};
+          final estado = n['estado'] ?? AppStates.pendiente;
+          final normalizedEstado = AppStates.normalize(estado);
+          final bool canNavigate = (normalizedEstado == AppStates.asignada || normalizedEstado == AppStates.enCurso);
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              onTap: canNavigate
+                  ? () {
+                      final viajeId = _solicitudToViaje[n['id'].toString()];
+                      if (viajeId != null) {
+                        context.push('/viajedetalle?viajeId=$viajeId');
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No se pudo encontrar el viaje asociado a esta solicitud'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      }
+                    }
+                  : null,
+              title: Text(
+                '${n['producto']}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Manrope', fontSize: 16),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text('${api['nombre'] ?? 'Sin nombre'} • ${api['localidad'] ?? 'Sin loc.'}'),
+                  Text('${n['cantidad']} ${_getUnidad(n['producto'])} estimados', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF08201A))),
+                ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (estado == AppStates.pendiente) ...[
+                    IconButton(
+                      icon: const Icon(Icons.edit_note_rounded, color: DesignTokens.primary),
+                      onPressed: () => _editNecesidad(n),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                      onPressed: () => _confirmDelete(n['id'].toString()),
+                    ),
+                  ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Color(AppStates.stateBgColor(normalizedEstado)),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      normalizedEstado.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Color(AppStates.stateTextColor(normalizedEstado)),
+                      ),
+                    ),
+                  ),
+                  if (canNavigate) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right_rounded, color: DesignTokens.primary, size: 20),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

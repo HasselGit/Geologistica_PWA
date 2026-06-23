@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Manrope:wght@600;700;800&amp;family=Work+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#1a1c1a",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#cee8df",
+                    "surface": "#fbf9f8",
+                    "surface-container-low": "#f5f3f3",
+                    "inverse-on-surface": "#f2f0f0",
+                    "secondary-fixed-dim": "#fabc46",
+                    "on-secondary-fixed-variant": "#5f4100",
+                    "surface-container": "#efeded",
+                    "on-surface": "#1b1c1c",
+                    "on-tertiary-fixed-variant": "#464745",
+                    "surface-variant": "#e4e2e2",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1b1c1c",
+                    "secondary-fixed": "#ffdeab",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-primary-container": "#859e96",
+                    "on-primary-fixed-variant": "#344b45",
+                    "inverse-primary": "#b2ccc3",
+                    "secondary": "#7d5700",
+                    "tertiary": "#1b1c1b",
+                    "on-primary-fixed": "#071f1a",
+                    "surface-dim": "#dbd9d9",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#30312f",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#303030",
+                    "surface-tint": "#4b635c",
+                    "outline-variant": "#c2c8c4",
+                    "error": "#ba1a1a",
+                    "background": "#fbf9f8",
+                    "outline": "#727876",
+                    "surface-container-high": "#eae8e7",
+                    "secondary-container": "#fdbe49",
+                    "on-secondary-container": "#704e00",
+                    "on-surface-variant": "#424846",
+                    "primary": "#08201a",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#1e352f",
+                    "surface-bright": "#fbf9f8",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#c7c6c4",
+                    "primary-fixed-dim": "#b2ccc3",
+                    "on-secondary-fixed": "#271900",
+                    "on-tertiary-container": "#999996",
+                    "tertiary-fixed": "#e3e2e0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "12px",
+                    "xl": "48px",
+                    "lg": "32px",
+                    "gutter": "16px",
+                    "xs": "4px",
+                    "container-margin": "20px",
+                    "md": "24px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "title-sm": ["Manrope"],
+                    "label-caps": ["Work Sans"],
+                    "display-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .honeycomb-pattern {
+            background-color: #faf9f6;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='%231e352f' stroke-opacity='0.03' stroke-width='1'/%3E%3C/svg%3E");
+        }
+        .main-button-glow {
+            box-shadow: 0 10px 30px -5px rgba(30, 53, 47, 0.2);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="honeycomb-pattern min-h-screen flex flex-col font-body-md text-on-surface antialiased">
+<header class="w-full">
+<nav class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto border-b border-[#1e352f]/10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="hive">hive</span>
+<span class="font-manrope font-extrabold text-lg text-primary uppercase tracking-widest">Apiary Logistics</span>
+</div>
+<div class="hidden md:flex gap-8 items-center">
+<span class="font-manrope font-bold tracking-tight text-secondary text-sm cursor-pointer hover:bg-black/5 px-3 py-1 rounded transition-all duration-200">Home</span>
+<span class="font-manrope font-bold tracking-tight text-[#1e352f]/60 text-sm cursor-pointer hover:bg-black/5 px-3 py-1 rounded transition-all duration-200">Routes</span>
+<span class="font-manrope font-bold tracking-tight text-[#1e352f]/60 text-sm cursor-pointer hover:bg-black/5 px-3 py-1 rounded transition-all duration-200">Beekeepers</span>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Professional portrait of a logistics manager in a clean, modern studio setting with neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLUgTqbR4GRvlmWL4g3JV6gYebCwSbgVvGAgSFsvVe2bAvnhvgQ6e99IZged_d0u6MTXiB__q95vdaX7o132yh7dcFR5cwW1BFEKcSuGHfNzVS3dV7pACE178kkJNffAn2qtyUayIcnmzVeRj2McNHPvUMSHbWSt2y59ezRYc04sf2IJtmirsGRnchfzwuaKd_Z7vyBDQQH84nPr57HOcNx94k3YV1SWsS9iwwxYX_xnngsG75BeINFmsGyS5EbYXtYXz_O0VbAvzZ"/>
+</div>
+</nav>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-container-margin py-xl text-center">
+<div class="max-w-xl w-full flex flex-col items-center space-y-md">
+<div class="relative mb-lg">
+<div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-white flex items-center justify-center shadow-sm border border-primary/5">
+<img class="w-24 h-24 md:w-32 md:h-32 object-contain" data-alt="Minimalist hexagonal logo of a stylized bee combined with GPS location pin in dark forest green and honey gold" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqwkDvhgTQM6BWoJ5WiFfShva0YaOYu-qUj96iq9qRZCRpQiB3CuEWWnFIuAS0nxg7nGVh6H508Tnd7WXM7MfDCZgguDfyLRtLq2VtVvd77mMwWQtNz_TQbZuB2Et7hzgTz5F1mSP7UbOYCWQysuVkPujdsPXT4wq4tb3ajdgh70Sbw8Tlh4zbF-SaczRA7-GlFtfSWW8ECnHanwgOjiwI7iWkeBJm5nD88VEcRYFAzNRsH2sD0T7accPG4rYLRsu0MOwz253Mre-M"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-secondary-container p-2 rounded-lg border border-white shadow-md">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="verified">verified</span>
+</div>
+</div>
+<h1 class="font-display-lg text-display-lg text-primary tracking-tight">
+                GeoLogística
+            </h1>
+<p class="font-title-sm text-title-sm text-on-surface-variant max-w-sm">
+                Tecnología y Logística Apícola
+            </p>
+<div class="w-full pt-lg">
+<button class="group relative inline-flex items-center justify-center px-10 py-5 font-manrope font-bold text-on-primary bg-primary-container rounded-xl border-2 border-[#c68e17] main-button-glow transition-all duration-300 active:scale-95 hover:-translate-y-1">
+<span class="material-symbols-outlined mr-2" data-icon="login">login</span>
+                    Ingresar al Sistema
+                </button>
+</div>
+<div class="pt-xl grid grid-cols-3 gap-lg w-full">
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="route">route</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">RUTAS OPTIMIZADAS</span>
+</div>
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">GESTIÓN DE COLMENAS</span>
+</div>
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">MONITOREO REAL</span>
+</div>
+</div>
+</div>
+</main>
+<footer class="md:hidden">
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white border-t border-[#1e352f]/5 shadow-[0_-4px_20px_rgba(30,53,47,0.08)] z-50 rounded-t-2xl">
+<div class="flex flex-col items-center justify-center text-[#f2c94c] bg-[#1e352f] rounded-xl px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1e352f]/50 px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="route">route</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">Routes</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1e352f]/50 px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">Beekeepers</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1e352f]/50 px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">More</span>
+</div>
+</nav>
+</footer>
+<div class="hidden md:flex fixed bottom-8 right-8 space-x-gutter">
+<div class="flex items-center space-x-2 bg-white px-md py-sm rounded-full shadow-lg border border-[#1e352f]/5">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="font-label-caps text-label-caps text-on-surface">SISTEMA OPERATIVO</span>
+</div>
+</div>
+</body></html>

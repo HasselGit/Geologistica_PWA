@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "GeoLogística",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--no-enable-impeller"
+            ]
+        },
+        {
+            "name": "GeoLogística (Release Mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

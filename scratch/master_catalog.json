@@ -1,0 +1,177 @@
+[
+  {
+    "CODIGO": "1",
+    "PRODUCTO": "TCM",
+    "DESCRIPCION": "Tambor con Miel",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Miel"
+  },
+  {
+    "CODIGO": "2",
+    "PRODUCTO": "TRR",
+    "DESCRIPCION": "Tambor Reacondicionado Raldas",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "3",
+    "PRODUCTO": "TRC",
+    "DESCRIPCION": "Tambor Reacondicionado Cosde",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "4",
+    "PRODUCTO": "TRO",
+    "DESCRIPCION": "Tambor Reacondicionado Ombu",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "5",
+    "PRODUCTO": "TNAR",
+    "DESCRIPCION": "Tambor Nuevo Alto Raldas",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "6",
+    "PRODUCTO": "TNAF",
+    "DESCRIPCION": "Tambor Nuevo Alto Fabritam",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "7",
+    "PRODUCTO": "TNP",
+    "DESCRIPCION": "Tambor Nuevo Petiso",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "8",
+    "PRODUCTO": "CO",
+    "DESCRIPCION": "Cera Operculo",
+    "UNIDAD": "Kg",
+    "CATEGORIA": "Cera"
+  },
+  {
+    "CODIGO": "9",
+    "PRODUCTO": "CR",
+    "DESCRIPCION": "Cera Recupero",
+    "UNIDAD": "Kg",
+    "CATEGORIA": "Cera"
+  },
+  {
+    "CODIGO": "10",
+    "PRODUCTO": "CE STD",
+    "DESCRIPCION": "Cera Estampada STD",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Cera"
+  },
+  {
+    "CODIGO": "11",
+    "PRODUCTO": "CE 3/4",
+    "DESCRIPCION": "Cera Estampada 3/4",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Cera"
+  },
+  {
+    "CODIGO": "13",
+    "PRODUCTO": "TE",
+    "DESCRIPCION": "Techo Calden",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "14",
+    "PRODUCTO": "PI",
+    "DESCRIPCION": "Piso Calden",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "15",
+    "PRODUCTO": "AL1 STD",
+    "DESCRIPCION": "Alzas de Primera STD",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "16",
+    "PRODUCTO": "AL2 STD",
+    "DESCRIPCION": "Alzas de Segunda STD",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "19",
+    "PRODUCTO": "TV",
+    "DESCRIPCION": "Tabla de Varroa",
+    "UNIDAD": "Caja x 600 Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "20",
+    "PRODUCTO": "AZ",
+    "DESCRIPCION": "Azucar",
+    "UNIDAD": "Bolsa x 50 Kg",
+    "CATEGORIA": "Alimento"
+  },
+  {
+    "CODIGO": "21",
+    "PRODUCTO": "GL",
+    "DESCRIPCION": "Glucosa ",
+    "UNIDAD": "Kg",
+    "CATEGORIA": "Alimento"
+  },
+  {
+    "CODIGO": "22",
+    "PRODUCTO": "TRM S/B",
+    "DESCRIPCION": "Tambor Reacondicionado Myhura S/B",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "23",
+    "PRODUCTO": "TRM C/B",
+    "DESCRIPCION": "Tambor Reacondicionado Myhura C/B",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Vacios"
+  },
+  {
+    "CODIGO": "17",
+    "PRODUCTO": "AL1 3/4",
+    "DESCRIPCION": "Alzas de Primera 3/4",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "18",
+    "PRODUCTO": "AL2 3/4",
+    "DESCRIPCION": "Alzas de Segunda 3/4",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "24",
+    "PRODUCTO": "LA",
+    "DESCRIPCION": "Largueros",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "12",
+    "PRODUCTO": "NU",
+    "DESCRIPCION": "Nucleros",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  },
+  {
+    "CODIGO": "25",
+    "PRODUCTO": "CU",
+    "DESCRIPCION": "Cuadros",
+    "UNIDAD": "Uni",
+    "CATEGORIA": "Insumos"
+  }
+]

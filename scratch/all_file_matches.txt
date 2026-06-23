@@ -1,0 +1,55 @@
+SEARCH IN BRAIN DIRECTORY FILES
+==============================
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\implementation_plan.md.resolved.2
+=============================================
+  Line 8: > **Control de Roles**: A partir de ahora, solo los usuarios con rol de `Chofer` (por ejemplo, `cmuse@geomiel.com`) podrán ver y utilizar las opciones para modificar cantidades de productos, registrar pesajes, generar nuevos remitos o finalizar paradas completas. Para los demás roles (Administrador, Gerente, Compras, etc.), toda la interfaz operativa pasará a ser de **solo lectura (consulta)**.
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\splash_design_proposal.md
+=============================================
+  Line 1: # Propuesta de Diseño: Splash Screen Corporativa Minimalista (Opción 3)
+  Line 13: Aquí tienes la nueva ilustración del Splash Screen utilizando tu logo oficial sobre el fondo corporativo oscuro con el brillo ultra sutil:
+  Line 15: ![Corporate Splash Mockup](file:///C:/Users/Parque-Apicola/.gemini/antigravity/brain/75658653-c460-45d0-a25b-67da014a8803/corporate_splash_mockup_1779460584272.png)
+  Line 32: 4. **Flujo de Precarga Automático (Opción 3)**:
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\task.md
+=============================================
+  Line 22: - `[x]` Ocultar / deshabilitar las opciones de **Registrar pesos por tambor**, **Agregar ítem**, **Generar remito** y **Finalizar parada** cuando el viaje es pendiente.
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\walkthrough.md.resolved
+=============================================
+  Line 33: - Si se selecciona la opción de firma por "Un Tercero", el sistema habilita un campo dedicado para introducir el teléfono de ese tercero.
+  Line 127: - **Problema**: El texto y las opciones de aprobación de *"Aprobar Cambio de Ruta"* y *"Cambio Solicitado"* se mostraban para viajes finalizados o planificados, cuando solo es relevante durante el transcurso activo del viaje.
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\walkthrough.md.resolved.10
+=============================================
+  Line 33: - Si se selecciona la opción de firma por "Un Tercero", el sistema habilita un campo dedicado para introducir el teléfono de ese tercero.
+  Line 127: - **Problema**: El texto y las opciones de aprobación de *"Aprobar Cambio de Ruta"* y *"Cambio Solicitado"* se mostraban para viajes finalizados o planificados, cuando solo es relevante durante el transcurso activo del viaje.
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\walkthrough.md.resolved.7
+=============================================
+  Line 33: - Si se selecciona la opción de firma por "Un Tercero", el sistema habilita un campo dedicado para introducir el teléfono de ese tercero.
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\walkthrough.md.resolved.8
+=============================================
+  Line 33: - Si se selecciona la opción de firma por "Un Tercero", el sistema habilita un campo dedicado para introducir el teléfono de ese tercero.
+
+
+=============================================
+FILE: C:\Users\Parque-Apicola\.gemini\antigravity\brain\75658653-c460-45d0-a25b-67da014a8803\walkthrough.md.resolved.9
+=============================================
+  Line 33: - Si se selecciona la opción de firma por "Un Tercero", el sistema habilita un campo dedicado para introducir el teléfono de ese tercero.

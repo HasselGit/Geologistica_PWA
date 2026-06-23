@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Work+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#1a1c1a",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#cee8df",
+                    "surface": "#fbf9f8",
+                    "surface-container-low": "#f5f3f3",
+                    "inverse-on-surface": "#f2f0f0",
+                    "secondary-fixed-dim": "#fabc46",
+                    "on-secondary-fixed-variant": "#5f4100",
+                    "surface-container": "#efeded",
+                    "on-surface": "#1b1c1c",
+                    "on-tertiary-fixed-variant": "#464745",
+                    "surface-variant": "#e4e2e2",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1b1c1c",
+                    "secondary-fixed": "#ffdeab",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-primary-container": "#859e96",
+                    "on-primary-fixed-variant": "#344b45",
+                    "inverse-primary": "#b2ccc3",
+                    "secondary": "#7d5700",
+                    "tertiary": "#1b1c1b",
+                    "on-primary-fixed": "#071f1a",
+                    "surface-dim": "#dbd9d9",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#30312f",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#303030",
+                    "surface-tint": "#4b635c",
+                    "outline-variant": "#c2c8c4",
+                    "error": "#ba1a1a",
+                    "background": "#fbf9f8",
+                    "outline": "#727876",
+                    "surface-container-high": "#eae8e7",
+                    "secondary-container": "#fdbe49",
+                    "on-secondary-container": "#704e00",
+                    "on-surface-variant": "#424846",
+                    "primary": "#08201a",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#1e352f",
+                    "surface-bright": "#fbf9f8",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#c7c6c4",
+                    "primary-fixed-dim": "#b2ccc3",
+                    "on-secondary-fixed": "#271900",
+                    "on-tertiary-container": "#999996",
+                    "tertiary-fixed": "#e3e2e0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "12px",
+                    "xl": "48px",
+                    "lg": "32px",
+                    "gutter": "16px",
+                    "xs": "4px",
+                    "container-margin": "20px",
+                    "md": "24px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "title-sm": ["Manrope"],
+                    "label-caps": ["Work Sans"],
+                    "display-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hex-clip {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-md text-on-background min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-[#faf9f6] dark:bg-[#121412] border-b border-[#1e352f]/10 dark:border-white/10 sticky top-0 z-40">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#1e352f] dark:text-[#f2c94c]" data-icon="hive">hive</span>
+<span class="font-manrope font-bold tracking-tight text-lg font-extrabold text-[#1e352f] dark:text-[#f2c94c] uppercase tracking-widest">Apiary Logistics</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="transition-all duration-200 ease-in-out active:scale-95 hover:bg-black/5 p-2 rounded-full hidden md:flex">
+<span class="material-symbols-outlined text-[#1e352f] dark:text-white/60" data-icon="search">search</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-secondary-container">
+<img class="w-full h-full object-cover" data-alt="professional portrait of a logistics manager in a modern office setting with warm natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuioi6F9lTT6pvSYoKjnvdgbwLF2we6bgguZJmhlbVQAQRQdDUAkwWz0puopFyHHf9khJ04xjRk_GTvwXnEEphfRoRRrBnhT9kmAsM4wyVem6cYHaeZ8cjIeAAL3It5iHueQkl8XsaBm2P9Ety4WyhDFu4mXNlWi-IgXgvedVPKK5bSUassw8epoNxw4rTAzH5xqvt16uw_wi99ut05rWs7BfnznFpsE4bCl1ffr9jdlNP-JtClHEp6tTGnlaxHZWYHEj0RF-Kmc1n"/>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-container-margin py-lg pb-32">
+<!-- Header & Filters -->
+<section class="mb-lg">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter mb-8">
+<div>
+<h1 class="font-display-lg text-display-lg text-primary mb-2">Beekeepers</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Manage and monitor your regional partner network.</p>
+</div>
+<div class="flex gap-sm overflow-x-auto pb-2 no-scrollbar">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl font-label-caps whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+                        ALL PARTNERS
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface-variant rounded-xl font-label-caps whitespace-nowrap hover:bg-surface-container-high transition-colors">
+                        ACTIVE HIVES
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface-variant rounded-xl font-label-caps whitespace-nowrap hover:bg-surface-container-high transition-colors">
+                        REGION
+                    </button>
+</div>
+</div>
+<!-- Search and Metrics Bento -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-xl">
+<div class="md:col-span-2 bg-white border border-primary/5 rounded-xl p-6 flex items-center shadow-sm">
+<div class="w-full relative">
+<span class="material-symbols-outlined absolute left-0 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-8 pr-4 py-2 bg-transparent border-b-2 border-surface-container focus:border-secondary-container outline-none font-body-lg transition-colors" placeholder="Search by name or locality..." type="text"/>
+</div>
+</div>
+<div class="bg-secondary-container/10 border border-secondary-container/20 rounded-xl p-6 flex flex-col justify-between">
+<span class="font-label-caps text-on-secondary-container opacity-70">TOTAL ACTIVE HIVES</span>
+<div class="flex items-end justify-between">
+<span class="font-display-lg text-display-lg text-on-secondary-container">1,284</span>
+<span class="material-symbols-outlined text-secondary text-3xl" data-icon="hive">hive</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Beekeepers Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="bg-white border border-primary/5 rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(30,53,47,0.04)] hover:shadow-[0_8px_30px_rgba(30,53,47,0.08)] transition-all duration-300 group">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center hex-clip">
+<span class="material-symbols-outlined text-[#f2c94c]" data-icon="person">person</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-primary">Julian Thorne</h3>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="text-body-md">Blue Mountains, NSW</span>
+</div>
+</div>
+</div>
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-caps text-[10px]">PREMIUM</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">ACTIVE HIVES</span>
+<span class="font-data-mono text-primary text-lg">142</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">LAST COLLECTION</span>
+<span class="font-data-mono text-primary text-lg">Oct 12</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>CAPACITY UTILIZATION</span>
+<span>84%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[84%]"></div>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-lowest border-t border-primary/5 flex justify-end gap-3">
+<button class="p-2 text-primary hover:bg-surface-container rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-caps text-[11px] group-hover:bg-primary-container transition-colors">
+                        VIEW PROFILE
+                    </button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white border border-primary/5 rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(30,53,47,0.04)] hover:shadow-[0_8px_30px_rgba(30,53,47,0.08)] transition-all duration-300 group">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center hex-clip">
+<span class="material-symbols-outlined text-[#f2c94c]" data-icon="person">person</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-primary">Elena Rodriguez</h3>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="text-body-md">Hunter Valley, NSW</span>
+</div>
+</div>
+</div>
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant rounded-full font-label-caps text-[10px]">STANDARD</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">ACTIVE HIVES</span>
+<span class="font-data-mono text-primary text-lg">86</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">LAST COLLECTION</span>
+<span class="font-data-mono text-primary text-lg">Oct 14</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>CAPACITY UTILIZATION</span>
+<span>42%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[42%]"></div>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-lowest border-t border-primary/5 flex justify-end gap-3">
+<button class="p-2 text-primary hover:bg-surface-container rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-caps text-[11px] group-hover:bg-primary-container transition-colors">
+                        VIEW PROFILE
+                    </button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white border border-primary/5 rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(30,53,47,0.04)] hover:shadow-[0_8px_30px_rgba(30,53,47,0.08)] transition-all duration-300 group">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center hex-clip">
+<span class="material-symbols-outlined text-[#f2c94c]" data-icon="person">person</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-primary">Marcus Vane</h3>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="text-body-md">Kangaroo Valley, NSW</span>
+</div>
+</div>
+</div>
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-caps text-[10px]">PREMIUM</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">ACTIVE HIVES</span>
+<span class="font-data-mono text-primary text-lg">210</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">LAST COLLECTION</span>
+<span class="font-data-mono text-primary text-lg">Sep 28</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>CAPACITY UTILIZATION</span>
+<span>92%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[92%]"></div>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-lowest border-t border-primary/5 flex justify-end gap-3">
+<button class="p-2 text-primary hover:bg-surface-container rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-caps text-[11px] group-hover:bg-primary-container transition-colors">
+                        VIEW PROFILE
+                    </button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white border border-primary/5 rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(30,53,47,0.04)] hover:shadow-[0_8px_30px_rgba(30,53,47,0.08)] transition-all duration-300 group">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center hex-clip">
+<span class="material-symbols-outlined text-[#f2c94c]" data-icon="person">person</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-primary">Sarah Chen</h3>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="text-body-md">Mudgee Region, NSW</span>
+</div>
+</div>
+</div>
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant rounded-full font-label-caps text-[10px]">STANDARD</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">ACTIVE HIVES</span>
+<span class="font-data-mono text-primary text-lg">64</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">LAST COLLECTION</span>
+<span class="font-data-mono text-primary text-lg">Oct 05</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>CAPACITY UTILIZATION</span>
+<span>25%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[25%]"></div>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-lowest border-t border-primary/5 flex justify-end gap-3">
+<button class="p-2 text-primary hover:bg-surface-container rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-caps text-[11px] group-hover:bg-primary-container transition-colors">
+                        VIEW PROFILE
+                    </button>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="bg-white border border-primary/5 rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(30,53,47,0.04)] hover:shadow-[0_8px_30px_rgba(30,53,47,0.08)] transition-all duration-300 group">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center hex-clip">
+<span class="material-symbols-outlined text-[#f2c94c]" data-icon="person">person</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-primary">Gregory Wells</h3>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="text-body-md">Orange, NSW</span>
+</div>
+</div>
+</div>
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-caps text-[10px]">PREMIUM</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">ACTIVE HIVES</span>
+<span class="font-data-mono text-primary text-lg">178</span>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg">
+<span class="block font-label-caps text-on-surface-variant mb-1">LAST COLLECTION</span>
+<span class="font-data-mono text-primary text-lg">Oct 10</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-on-surface-variant">
+<span>CAPACITY UTILIZATION</span>
+<span>68%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[68%]"></div>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 bg-surface-container-lowest border-t border-primary/5 flex justify-end gap-3">
+<button class="p-2 text-primary hover:bg-surface-container rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-caps text-[11px] group-hover:bg-primary-container transition-colors">
+                        VIEW PROFILE
+                    </button>
+</div>
+</div>
+<!-- Add New Placeholder -->
+<button class="border-2 border-dashed border-primary/10 rounded-xl flex flex-col items-center justify-center p-8 hover:bg-primary/5 transition-all group min-h-[320px]">
+<div class="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl text-primary" data-icon="add">add</span>
+</div>
+<span class="font-title-sm text-primary">Add New Partner</span>
+<span class="text-body-md text-on-surface-variant">Register a new beekeeper</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white dark:bg-[#1a2e29] border-t border-[#1e352f]/5 dark:border-white/5 shadow-[0_-4px_20px_rgba(30,53,47,0.08)] dark:shadow-none z-50 rounded-t-2xl">
+<a class="flex flex-col items-center justify-center text-[#1e352f]/50 dark:text-white/40 px-4 py-1.5 transition-transform active:scale-90 tap-highlight-transparent hover:text-[#1e352f] dark:hover:text-[#f2c94c]" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1e352f]/50 dark:text-white/40 px-4 py-1.5 transition-transform active:scale-90 tap-highlight-transparent hover:text-[#1e352f] dark:hover:text-[#f2c94c]" href="#">
+<span class="material-symbols-outlined" data-icon="route">route</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">Routes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#f2c94c] bg-[#1e352f] dark:bg-white/10 rounded-xl px-4 py-1.5 transition-transform active:scale-90 tap-highlight-transparent" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">Beekeepers</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1e352f]/50 dark:text-white/40 px-4 py-1.5 transition-transform active:scale-90 tap-highlight-transparent hover:text-[#1e352f] dark:hover:text-[#f2c94c]" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter">More</span>
+</a>
+</nav>
+</body></html>

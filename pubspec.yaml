@@ -1,0 +1,84 @@
+name: geo_logistica
+description: A new Flutter project.
+version: 1.0.2+3
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  app_links: any
+  auto_size_text: ^3.0.0
+  cached_network_image: any
+  collection: ^1.18.0
+  dropdown_button2: 
+    git:
+      url: https://github.com/FlutterFlow/dropdown_button2.git
+      ref: 514178337dfbea442f617daed39c704b57593fc9
+      path: packages/dropdown_button2
+  easy_debounce: ^2.0.3
+  flutter_animate: any
+  flutter_barcode_scanner: 
+    git:
+      url: https://github.com/FlutterFlow/flutter_barcode_scanner
+      ref: 3b315cdeb48e06d1758c5110b3d2dbc3e922a7ce
+  flutter_cache_manager: ^3.3.1
+  flutter_plugin_android_lifecycle: ^2.0.19
+  font_awesome_flutter: any
+  from_css_color: ^2.0.0
+  go_router: any
+  google_fonts: any
+  hive: ^2.2.3
+  intl: any
+  http: any
+  json_path: any
+  page_transition: ^2.1.0
+  path_provider: ^2.1.4
+  provider: ^6.1.5
+  rxdart: ^0.28.0
+  shared_preferences: any
+  sign_in_with_apple: any
+  sqflite: ^2.3.3
+  signature: ^5.5.0
+  pdf: any
+  printing: any
+  supabase: ^2.10.6
+  supabase_flutter: ^2.12.4
+  timeago: ^3.7.0
+  url_launcher: ^6.3.1
+  webview_flutter: any
+  share_plus: any
+  image_picker: ^1.1.2
+  path: ^1.9.0
+  image: ^4.8.0
+
+dependency_overrides:
+  sqflite: 2.3.3+1
+  flutter_barcode_scanner:
+    git:
+      url: https://github.com/FlutterFlow/flutter_barcode_scanner
+      ref: 3b315cdeb48e06d1758c5110b3d2dbc3e922a7ce
+
+dev_dependencies:
+  flutter_lints: any
+  lints: any
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo_Geologistica_Verde.png"
+  adaptive_icon_background: "#F6F7F2"
+  adaptive_icon_foreground: "assets/images/logo_padded.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+
+  

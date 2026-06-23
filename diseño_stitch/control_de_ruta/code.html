@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Manrope:wght@600;700;800&amp;family=Work+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#1a1c1a",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#cee8df",
+                        "surface": "#fbf9f8",
+                        "surface-container-low": "#f5f3f3",
+                        "inverse-on-surface": "#f2f0f0",
+                        "secondary-fixed-dim": "#fabc46",
+                        "on-secondary-fixed-variant": "#5f4100",
+                        "surface-container": "#efeded",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-fixed-variant": "#464745",
+                        "surface-variant": "#e4e2e2",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1b1c1c",
+                        "secondary-fixed": "#ffdeab",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-primary-container": "#859e96",
+                        "on-primary-fixed-variant": "#344b45",
+                        "inverse-primary": "#b2ccc3",
+                        "secondary": "#7d5700",
+                        "tertiary": "#1b1c1b",
+                        "on-primary-fixed": "#071f1a",
+                        "surface-dim": "#dbd9d9",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#30312f",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#303030",
+                        "surface-tint": "#4b635c",
+                        "outline-variant": "#c2c8c4",
+                        "error": "#ba1a1a",
+                        "background": "#fbf9f8",
+                        "outline": "#727876",
+                        "surface-container-high": "#eae8e7",
+                        "secondary-container": "#fdbe49",
+                        "on-secondary-container": "#704e00",
+                        "on-surface-variant": "#424846",
+                        "primary": "#08201a",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#1e352f",
+                        "surface-bright": "#fbf9f8",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#c7c6c4",
+                        "primary-fixed-dim": "#b2ccc3",
+                        "on-secondary-fixed": "#271900",
+                        "on-tertiary-container": "#999996",
+                        "tertiary-fixed": "#e3e2e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "data-mono": ["Inter"],
+                        "title-sm": ["Manrope"],
+                        "label-caps": ["Work Sans"],
+                        "display-lg": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .honey-gradient {
+            background: linear-gradient(90deg, #f2c94c 0%, #fdbe49 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-md text-on-surface min-h-screen pb-32">
+<!-- Top Navigation Anchor -->
+<header class="sticky top-0 z-50 bg-[#faf9f6] dark:bg-[#121412] border-b border-[#1e352f]/10 dark:border-white/10">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="transition-all duration-200 ease-in-out active:scale-95 text-[#1e352f] dark:text-[#e1e3e1]">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-manrope font-bold tracking-tight text-lg text-[#1e352f] dark:text-[#e1e3e1]">Route Control</h1>
+</div>
+<div class="flex items-center gap-3">
+<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-label-caps font-label-caps">PLANIFICADO</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="professional portrait of a male logistics manager in business attire looking confident and friendly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVLpL7HoX0A19TiIQu9GkAPVY1Vz8j-kXBXl3cHrKXzRy41LSVH90H09ncJ3pw0AnE-gkNIvWz_lQNWDIoT9aX7p3iBNhy2jOAJOrz_eqsQX9Dz0-G5TMy3Bb9C7DskjfmCgnBto3PC5Yhj7vOTFIRs0rxIhM_NqbQeo-ELVlB2qfnoBSfRFcfb26PAHjg06TS8lZThvH-uA418sB-DieqAP6Kvac_sYwAdK6GWx9FtuySomGcUHzFEtMScBcy5QWodFHmgeJiQBP_"/>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-container-margin mt-6 space-y-6">
+<!-- Fleet & Capacity Overview -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-8 bg-surface-container-lowest border border-primary/5 rounded-xl p-md shadow-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-lg gap-4">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-xs">VEHÍCULO ASIGNADO</p>
+<h2 class="font-headline-md text-headline-md text-primary">SCANIA G410 - AF 452 ZK</h2>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-xs">DISTANCIA TOTAL</p>
+<p class="font-data-mono text-data-mono text-primary">420 KM</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="font-title-sm text-title-sm text-primary">Capacidad de Carga</span>
+<span class="font-data-mono text-data-mono text-secondary">36% OCUPADO</span>
+</div>
+<div class="h-4 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full honey-gradient rounded-full" style="width: 36%"></div>
+</div>
+<div class="flex justify-between text-label-caps font-label-caps text-on-surface-variant pt-xs">
+<span>0 KG</span>
+<span>MAX 12,000 KG</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-4 bg-primary-container text-on-primary rounded-xl p-md flex flex-col justify-between overflow-hidden relative">
+<div class="relative z-10">
+<p class="font-label-caps text-label-caps text-on-primary-container mb-xs">NEXT WAYPOINT</p>
+<h3 class="font-title-sm text-title-sm">Santa Rosa, La Pampa</h3>
+<p class="text-body-md opacity-80 mt-1">Estimado: 14:30 HS</p>
+</div>
+<div class="relative z-10 mt-lg">
+<button class="w-full bg-secondary-container text-on-secondary-container py-3 rounded-lg font-title-sm flex items-center justify-center gap-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="navigation">navigation</span>
+                        INICIAR RUTA
+                    </button>
+</div>
+<!-- Decorative map hint -->
+<div class="absolute -right-8 -bottom-8 opacity-20 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]" data-icon="map">map</span>
+</div>
+</div>
+</section>
+<!-- Route Sheet & Weights -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-primary">Hoja de Ruta y Pesajes</h3>
+<button class="text-secondary font-title-sm flex items-center gap-1">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+                    Filtrar
+                </button>
+</div>
+<!-- Bento Card: Stop Detailed View -->
+<div class="grid grid-cols-1 gap-6">
+<div class="bg-surface-container-lowest border border-primary/5 rounded-xl overflow-hidden shadow-sm">
+<div class="flex items-center justify-between p-md border-b border-surface-variant">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="location_on">location_on</span>
+</div>
+<div>
+<h4 class="font-title-sm text-title-sm text-primary">Juan Pérez</h4>
+<p class="text-body-md text-on-surface-variant">Santa Rosa • Apiario #042</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-caps font-label-caps bg-surface-container px-3 py-1 rounded-full text-on-surface-variant">PARADA 1/4</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-surface-variant">
+<!-- Weight Details -->
+<div class="p-md space-y-4">
+<p class="font-label-caps text-label-caps text-on-surface-variant">REGISTRO DE PESO</p>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="text-body-md text-on-surface-variant">Peso Bruto</p>
+<p class="font-data-mono text-lg text-primary">4,230 KG</p>
+</div>
+<div>
+<p class="text-body-md text-on-surface-variant">Peso Neto</p>
+<p class="font-data-mono text-lg text-secondary">3,120 KG</p>
+</div>
+</div>
+</div>
+<!-- Logistics Items -->
+<div class="p-md space-y-4 md:col-span-1 lg:col-span-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant">DETALLE DE CARGA</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-lg border border-primary/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="hive">hive</span>
+<span class="text-body-md font-semibold">Alimentadores 2L</span>
+</div>
+<span class="font-data-mono text-primary">120 UDS</span>
+</div>
+<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-lg border border-primary/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="layers">layers</span>
+<span class="text-body-md font-semibold">Cera Estampada</span>
+</div>
+<span class="font-data-mono text-primary">45 PAQS</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-variant/30 p-sm flex justify-center">
+<button class="text-primary font-title-sm flex items-center gap-2 px-md py-xs hover:bg-white/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+                            VER REMITOS DIGITALES
+                        </button>
+</div>
+</div>
+<!-- Minimal Next Stop Hint -->
+<div class="bg-surface-container-low border border-dashed border-outline-variant rounded-xl p-md flex items-center justify-center gap-4 text-on-surface-variant opacity-60">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+<p class="font-title-sm">Siguiente Parada: María García - Gral. Pico</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual FAB -->
+<button class="fixed bottom-28 right-6 w-16 h-16 bg-secondary-container text-on-secondary-container rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-90 z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="add_box">add_box</span>
+<span class="sr-only">Gestión de Carga</span>
+</button>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white dark:bg-[#1a2e29] border-t border-[#1e352f]/5 dark:border-white/5 shadow-[0_-4px_20px_rgba(30,53,47,0.08)] dark:shadow-none z-50">
+<button class="flex flex-col items-center justify-center text-[#1e352f]/50 dark:text-white/40 px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#f2c94c] bg-[#1e352f] dark:bg-white/10 rounded-xl px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="route">route</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">Routes</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#1e352f]/50 dark:text-white/40 px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">Beekeepers</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#1e352f]/50 dark:text-white/40 px-4 py-1.5 transition-transform active:scale-90">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">More</span>
+</button>
+</nav>
+</body></html>

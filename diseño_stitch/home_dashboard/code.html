@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Manrope:wght@600;700;800&amp;family=Work+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#1a1c1a",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#cee8df",
+                    "surface": "#fbf9f8",
+                    "surface-container-low": "#f5f3f3",
+                    "inverse-on-surface": "#f2f0f0",
+                    "secondary-fixed-dim": "#fabc46",
+                    "on-secondary-fixed-variant": "#5f4100",
+                    "surface-container": "#efeded",
+                    "on-surface": "#1b1c1c",
+                    "on-tertiary-fixed-variant": "#464745",
+                    "surface-variant": "#e4e2e2",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1b1c1c",
+                    "secondary-fixed": "#ffdeab",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-primary-container": "#859e96",
+                    "on-primary-fixed-variant": "#344b45",
+                    "inverse-primary": "#b2ccc3",
+                    "secondary": "#7d5700",
+                    "tertiary": "#1b1c1b",
+                    "on-primary-fixed": "#071f1a",
+                    "surface-dim": "#dbd9d9",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#30312f",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#303030",
+                    "surface-tint": "#4b635c",
+                    "outline-variant": "#c2c8c4",
+                    "error": "#ba1a1a",
+                    "background": "#fbf9f8",
+                    "outline": "#727876",
+                    "surface-container-high": "#eae8e7",
+                    "secondary-container": "#fdbe49",
+                    "on-secondary-container": "#704e00",
+                    "on-surface-variant": "#424846",
+                    "primary": "#08201a",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#1e352f",
+                    "surface-bright": "#fbf9f8",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#c7c6c4",
+                    "primary-fixed-dim": "#b2ccc3",
+                    "on-secondary-fixed": "#271900",
+                    "on-tertiary-container": "#999996",
+                    "tertiary-fixed": "#e3e2e0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "12px",
+                    "xl": "48px",
+                    "lg": "32px",
+                    "gutter": "16px",
+                    "xs": "4px",
+                    "container-margin": "20px",
+                    "md": "24px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "title-sm": ["Manrope"],
+                    "label-caps": ["Work Sans"],
+                    "display-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .honey-gradient {
+            background: linear-gradient(135deg, #fdbe49 0%, #fabc46 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-md text-on-surface min-h-screen pb-32">
+<header class="sticky top-0 z-50 bg-[#faf9f6] border-b border-[#1e352f]/10">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#1e352f]" data-icon="hive">hive</span>
+<h1 class="text-lg font-extrabold text-[#1e352f] uppercase tracking-widest font-manrope">Apiary Logistics</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-secondary-container">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Professional headshot of a logistics manager with a confident expression in a sunlit office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzCINyQMnlqDms-k126J9tMlqYq4WqYHqaRJ88eERJbIDtCe-xn7ZuFuANz0vvkbmfCQmssBcYSBTX9SjoVNfbpx_E_FiuJLbigzUvgQBAA5SYfVqLwjYX44D6FLLamFr4TYzV3w5DMcj_efQhgkykfvQ1c5pjBkIIq4TKqq8TZhuY_ZdWAkoPYnMIRlCDAcFV3nhOleYVjpiWHRr2sqgSYisW63Iue1nFU5-hfsqUe52qZXe0dB6p0XIG2t-Q2a_7cCD_yukbLCZU"/>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-container-margin py-base">
+<section class="mt-lg">
+<h2 class="font-headline-md text-headline-md text-primary mb-md">Mis Viajes Asignados</h2>
+<div class="bg-surface-container-lowest border border-outline/5 rounded-xl shadow-[0_4px_24px_rgba(30,53,47,0.04)] overflow-hidden">
+<div class="p-md flex flex-col gap-lg">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Ruta Actual</span>
+<h3 class="font-display-lg text-display-lg text-primary mt-1">V-2026-CHOFER</h3>
+</div>
+<div class="bg-secondary-container/20 px-3 py-1 rounded-full">
+<span class="font-label-caps text-label-caps text-secondary-container uppercase">Pendiente</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg relative">
+<div class="flex items-start gap-4">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="location_on">location_on</span>
+</div>
+<div class="w-0.5 h-12 bg-outline-variant my-1 border-dashed border-l-2"></div>
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="hive">hive</span>
+</div>
+</div>
+<div class="flex flex-col justify-between h-[112px]">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant">ORIGEN</p>
+<p class="font-title-sm text-title-sm text-primary">Planta Central A-12</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant">DESTINO</p>
+<p class="font-title-sm text-title-sm text-primary">Apiario 'El Valle'</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-md">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-sm uppercase">Carga Asignada</h4>
+<div class="space-y-md">
+<div>
+<div class="flex justify-between items-end mb-1.5">
+<span class="font-body-md text-body-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="inventory_2">inventory_2</span>
+                                            Standard Frames
+                                        </span>
+<span class="font-data-mono text-data-mono">48/60</span>
+</div>
+<div class="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full honey-gradient rounded-full" style="width: 80%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-1.5">
+<span class="font-body-md text-body-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="format_color_fill">format_color_fill</span>
+                                            Wax Blocks
+                                        </span>
+<span class="font-data-mono text-data-mono">15/15</span>
+</div>
+<div class="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-1.5">
+<span class="font-body-md text-body-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="water_drop">water_drop</span>
+                                            Honey to collect
+                                        </span>
+<span class="font-data-mono text-data-mono">0/250kg</span>
+</div>
+<div class="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full honey-gradient rounded-full opacity-30" style="width: 0%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-4 honey-gradient text-primary font-manrope font-bold text-lg rounded-xl shadow-lg shadow-secondary-container/20 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-3">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+                        Start Route
+                    </button>
+</div>
+</div>
+</section>
+<section class="mt-xl grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-surface-container-lowest p-md border border-outline/5 rounded-xl">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="thermometer">thermometer</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">TEMP AMBIENTE</span>
+</div>
+<p class="font-headline-md text-headline-md text-primary">24°C</p>
+<p class="text-body-md text-on-surface-variant mt-1">Estable para transporte</p>
+</div>
+<div class="bg-surface-container-lowest p-md border border-outline/5 rounded-xl">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ÚLTIMO VIAJE</span>
+</div>
+<p class="font-headline-md text-headline-md text-primary">4.2h</p>
+<p class="text-body-md text-on-surface-variant mt-1">Ruta Sur completada</p>
+</div>
+<div class="bg-surface-container-lowest p-md border border-outline/5 rounded-xl">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="notifications_active">notifications_active</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">ALERTA</span>
+</div>
+<p class="font-headline-md text-headline-md text-primary">Mantenimiento</p>
+<p class="text-body-md text-on-surface-variant mt-1">Smoker check mañana</p>
+</div>
+</section>
+<section class="mt-xl mb-base">
+<div class="flex items-center justify-between mb-md">
+<h2 class="font-headline-md text-headline-md text-primary">Mapa de Ruta</h2>
+<button class="text-secondary font-label-caps text-label-caps uppercase flex items-center gap-1">
+                    Ver pantalla completa <span class="material-symbols-outlined text-sm" data-icon="open_in_full">open_in_full</span>
+</button>
+</div>
+<div class="h-64 md:h-96 bg-surface-container-high rounded-2xl overflow-hidden relative border border-outline/10">
+<img class="w-full h-full object-cover" data-alt="Detailed topography map view of a rural landscape with winding roads and green valleys, minimalist silver style" data-location="Northern Valley Apiaries" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC29nV7L5Lo7dlvTpThE-pK4rAPQ32It3WcmTHBhcmo02p4QKU6f04rcNQ98MNS5sviTv44f-EaJzUte9dRHTrlNNQ-LbqyPXaIyqcOYGaAXxgmEP6rPdXb0SS2ja3Kq9XWLFsOc22ULBRJV0D5f4cyNS13Njd8pFzSzy1APwfC_PaxJjBLN8VzmmNM2LRCoA43JgjPr5KnlMgBCr3v25b4pdOv2sU0aqvkgIOcryr_AQyFuJCHNob87Z_DYDlftm9HdaHQiKwNZjue"/>
+<div class="absolute inset-0 bg-primary/5 pointer-events-none"></div>
+<div class="absolute top-4 left-4 bg-surface-container-lowest p-3 rounded-lg shadow-xl border border-outline/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="near_me">near_me</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant">SIGUIENTE PUNTO</p>
+<p class="font-body-md font-bold text-primary">Apiario 'El Valle' - 12.4 km</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white border-t border-[#1e352f]/5 shadow-[0_-4px_20px_rgba(30,53,47,0.08)] z-50 rounded-t-2xl">
+<a class="flex flex-col items-center justify-center text-[#f2c94c] bg-[#1e352f] rounded-xl px-4 py-1.5 transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1e352f]/50 px-4 py-1.5 transition-transform active:scale-90 hover:text-[#1e352f]" href="#">
+<span class="material-symbols-outlined" data-icon="route">route</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">Routes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1e352f]/50 px-4 py-1.5 transition-transform active:scale-90 hover:text-[#1e352f]" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">Beekeepers</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1e352f]/50 px-4 py-1.5 transition-transform active:scale-90 hover:text-[#1e352f]" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-manrope text-[10px] font-medium uppercase tracking-tighter mt-1">More</span>
+</a>
+</nav>
+</body></html>

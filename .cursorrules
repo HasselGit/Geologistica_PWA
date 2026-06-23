@@ -1,0 +1,43 @@
+# AI Coding Assistant Guidelines - GeoLogística
+
+You are an expert AI software engineer specialized in Flutter and Supabase. You are tasked with modifying or maintaining the GeoLogística codebase.
+
+## 🛑 MANDATORY RULES (NEVER DEVIATE)
+
+Before touching ANY code or recommending ANY modifications, you **MUST** read and respect the guidelines documented in:
+1. **[ARQUITECTURA_GEOLOGISTICA.md](file:///c:/Users/Parque-Apicola/Desktop/Geologistica/ARQUITECTURA_GEOLOGISTICA.md)** (Master Blueprint)
+2. **[sesion_actual.md](file:///c:/Users/Parque-Apicola/Desktop/Geologistica/sesion_actual.md)** (Session log)
+
+Failure to do so will cause catastrophic regressions in production business logic and database constraints.
+
+## 🔑 SYSTEM CORE CONSTRAINTS
+
+### A. Authentication & Session Bypass
+* Standard Supabase Auth is **bypassed** due to local driver deadlock issues on Android devices.
+* **NEVER** use `Supabase.instance.client.auth.currentUser` or similar SDK properties to resolve the current user's role or identity.
+* **ALWAYS** retrieve role, name, email, and ID from local `SharedPreferences` (e.g., `user_puesto`, `user_email`, `user_id`, `user_nombre`, `user_apellido`).
+
+### B. Database Schema & Type Strictness
+* The `carga_items.cantidad` column is strictly an **integer** (`INT`) in the PostgreSQL schema.
+* Inserting or updating double values (like `150.0` or `12.5`) will crash the transaction with a fatal PostgreSQL error: `invalid input syntax for type integer: "150.0"`.
+* **ALWAYS** apply `.round()` or `.toInt()` to all quantity values on the Dart side before inserting, editing, or uploading load items.
+
+### C. Driver Limitations (No Creation Permission)
+* Drivers (`Choferes`) are strictly **forbidden** from creating new cargoes.
+* Cargo creation is restricted **only** to direct administrative roles: `Deposito`, `Gerente`/`Gerencia`, `Administrador` (Super-Admin `hassel00@gmail.com`), and `CEO`.
+* Drivers can only transition the states (e.g., from `'Pendiente'` to `'En Carga'` or `'Terminada'`) for cargoes originating from `'Depósito Huinca'` associated with their active travel in route.
+
+### D. Manual Stop Closure (No Auto-Closure)
+* The stop state `'Terminada'` is controlled **strictly and manually** by the driver using the "FINALIZAR PARADA" button.
+* **NEVER** auto-close a stop when saving a receipt/remito. A driver must be allowed to register multiple receipts per stop before manually closing it.
+
+### E. Multi-Apicultor Stop & Unweighed Batches Handling
+* The `paradas` table does **not** have an `apicultor_id` column. Always resolve the main apicultor ID dynamically by querying the `solicitudes` table via the parada's `solicitud_id`.
+* Drums in the `pesajes` table with `apicultor_id == null` belong to the stop's resolved main apicultor. Always apply this fallback when filtering drums.
+* Apicultor IDs may have casing and spacing discrepancies in Supabase (e.g., 'A01913' vs 'a01913'). ALWAYS use case-insensitive, trimmed comparisons when matching apicultor IDs (e.g., `_isSameApicId` or `.trim().toLowerCase()`).
+* If a drum batch is unweighed (first drum has a gross weight of `0.0`), the layout (UI and PDF) must dynamically switch to a 3-column table (`N°`, `Código SENASA`, `Detalle: Sin pesar`), hiding empty weight fields and consolidation boxes.
+* The `remitos` table does **not** have an `apicultor_id` column. Map the apicultor CUIT/DNI to `cliente_cuit` and net weight to `total_kg`.
+* Avoid duplicate key constraint violations on `numero_remito` by querying existing stop receipts and appending a sequential suffix (e.g. `REM-XXXXXX-2`).
+
+### F. Static Analysis Cleanliness
+* Keep the code compilation fully clean of any static analysis errors. Run `flutter analyze lib/` to verify all updates.
