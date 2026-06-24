@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../backend/supabase_service.dart';
 import '../backend/productos_data.dart';
+import 'package:hive/hive.dart';
 
 class ProductosPageWidget extends StatefulWidget {
   const ProductosPageWidget({super.key});
@@ -13,12 +15,12 @@ class ProductosPageWidget extends StatefulWidget {
 }
 
 class _ProductosPageWidgetState extends State<ProductosPageWidget> {
-  late Future<List<Map<String, dynamic>>> _productsFuture;
   List<Map<String, dynamic>> _productos = [];
   List<Map<String, dynamic>> _filteredProductos = [];
   final _searchController = TextEditingController();
   bool _loading = true;
   String? _userRole;
+  Timer? _debounce;
 
   static const kPrimary = Color(0xFF08201A);
   static const kSecContainer = Color(0xFFFDBE49);
@@ -31,6 +33,13 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
     _fetchData();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadRole() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) setState(() => _userRole = prefs.getString('user_puesto'));
@@ -38,20 +47,60 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
 
   Future<void> _fetchData() async {
     setState(() => _loading = true);
+    
     try {
-      _productsFuture = SupabaseService().getProductos();
-      final data = await _productsFuture;
+      final box = await Hive.openBox('productosCache');
+      if (box.containsKey('data')) {
+        final cached = box.get('data');
+        if (cached != null && cached is List && mounted) {
+          final parsed = List<Map<String, dynamic>>.from(
+            cached.map((e) => Map<String, dynamic>.from(e as Map))
+          );
+          parsed.sort((a, b) => (a['descripcion'] ?? '').toString().toLowerCase().compareTo((b['descripcion'] ?? '').toString().toLowerCase()));
+          setState(() {
+            _productos = parsed;
+            _filteredProductos = parsed;
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Hive cache error: $e');
+    }
+
+    try {
+      final data = await SupabaseService().getProductos();
       if (mounted) {
+        data.sort((a, b) => (a['descripcion'] ?? '').toString().toLowerCase().compareTo((b['descripcion'] ?? '').toString().toLowerCase()));
         setState(() {
-          data.sort((a, b) => (a['descripcion'] ?? '').toString().toLowerCase().compareTo((b['descripcion'] ?? '').toString().toLowerCase()));
           _productos = data;
           _filteredProductos = data;
           _loading = false;
         });
+
+        try {
+          final box = await Hive.openBox('productosCache');
+          await box.put('data', data);
+        } catch (e) {
+          print('Hive save error: $e');
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _filterProducts(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      setState(() {
+        _filteredProductos = _productos.where((p) {
+          final desc = (p['descripcion'] ?? '').toString().toLowerCase();
+          final cod = (p['codigo'] ?? '').toString().toLowerCase();
+          return desc.contains(query.toLowerCase()) || cod.contains(query.toLowerCase());
+        }).toList();
+      });
+    });
   }
 
   @override
@@ -82,12 +131,16 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
             ),
           ),
           Expanded(
-            child: _loading 
+            child: _loading && _productos.isEmpty
               ? const Center(child: CircularProgressIndicator(color: kSecContainer))
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  itemCount: _filteredProductos.length,
-                  itemBuilder: (context, index) => _buildProductCard(_filteredProductos[index]),
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth >= 900) {
+                      return _buildWebTable();
+                    } else {
+                      return _buildMobileList();
+                    }
+                  },
                 ),
           ),
         ],
@@ -99,6 +152,70 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
             child: const Icon(Icons.add, color: kSecContainer),
           )
         : null,
+    );
+  }
+
+  Widget _buildWebTable() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(kPrimary.withOpacity(0.05)),
+            columns: const [
+              DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold, color: kPrimary))),
+              DataColumn(label: Text('DESCRIPCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: kPrimary))),
+              DataColumn(label: Text('UNIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: kPrimary))),
+              DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: kPrimary))),
+            ],
+            rows: _filteredProductos.map((p) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(p['codigo'] ?? 'S/C', style: const TextStyle(fontWeight: FontWeight.w600))),
+                  DataCell(Text(p['descripcion'] ?? 'Sin descripción')),
+                  DataCell(Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: kSecContainer.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                    child: Text(p['unidad'] ?? 'UN', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: kPrimary)),
+                  )),
+                  DataCell(
+                    (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras')
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 18, color: kPrimary),
+                              onPressed: () => _editProduct(p),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                              onPressed: () => _confirmDelete(p),
+                            ),
+                          ],
+                        )
+                      : const SizedBox(),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileList() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      itemCount: _filteredProductos.length,
+      itemBuilder: (context, index) => _buildProductCard(_filteredProductos[index]),
     );
   }
 
@@ -278,7 +395,6 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
     final codeController = TextEditingController();
     String? selectedUnidad = 'KG';
     
-    // Sort catalog once
     final sortedCatalog = List<Map<String, dynamic>>.from(ProductosData.masterCatalog)
       ..sort((a, b) => (a['descripcion'] ?? '').toString().toLowerCase().compareTo((b['descripcion'] ?? '').toString().toLowerCase()));
 
@@ -412,14 +528,5 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
         ),
       ),
     );
-  }
-  void _filterProducts(String query) {
-    setState(() {
-      _filteredProductos = _productos.where((p) {
-        final desc = (p['descripcion'] ?? '').toString().toLowerCase();
-        final cod = (p['codigo'] ?? '').toString().toLowerCase();
-        return desc.contains(query.toLowerCase()) || cod.contains(query.toLowerCase());
-      }).toList();
-    });
   }
 }

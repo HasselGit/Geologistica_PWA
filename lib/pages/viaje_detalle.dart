@@ -81,10 +81,32 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // STATUS HELPERS
+  // ─────────────────────────────────────────────────────────────────────────
+  Color _estadoColor(String estado) {
+    final n = AppStates.normalize(estado);
+    if (n == AppStates.enCurso) return const Color(0xFF1565C0);
+    if (n == AppStates.terminado) return DesignTokens.success;
+    if (n == AppStates.pendiente) return DesignTokens.secondary;
+    return DesignTokens.onSurfaceVariant;
+  }
+
+  IconData _estadoIcon(String estado) {
+    final n = AppStates.normalize(estado);
+    if (n == AppStates.enCurso) return Icons.play_circle_rounded;
+    if (n == AppStates.terminado) return Icons.check_circle_rounded;
+    if (n == AppStates.pendiente) return Icons.schedule_rounded;
+    return Icons.info_outline_rounded;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: DesignTokens.secondary)));
     if (_viaje == null) return const Scaffold(body: Center(child: Text('No se encontró el viaje')));
 
     final List<Map<String, dynamic>> paradas = [];
@@ -114,8 +136,8 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
       chofer = Map<String, dynamic>.from(choferRaw.first);
     }
 
-    final choferNombre = (chofer['nombre'] != null) 
-        ? '${chofer['nombre']} ${chofer['apellido']}' 
+    final choferNombre = (chofer['nombre'] != null)
+        ? '${chofer['nombre']} ${chofer['apellido']}'
         : 'ID: ${_viaje!['chofer_id'] ?? 'S/D'}';
 
     final bool esPendiente = AppStates.normalize(_viaje!['estado']) == AppStates.pendiente;
@@ -144,235 +166,1379 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: theme.primaryBackground,
-      appBar: AppBar(
-        title: Text('Detalle de Viaje: ${_viaje!['viaje_codigo']}', style: theme.headlineSmall),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: IconThemeData(color: theme.primary),
-        actions: [
-          // Botón de eliminar viaje: solo disponible para el admin
-          if (_isAdmin)
-            IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-              tooltip: 'Eliminar viaje (Admin)',
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Eliminar Viaje'),
-                    content: Text('¿Está seguro de eliminar el viaje ${_viaje!['viaje_codigo']}? Esta acción no se puede deshacer.'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCELAR')),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('ELIMINAR'),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirm == true && mounted) {
-                  try {
-                    await SupabaseService().deleteViaje(widget.viajeId);
-                    if (mounted) context.pop();
-                  } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red),
-                    );
+    // ── LAYOUT DECISION ──────────────────────────────────────────────────────
+    return LayoutBuilder(builder: (context, constraints) {
+      final bool isWeb = constraints.maxWidth >= 900;
+
+      if (isWeb) {
+        return _buildWebLayout(
+          theme: theme,
+          paradas: paradas,
+          gastos: gastos,
+          cargas: cargas,
+          rutasRaw: rutasRaw,
+          choferNombre: choferNombre,
+          esPendiente: esPendiente,
+          esEnCurso: esEnCurso,
+          tieneRuta: tieneRuta,
+          todasTerminadas: todasTerminadas,
+          tieneCargaPendiente: tieneCargaPendiente,
+          puedeIniciar: puedeIniciar,
+        );
+      }
+
+      // ── MOBILE FALLBACK (original layout) ────────────────────────────────
+      return Scaffold(
+        backgroundColor: DesignTokens.surface,
+        appBar: AppBar(
+          title: Text('Viaje ${_viaje!['viaje_codigo']}',
+              style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: DesignTokens.primary)),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: DesignTokens.primary),
+          actions: [
+            if (_isAdmin)
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                tooltip: 'Eliminar viaje (Admin)',
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Eliminar Viaje'),
+                      content: Text(
+                          '¿Está seguro de eliminar el viaje ${_viaje!['viaje_codigo']}? Esta acción no se puede deshacer.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCELAR')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('ELIMINAR'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true && mounted) {
+                    try {
+                      await SupabaseService().deleteViaje(widget.viajeId);
+                      if (mounted) context.pop();
+                    } catch (e) {
+                      if (mounted)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red),
+                        );
+                    }
                   }
-                }
-              },
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // CARD DE CABECERA (LOGÍSTICA)
-            _buildInfoCard(theme, choferNombre),
-            const SizedBox(height: 24),
-
-            // CONTROL DE ODÓMETRO Y RENDIMIENTO
-            _buildOdometerSection(theme, esPendiente, esEnCurso),
-            const SizedBox(height: 24),
-
-            // BOTÓN AGREGAR RUTA (solo Gerente/CEO/Compras, si Pendiente y sin ruta)
-            if (_canEditRoute && esPendiente && !tieneRuta)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: SizedBox(
-                  width: double.infinity, height: 60,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.add_road),
-                    label: const Text('AGREGAR RUTA Y SOLICITUDES'),
-                    style: DesignTokens.primaryButtonStyle,
-                    onPressed: () => context.push('/planificarViaje?editId=${widget.viajeId}'),
-                  ),
-                ),
+                },
               ),
-
-            // BOTONES DE ESTADO PARA CHOFER Y ADMINISTRADOR
-            if (_canOperateViaje) ...[
-              if (esPendiente && tieneRuta)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity, height: 56,
-                        child: ElevatedButton.icon(
-                          icon: _saving
-                              ? const SizedBox(width: 18, height: 18,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Icon(Icons.play_circle_outline_rounded),
-                          label: const Text('INICIAR VIAJE'),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: puedeIniciar ? const Color(0xFF1565C0) : Colors.grey,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                          onPressed: (_saving || !puedeIniciar) ? null : () => _cambiarEstado(AppStates.enCurso),
-                        ),
-                      ),
-                      if (tieneCargaPendiente)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 14),
-                              const SizedBox(width: 6),
-                              Text('Carga pendiente de confirmación en depósito',
-                                  style: TextStyle(fontSize: 10, color: Colors.orange[800], fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              if (esEnCurso && todasTerminadas)
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoCard(theme, choferNombre),
+              const SizedBox(height: 24),
+              _buildOdometerSection(theme, esPendiente, esEnCurso),
+              const SizedBox(height: 24),
+              if (_canEditRoute && esPendiente && !tieneRuta)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 24),
                   child: SizedBox(
-                    width: double.infinity, height: 56,
+                    width: double.infinity,
+                    height: 60,
                     child: ElevatedButton.icon(
-                      icon: _saving
-                          ? const SizedBox(width: 18, height: 18,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.check_circle_outline_rounded),
-                      label: const Text('FINALIZAR VIAJE'),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1A6B43),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                      onPressed: _saving ? null : () => _cambiarEstado(AppStates.terminado),
+                      icon: const Icon(Icons.add_road),
+                      label: const Text('AGREGAR RUTA Y SOLICITUDES'),
+                      style: DesignTokens.primaryButtonStyle,
+                      onPressed: () => context.push('/planificarViaje?editId=${widget.viajeId}'),
                     ),
                   ),
                 ),
-              // Aviso de ruta bloqueada (si aplica)
-              if (esEnCurso)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity, height: 50,
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.alt_route_rounded, size: 18),
-                          label: const Text('SOLICITAR CAMBIO DE RECORRIDO'),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.orange),
-                            foregroundColor: Colors.orange,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              if (_canOperateViaje) ...[
+                if (esPendiente && tieneRuta)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            icon: _saving
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.play_circle_outline_rounded),
+                            label: const Text('INICIAR VIAJE'),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: puedeIniciar ? const Color(0xFF1565C0) : Colors.grey,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                            onPressed: (_saving || !puedeIniciar) ? null : () => _cambiarEstado(AppStates.enCurso),
                           ),
-                          onPressed: () => _mostrarDialogoSolicitudCambio(paradas),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: const Color(0xFFFFF3E0),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.orange.withOpacity(0.3))),
-                        child: const Row(children: [
-                          Icon(Icons.info_outline_rounded, color: Colors.orange, size: 16),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Puede solicitar cambios en nodos futuros sin detener su marcha.',
-                              style: TextStyle(fontFamily: 'Inter', fontSize: 11,
-                                  color: Colors.orange, fontWeight: FontWeight.w600),
+                        if (tieneCargaPendiente)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 14),
+                                const SizedBox(width: 6),
+                                Text('Carga pendiente de confirmación en depósito',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.orange[800],
+                                        fontWeight: FontWeight.bold)),
+                              ],
                             ),
                           ),
-                        ]),
+                      ],
+                    ),
+                  ),
+                if (esEnCurso && todasTerminadas)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton.icon(
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.check_circle_outline_rounded),
+                        label: const Text('FINALIZAR VIAJE'),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1A6B43),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                        onPressed: _saving ? null : () => _cambiarEstado(AppStates.terminado),
                       ),
-                    ],
+                    ),
+                  ),
+                if (esEnCurso)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.alt_route_rounded, size: 18),
+                            label: const Text('SOLICITAR CAMBIO DE RECORRIDO'),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.orange),
+                              foregroundColor: Colors.orange,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () => _mostrarDialogoSolicitudCambio(paradas),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                              color: const Color(0xFFFFF3E0),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.orange.withOpacity(0.3))),
+                          child: const Row(children: [
+                            Icon(Icons.info_outline_rounded, color: Colors.orange, size: 16),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Puede solicitar cambios en nodos futuros sin detener su marcha.',
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 11,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+              if (rutasRaw.isNotEmpty) ...[
+                _buildSectionTitle(theme, 'Rutas del Viaje', Icons.map_outlined),
+                ...rutasRaw.map((ruta) => _buildRutaGroup(ruta, theme)).toList(),
+              ] else ...[
+                _buildSectionTitle(theme, 'Operaciones y Documentación', Icons.assignment_outlined),
+                if (!tieneRuta)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                        child: Text('Pendiente de asignar ruta',
+                            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic))),
+                  )
+                else
+                  ...paradas.map((p) => _buildParadaItem(p, theme)).toList(),
+              ],
+              const SizedBox(height: 24),
+              _buildSectionTitle(theme, 'Cargas del Vehículo', Icons.inventory_2_outlined),
+              if (cargas.isEmpty)
+                const Text('Sin cargas asignadas a este viaje.',
+                    style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+              else
+                ...cargas.map((c) => _buildCargaItem(c, theme)).toList(),
+              const SizedBox(height: 24),
+              _buildSectionTitle(theme, 'Gastos de Viaje', Icons.account_balance_wallet_outlined),
+              if (gastos.isEmpty)
+                const Text('Sin gastos registrados.',
+                    style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+              else ...[
+                ...gastos.map((g) => _buildGastoItem(g, theme)).toList(),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('TOTAL GASTOS: ',
+                        style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: theme.secondaryText)),
+                    Text(
+                        '\$${gastos.fold<double>(0.0, (sum, g) => sum + (double.tryParse(g['importe']?.toString() ?? '0') ?? 0.0)).toStringAsFixed(2)}',
+                        style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            color: theme.primaryText)),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 32),
+              if (tieneRuta)
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.location_on),
+                    label: const Text('VER RECORRIDO COMPLETO'),
+                    style: DesignTokens.secondaryButtonStyle,
+                    onPressed: () => _openMap(paradas),
                   ),
                 ),
             ],
+          ),
+        ),
+      );
+    });
+  }
 
-            // SECCIÓN: HOJA DE RUTA (POR RUTAS)
-            if (rutasRaw.isNotEmpty) ...[
-              _buildSectionTitle(theme, 'Rutas del Viaje', Icons.map_outlined),
-              ...rutasRaw.map((ruta) => _buildRutaGroup(ruta, theme)).toList(),
-            ] else ...[
-              _buildSectionTitle(theme, 'Operaciones y Documentación', Icons.assignment_outlined),
-              if (!tieneRuta)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(child: Text('Pendiente de asignar ruta', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic))),
-                )
-              else
-                ...paradas.map((p) => _buildParadaItem(p, theme)).toList(),
-            ],
-            
-            const SizedBox(height: 24),
-            
-            // SECCIÓN: CARGAS ASOCIADAS
-            _buildSectionTitle(theme, 'Cargas del Vehículo', Icons.inventory_2_outlined),
-            if (cargas.isEmpty)
-              const Text('Sin cargas asignadas a este viaje.', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
-            else
-              ...cargas.map((c) => _buildCargaItem(c, theme)).toList(),
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WEB LAYOUT BUILDERS
+  // ═══════════════════════════════════════════════════════════════════════════
 
-            const SizedBox(height: 24),
+  Widget _buildWebLayout({
+    required FlutterFlowTheme theme,
+    required List<Map<String, dynamic>> paradas,
+    required List<Map<String, dynamic>> gastos,
+    required List<Map<String, dynamic>> cargas,
+    required List<Map<String, dynamic>> rutasRaw,
+    required String choferNombre,
+    required bool esPendiente,
+    required bool esEnCurso,
+    required bool tieneRuta,
+    required bool todasTerminadas,
+    required bool tieneCargaPendiente,
+    required bool puedeIniciar,
+  }) {
+    // Compute all paradas from rutas OR flat list
+    final List<Map<String, dynamic>> allParadas = rutasRaw.isNotEmpty
+        ? rutasRaw.expand((r) => List<Map<String, dynamic>>.from(r['paradas'] ?? [])).toList()
+        : paradas;
+    allParadas.sort((a, b) => ((a['orden_secuencia'] as num?)?.toInt() ?? 0)
+        .compareTo((b['orden_secuencia'] as num?)?.toInt() ?? 0));
 
-            // SECCIÓN: GASTOS ASOCIADOS
-            _buildSectionTitle(theme, 'Gastos de Viaje', Icons.account_balance_wallet_outlined),
-            if (gastos.isEmpty)
-              const Text('Sin gastos registrados.', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
-            else ...[
-              ...gastos.map((g) => _buildGastoItem(g, theme)).toList(),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+    final double? oIni = (_viaje!['odometro_inicial'] as num?)?.toDouble();
+    final double? oFin = (_viaje!['odometro_final'] as num?)?.toDouble();
+    final double? distancia = (oIni != null && oFin != null) ? (oFin - oIni) : null;
+
+    final double totalKg = allParadas.fold<double>(0.0, (sum, p) {
+      final pesajes = List<Map<String, dynamic>>.from(p['pesajes'] ?? []);
+      return sum +
+          pesajes.fold<double>(0.0, (s, pe) {
+            final b = (pe['peso_bruto'] as num?)?.toDouble() ?? 0;
+            final t = (pe['tara'] as num?)?.toDouble() ?? 0;
+            final n = (pe['peso_neto'] as num?)?.toDouble();
+            return s + (n ?? (b - t));
+          });
+    });
+
+    final estadoViaje = _viaje!['estado'] ?? 'Pendiente';
+    final estadoColor = _estadoColor(estadoViaje);
+    final estadoIcon = _estadoIcon(estadoViaje);
+
+    return Scaffold(
+      backgroundColor: DesignTokens.surface,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── LEFT COLUMN ──────────────────────────────────────────────────
+          SizedBox(
+            width: 360,
+            child: Container(
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(right: BorderSide(color: Color(0xFFEEECEB), width: 1)),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                child: _buildWebLeftPanel(
+                  theme: theme,
+                  choferNombre: choferNombre,
+                  estadoViaje: estadoViaje,
+                  estadoColor: estadoColor,
+                  estadoIcon: estadoIcon,
+                  esPendiente: esPendiente,
+                  esEnCurso: esEnCurso,
+                  tieneRuta: tieneRuta,
+                  todasTerminadas: todasTerminadas,
+                  tieneCargaPendiente: tieneCargaPendiente,
+                  puedeIniciar: puedeIniciar,
+                  paradas: paradas,
+                  cargas: cargas,
+                  distancia: distancia,
+                  totalKg: totalKg,
+                ),
+              ),
+            ),
+          ),
+
+          // ── RIGHT COLUMN ─────────────────────────────────────────────────
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section header
+                        Row(
+                          children: [
+                            const Text(
+                              'ITINERARIO',
+                              style: TextStyle(
+                                fontFamily: 'Work Sans',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
+                                color: DesignTokens.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                height: 1,
+                                color: DesignTokens.outline,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: DesignTokens.primary.withOpacity(0.07),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${allParadas.length} PARADAS',
+                                style: const TextStyle(
+                                  fontFamily: 'Work Sans',
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1,
+                                  color: DesignTokens.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Timeline
+                if (allParadas.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                      child: Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: DesignTokens.outline),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.route_outlined,
+                                size: 40, color: DesignTokens.onSurfaceVariant.withOpacity(0.4)),
+                            const SizedBox(height: 12),
+                            const Text('Pendiente de asignar ruta',
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 14,
+                                    color: DesignTokens.onSurfaceVariant)),
+                            if (_canEditRoute && esPendiente) ...[
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.add_road),
+                                label: const Text('AGREGAR RUTA'),
+                                style: DesignTokens.primaryButtonStyle,
+                                onPressed: () =>
+                                    context.push('/planificarViaje?editId=${widget.viajeId}'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final p = allParadas[index];
+                          final isLast = index == allParadas.length - 1;
+                          return _buildTimelineNode(p, index, isLast);
+                        },
+                        childCount: allParadas.length,
+                      ),
+                    ),
+                  ),
+
+                // Bottom action strip for web
+                if (_canOperateViaje)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+                      child: Row(
+                        children: [
+                          if (esPendiente && tieneRuta)
+                            Expanded(
+                              child: SizedBox(
+                                height: 52,
+                                child: ElevatedButton.icon(
+                                  icon: _saving
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white, strokeWidth: 2))
+                                      : const Icon(Icons.play_circle_outline_rounded),
+                                  label: const Text('INICIAR VIAJE'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        puedeIniciar ? const Color(0xFF1565C0) : Colors.grey,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14)),
+                                    textStyle: const TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14),
+                                  ),
+                                  onPressed:
+                                      (_saving || !puedeIniciar)
+                                          ? null
+                                          : () => _cambiarEstado(AppStates.enCurso),
+                                ),
+                              ),
+                            ),
+                          if (esEnCurso && todasTerminadas)
+                            Expanded(
+                              child: SizedBox(
+                                height: 52,
+                                child: ElevatedButton.icon(
+                                  icon: _saving
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white, strokeWidth: 2))
+                                      : const Icon(Icons.check_circle_outline_rounded),
+                                  label: const Text('FINALIZAR VIAJE'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: DesignTokens.success,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14)),
+                                    textStyle: const TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14),
+                                  ),
+                                  onPressed: _saving
+                                      ? null
+                                      : () => _cambiarEstado(AppStates.terminado),
+                                ),
+                              ),
+                            ),
+                          if (esEnCurso && (esPendiente || esEnCurso)) ...[
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              height: 52,
+                              child: OutlinedButton.icon(
+                                icon: const Icon(Icons.alt_route_rounded, size: 18),
+                                label: const Text('CAMBIO DE RECORRIDO'),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.orange),
+                                  foregroundColor: Colors.orange,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                  textStyle: const TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13),
+                                ),
+                                onPressed: () => _mostrarDialogoSolicitudCambio(paradas),
+                              ),
+                            ),
+                          ],
+                          if (tieneRuta) ...[
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              height: 52,
+                              child: OutlinedButton.icon(
+                                icon: const Icon(Icons.location_on_outlined, size: 18),
+                                label: const Text('VER MAPA'),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: DesignTokens.primary),
+                                  foregroundColor: DesignTokens.primary,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                  textStyle: const TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13),
+                                ),
+                                onPressed: () => _openMap(paradas),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebLeftPanel({
+    required FlutterFlowTheme theme,
+    required String choferNombre,
+    required String estadoViaje,
+    required Color estadoColor,
+    required IconData estadoIcon,
+    required bool esPendiente,
+    required bool esEnCurso,
+    required bool tieneRuta,
+    required bool todasTerminadas,
+    required bool tieneCargaPendiente,
+    required bool puedeIniciar,
+    required List<Map<String, dynamic>> paradas,
+    required List<Map<String, dynamic>> cargas,
+    required double? distancia,
+    required double totalKg,
+  }) {
+    final fmt = DateFormat('dd/MM HH:mm');
+    String _fmt(dynamic d) {
+      if (d == null || d.toString().trim().isEmpty) return '—';
+      try {
+        return fmt.format(DateTime.parse(d.toString().trim()));
+      } catch (_) {
+        return d.toString();
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Back + Viaje Code ─────────────────────────────────────────────
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => context.pop(),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: DesignTokens.surfaceLow,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: DesignTokens.outline),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded,
+                    size: 16, color: DesignTokens.primary),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('TOTAL GASTOS: ', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, fontSize: 14, color: theme.secondaryText)),
-                  Text('\$${gastos.fold<double>(0.0, (sum, g) => sum + (double.tryParse(g['importe']?.toString() ?? '0') ?? 0.0)).toStringAsFixed(2)}', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: theme.primaryText)),
+                  const Text(
+                    'VIAJE',
+                    style: TextStyle(
+                      fontFamily: 'Work Sans',
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      color: DesignTokens.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    _viaje!['viaje_codigo'] ?? '—',
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: DesignTokens.primary,
+                      height: 1,
+                    ),
+                  ),
                 ],
               ),
-            ],
-
-            const SizedBox(height: 32),
-            
-            if (tieneRuta)
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.location_on),
-                  label: const Text('VER RECORRIDO COMPLETO'),
-                  style: DesignTokens.secondaryButtonStyle,
-                  onPressed: () => _openMap(paradas),
+            ),
+            // Admin delete
+            if (_isAdmin)
+              GestureDetector(
+                onTap: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Eliminar Viaje'),
+                      content: Text(
+                          '¿Eliminar viaje ${_viaje!['viaje_codigo']}? Esta acción no se puede deshacer.'),
+                      actions: [
+                        TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('CANCELAR')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('ELIMINAR'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true && mounted) {
+                    try {
+                      await SupabaseService().deleteViaje(widget.viajeId);
+                      if (mounted) context.pop();
+                    } catch (e) {
+                      if (mounted)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Error al eliminar: $e'),
+                              backgroundColor: Colors.red),
+                        );
+                    }
+                  }
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.07),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.red.withOpacity(0.2)),
+                  ),
+                  child: const Icon(Icons.delete_outline_rounded,
+                      size: 17, color: Colors.redAccent),
                 ),
               ),
           ],
         ),
+        const SizedBox(height: 28),
+
+        // ── STATUS CARD ───────────────────────────────────────────────────
+        _buildWebStatusBadge(estadoViaje, estadoColor, estadoIcon),
+        const SizedBox(height: 20),
+
+        // ── VEHICLE INFO CARD ─────────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: DesignTokens.surfaceLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: DesignTokens.outline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'VEHÍCULO',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: DesignTokens.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: DesignTokens.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.local_shipping_rounded,
+                        size: 20, color: DesignTokens.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _viaje!['vehiculo_codigo'] ?? 'Sin asignar',
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: DesignTokens.primary,
+                          ),
+                        ),
+                        Text(
+                          _viaje!['vehiculo_patente'] ?? '',
+                          style: const TextStyle(
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 11,
+                            color: DesignTokens.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ── DRIVER INFO CARD ──────────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: DesignTokens.surfaceLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: DesignTokens.outline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'CHOFER',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: DesignTokens.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: DesignTokens.secondary.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.person_rounded,
+                        size: 20, color: DesignTokens.secondary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      choferNombre,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: DesignTokens.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ── DATES CARD ────────────────────────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: DesignTokens.surfaceLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: DesignTokens.outline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'FECHAS',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: DesignTokens.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildWebDateRow(
+                  Icons.calendar_today_outlined,
+                  'Planificado',
+                  _fmt(_viaje!['fecha_planificada'] ?? _viaje!['fecha']),
+                  Colors.blueAccent),
+              const SizedBox(height: 6),
+              _buildWebDateRow(
+                  Icons.play_arrow_rounded,
+                  'Inicio real',
+                  _fmt(_viaje!['fecha_inicio']),
+                  DesignTokens.success),
+              if (_viaje!['fecha_terminado'] != null) ...[
+                const SizedBox(height: 6),
+                _buildWebDateRow(
+                    Icons.check_circle_rounded,
+                    'Terminado',
+                    _fmt(_viaje!['fecha_terminado']),
+                    DesignTokens.primary),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // ── STATS ROW ─────────────────────────────────────────────────────
+        _buildWebStatRow(paradas: paradas, distancia: distancia, totalKg: totalKg),
+        const SizedBox(height: 20),
+
+        // ── ODOMETER COMPACT ──────────────────────────────────────────────
+        _buildOdometerSection(theme, esPendiente, esEnCurso),
+        const SizedBox(height: 20),
+
+        // ── CARGAS SECTION ────────────────────────────────────────────────
+        if (cargas.isNotEmpty) ...[
+          const Text(
+            'CARGAS ASOCIADAS',
+            style: TextStyle(
+              fontFamily: 'Work Sans',
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.5,
+              color: DesignTokens.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...cargas.map((c) => _buildCargaItem(c, theme)).toList(),
+          const SizedBox(height: 20),
+        ],
+
+        // ── ADD ROUTE BUTTON ──────────────────────────────────────────────
+        if (_canEditRoute && esPendiente && !tieneRuta) ...[
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add_road),
+              label: const Text('AGREGAR RUTA'),
+              style: DesignTokens.primaryButtonStyle,
+              onPressed: () => context.push('/planificarViaje?editId=${widget.viajeId}'),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // ── REQUEST ROUTE CHANGE ──────────────────────────────────────────
+        if (esEnCurso && _canOperateViaje)
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.alt_route_rounded, size: 16),
+              label: const Text('SOLICITAR CAMBIO DE RECORRIDO'),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.orange),
+                foregroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                textStyle:
+                    const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+              onPressed: () => _mostrarDialogoSolicitudCambio(paradas),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildWebDateRow(IconData icon, String label, String value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: color.withOpacity(0.7)),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 11,
+            color: DesignTokens.onSurfaceVariant,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebStatusBadge(String estado, Color color, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.22)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'ESTADO',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontSize: 8,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: DesignTokens.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                estado.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebStatRow({
+    required List<Map<String, dynamic>> paradas,
+    required double? distancia,
+    required double totalKg,
+  }) {
+    final items = [
+      (
+        icon: Icons.flag_rounded,
+        label: 'PARADAS',
+        value: '${paradas.length}',
+        color: DesignTokens.primary,
+      ),
+      if (distancia != null)
+        (
+          icon: Icons.straighten_rounded,
+          label: 'KM',
+          value: distancia.toStringAsFixed(0),
+          color: const Color(0xFF1565C0),
+        ),
+      if (totalKg > 0)
+        (
+          icon: Icons.scale_rounded,
+          label: 'KG NETO',
+          value: totalKg.toStringAsFixed(0),
+          color: DesignTokens.secondary,
+        ),
+    ];
+
+    return Row(
+      children: items.map((item) {
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(right: item == items.last ? 0 : 8),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            decoration: BoxDecoration(
+              color: item.color.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: item.color.withOpacity(0.15)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(item.icon, size: 14, color: item.color.withOpacity(0.7)),
+                const SizedBox(height: 4),
+                Text(
+                  item.value,
+                  style: TextStyle(
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: item.color,
+                  ),
+                ),
+                Text(
+                  item.label,
+                  style: const TextStyle(
+                    fontFamily: 'Work Sans',
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                    color: DesignTokens.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTimelineNode(
+      Map<String, dynamic> p, int index, bool isLast) {
+    final String rawEstado = (p['estado'] ?? '').toString();
+    final String estado = AppStates.normalize(rawEstado);
+    final bool isDone = estado == AppStates.terminado ||
+        (p['remitos'] as List? ?? []).isNotEmpty;
+    final bool isActive = estado == AppStates.enCurso;
+
+    // Node color logic
+    final Color nodeColor = isDone
+        ? DesignTokens.success
+        : isActive
+            ? DesignTokens.accent
+            : DesignTokens.outline;
+    final Color nodeBorderColor = isDone
+        ? DesignTokens.success
+        : isActive
+            ? DesignTokens.secondary
+            : DesignTokens.onSurfaceVariant.withOpacity(0.3);
+    final Color lineColor = isDone
+        ? DesignTokens.success.withOpacity(0.35)
+        : DesignTokens.outline;
+
+    // tipo display
+    final List<Map<String, dynamic>> items = List<Map<String, dynamic>>.from(
+        (p['parada_items'] ?? []).whereType<Map>());
+    bool hasRec = false, hasDist = false;
+    for (final it in items) {
+      final code = (it['producto_codigo'] ?? '').toString().toUpperCase();
+      if (code == 'TCM' || code == '1' || code.contains('MIEL')) {
+        hasRec = true;
+      } else {
+        hasDist = true;
+      }
+    }
+    String tipoDisplay = p['tipo'] ?? 'Operación';
+    if (hasRec && hasDist) {
+      tipoDisplay = 'Mixta';
+    } else if (hasRec) {
+      tipoDisplay = 'Recolección';
+    } else if (hasDist) {
+      tipoDisplay = 'Distribución';
+    }
+
+    final Color tipoBg = tipoDisplay == 'Recolección'
+        ? DesignTokens.secondary.withOpacity(0.12)
+        : tipoDisplay == 'Distribución'
+            ? const Color(0xFF1565C0).withOpacity(0.10)
+            : DesignTokens.primary.withOpacity(0.08);
+    final Color tipoFg = tipoDisplay == 'Recolección'
+        ? DesignTokens.secondary
+        : tipoDisplay == 'Distribución'
+            ? const Color(0xFF1565C0)
+            : DesignTokens.primary;
+
+    final bool isViajeTerminado =
+        AppStates.normalize(_viaje?['estado']) == AppStates.terminado;
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── TIMELINE RAIL ─────────────────────────────────────────────
+          SizedBox(
+            width: 48,
+            child: Column(
+              children: [
+                // Node circle
+                Container(
+                  width: 28,
+                  height: 28,
+                  margin: const EdgeInsets.only(top: 16),
+                  decoration: BoxDecoration(
+                    color: isDone
+                        ? DesignTokens.success
+                        : isActive
+                            ? DesignTokens.accent
+                            : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: nodeBorderColor, width: 2),
+                    boxShadow: (isDone || isActive)
+                        ? [
+                            BoxShadow(
+                              color: nodeColor.withOpacity(0.25),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            )
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: isDone
+                        ? const Icon(Icons.check_rounded,
+                            size: 14, color: Colors.white)
+                        : isActive
+                            ? Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: DesignTokens.secondary,
+                                  shape: BoxShape.circle,
+                                ),
+                              )
+                            : Text(
+                                '${(p['orden_secuencia'] as num?)?.toInt() ?? index + 1}',
+                                style: TextStyle(
+                                  fontFamily: 'JetBrains Mono',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: DesignTokens.onSurfaceVariant
+                                      .withOpacity(0.6),
+                                ),
+                              ),
+                  ),
+                ),
+                // Vertical connecting line
+                if (!isLast)
+                  Expanded(
+                    child: Center(
+                      child: Container(
+                        width: 2,
+                        color: lineColor,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // ── PARADA CARD ───────────────────────────────────────────────
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                  left: 12, bottom: isLast ? 0 : 16, top: 8),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => context
+                      .push('/paradaDetalle?paradaId=${p['id']}')
+                      .then((_) => _loadData()),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDone
+                            ? DesignTokens.success.withOpacity(0.25)
+                            : isActive
+                                ? DesignTokens.secondary.withOpacity(0.35)
+                                : DesignTokens.outline,
+                        width: isActive ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                p['ubicacion'] ?? 'Sin Apicultor',
+                                style: const TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                  color: DesignTokens.primary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: tipoBg,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                tipoDisplay.toUpperCase(),
+                                style: TextStyle(
+                                  fontFamily: 'Work Sans',
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                  color: tipoFg,
+                                ),
+                              ),
+                            ),
+                            if (!isViajeTerminado) ...[
+                              const SizedBox(width: 6),
+                              const Icon(Icons.chevron_right_rounded,
+                                  size: 18, color: DesignTokens.primary),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 12,
+                                color: DesignTokens.onSurfaceVariant),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                p['localidad'] ?? 'Sin localidad',
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  color: DesignTokens.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // Remito status pill
+                            Builder(builder: (ctx) {
+                              final remitos =
+                                  List<Map<String, dynamic>>.from(
+                                      (p['remitos'] ?? []).whereType<Map>());
+                              if (remitos.isNotEmpty) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        DesignTokens.success.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: const Text(
+                                    'REMITO ✓',
+                                    style: TextStyle(
+                                      fontFamily: 'Work Sans',
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w800,
+                                      color: DesignTokens.success,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                          ],
+                        ),
+                        // Items summary
+                        if (items.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: items
+                                .take(3)
+                                .map((it) => Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 7, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: DesignTokens.primary
+                                            .withOpacity(0.05),
+                                        borderRadius:
+                                            BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        '${it['producto_codigo']}: ${it['cantidad']} ${it['unidad'] ?? ''}'
+                                            .trim(),
+                                        style: const TextStyle(
+                                          fontFamily: 'JetBrains Mono',
+                                          fontSize: 9,
+                                          color: DesignTokens.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ))
+                                .toList(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@
 **Antes de realizar cualquier modificación, análisis o propuesta de cambio de código en este repositorio, es obligatorio leer y asimilar en su totalidad los siguientes documentos de directrices inmutables:**
 * [ARQUITECTURA_GEOLOGISTICA.md](file:///c:/Users/Parque-Apicola/Desktop/Geologistica/ARQUITECTURA_GEOLOGISTICA.md) (Master Blueprint)
 * [sesion_actual.md](file:///c:/Users/Parque-Apicola/Desktop/Geologistica/sesion_actual.md) (Bitácora de Cambios de Sesión)
+* [STITCH_SYSTEM_GUIDE.md](file:///c:/Users/Parque-Apicola/Desktop/Geologistica/STITCH_SYSTEM_GUIDE.md) (Contexto de Interfaz, Vercel SPA y Refactorización PWA - LEER OBLIGATORIAMENTE)
 
 ---
 

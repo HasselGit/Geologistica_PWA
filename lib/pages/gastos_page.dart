@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../backend/supabase_service.dart';
@@ -10,6 +11,10 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'gastos_detalle.dart';
+
+class SaveIntent extends Intent { const SaveIntent(); }
+class ClearIntent extends Intent { const ClearIntent(); }
 
 class GastosPageWidget extends StatefulWidget {
   const GastosPageWidget({super.key});
@@ -19,6 +24,24 @@ class GastosPageWidget extends StatefulWidget {
 }
 
 class _GastosPageWidgetState extends State<GastosPageWidget> {
+  // Web Form state
+  final _amountController = TextEditingController();
+  final _descController = TextEditingController();
+  final _comprobanteController = TextEditingController();
+  final _litrosController = TextEditingController();
+
+  final _amountFocus = FocusNode();
+  final _descFocus = FocusNode();
+  final _comprobanteFocus = FocusNode();
+  final _litrosFocus = FocusNode();
+
+  String? _selectedTipoWeb = 'Combustible';
+  String? _selectedMetodoWeb = 'Efectivo';
+  DateTime _selectedFechaWeb = DateTime.now();
+  String? _selectedViajeIdWeb;
+  XFile? _pickedFileWeb;
+  bool _savingForm = false;
+
   List<Map<String, dynamic>> _gastos = [];
   List<Map<String, dynamic>> _viajesParaGasto = [];
   bool _loading = true;
@@ -363,85 +386,496 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DesignTokens.surface,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: DesignTokens.primary),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Gestión de Gastos',
-          style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
+    return Shortcuts(
+      shortcuts: {
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.enter): const SaveIntent(),
+        LogicalKeySet(LogicalKeyboardKey.escape): const ClearIntent(),
+      },
+      child: Actions(
+        actions: {
+          SaveIntent: CallbackAction<SaveIntent>(onInvoke: (intent) => _saveGastoWeb()),
+          ClearIntent: CallbackAction<ClearIntent>(onInvoke: (intent) => _clearWebForm()),
+        },
+        child: Scaffold(
+          backgroundColor: DesignTokens.surface,
+          appBar: AppBar(
+            backgroundColor: DesignTokens.surface,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: DesignTokens.primary),
+              onPressed: () => context.pop(),
+            ),
+            title: const Text(
+              'Gestión de Gastos',
+              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
+            ),
+          ),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth >= 900) {
+                return _buildWebLayout();
+              }
+              return _buildMobileLayout();
+            },
+          ),
+          floatingActionButton: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth >= 900) return const SizedBox.shrink();
+              return FloatingActionButton.extended(
+                onPressed: _showAddGastoDialog,
+                backgroundColor: DesignTokens.primary,
+                icon: const Icon(Icons.payments_rounded, color: Colors.white),
+                label: const Text('NUEVO GASTO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              );
+            },
+          ),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    if (_loading) return const Center(child: CircularProgressIndicator(color: DesignTokens.secondary));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildKPIPanel(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Buscar por chofer, viaje, comprobante, observaciones...',
+              hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+              prefixIcon: const Icon(Icons.search, color: DesignTokens.primary, size: 20),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.08))),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: DesignTokens.secondary, width: 1.5)),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onChanged: (val) {
+              setState(() {
+                _searchQuery = val;
+              });
+            },
+          ),
+        ),
+        _buildCategoryFilterRow(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'REGISTROS MOSTRADOS (${_filteredGastos.length})', 
+                style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 0.5)
+              ),
+              Text(
+                'Total: \$${_filteredGastos.fold(0.0, (sum, g) => sum + (double.tryParse(g['importe']?.toString() ?? '0') ?? 0.0)).toStringAsFixed(2)}', 
+                style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 15, color: DesignTokens.primary)
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _filteredGastos.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  itemCount: _filteredGastos.length,
+                  itemBuilder: (context, index) {
+                    final g = _filteredGastos[index];
+                    return _buildGastoCard(g);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 450,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(right: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
+          ),
+          child: _buildWebForm(),
+        ),
+        Expanded(
+          child: _buildMobileLayout(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebForm() {
+    if (_selectedViajeIdWeb == null && _viajesParaGasto.isNotEmpty) {
+      final viajeEnCurso = _viajesParaGasto.where((v) {
+        final est = (v['estado'] ?? '').toString().toLowerCase();
+        return est.contains('proceso') || est.contains('curso');
+      }).toList();
+      if (viajeEnCurso.isNotEmpty) {
+        _selectedViajeIdWeb = viajeEnCurso.first['id']?.toString();
+      }
+    }
+
+    const honeyGold = Color(0xFFC68E17);
+    final inputBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.05)));
+    final focusBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: honeyGold, width: 2));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Registrar Nuevo Gasto', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+        const SizedBox(height: 8),
+        const Text('Presione Ctrl+Enter para guardar, Esc para limpiar', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 20),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
               children: [
-                _buildKPIPanel(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por chofer, viaje, comprobante, observaciones...',
-                      hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-                      prefixIcon: const Icon(Icons.search, color: DesignTokens.primary, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.08))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: DesignTokens.secondary, width: 1.5)),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    onChanged: (val) {
-                      setState(() {
-                        _searchQuery = val;
-                      });
-                    },
-                  ),
-                ),
-                _buildCategoryFilterRow(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'REGISTROS MOSTRADOS (${_filteredGastos.length})', 
-                        style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 0.5)
-                      ),
-                      Text(
-                        'Total: \$${_filteredGastos.fold(0.0, (sum, g) => sum + (double.tryParse(g['importe']?.toString() ?? '0') ?? 0.0)).toStringAsFixed(2)}', 
-                        style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 15, color: DesignTokens.primary)
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: _filteredGastos.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          itemCount: _filteredGastos.length,
-                          itemBuilder: (context, index) {
-                            final g = _filteredGastos[index];
-                            return _buildGastoCard(g);
-                          },
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedFechaWeb,
+                            firstDate: DateTime(2024),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) setState(() => _selectedFechaWeb = picked);
+                        },
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Fecha',
+                            prefixIcon: const Icon(Icons.calendar_today_rounded, color: DesignTokens.primary),
+                            filled: true,
+                            fillColor: DesignTokens.surface,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                            enabledBorder: inputBorder,
+                          ),
+                          child: Text(DateFormat('dd/MM/yyyy').format(_selectedFechaWeb), style: const TextStyle(fontWeight: FontWeight.bold)),
                         ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _comprobanteController,
+                        focusNode: _comprobanteFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => FocusScope.of(context).requestFocus(_amountFocus),
+                        decoration: InputDecoration(
+                          labelText: 'N° Comprobante',
+                          prefixIcon: const Icon(Icons.receipt_rounded, color: DesignTokens.primary),
+                          filled: true,
+                          fillColor: DesignTokens.surface,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          enabledBorder: inputBorder,
+                          focusedBorder: focusBorder,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedTipoWeb,
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de Gasto',
+                    prefixIcon: const Icon(Icons.category_rounded, color: DesignTokens.primary),
+                    filled: true,
+                    fillColor: DesignTokens.surface,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    enabledBorder: inputBorder,
+                    focusedBorder: focusBorder,
+                  ),
+                  items: ['Combustible', 'Comida', 'Peaje', 'Reparación', 'Otros']
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedTipoWeb = v),
+                ),
+                if (_selectedTipoWeb == 'Combustible') ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _litrosController,
+                    focusNode: _litrosFocus,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_descFocus),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Cantidad en Litros (L)',
+                      prefixIcon: const Icon(Icons.local_gas_station_rounded, color: DesignTokens.primary),
+                      filled: true,
+                      fillColor: DesignTokens.surface,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      enabledBorder: inputBorder,
+                      focusedBorder: focusBorder,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedViajeIdWeb,
+                  decoration: InputDecoration(
+                    labelText: 'Vincular a Viaje',
+                    prefixIcon: const Icon(Icons.local_shipping_rounded, color: DesignTokens.primary),
+                    filled: true,
+                    fillColor: DesignTokens.surface,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    enabledBorder: inputBorder,
+                    focusedBorder: focusBorder,
+                  ),
+                  hint: const Text('Seleccione un viaje...'),
+                  items: _viajesParaGasto.map((v) => DropdownMenuItem<String>(
+                    value: v['id']?.toString(),
+                    child: Text('${v['viaje_codigo'] ?? 'S/C'} (${v['estado'] ?? ''})'),
+                  )).toList(),
+                  onChanged: (v) => setState(() => _selectedViajeIdWeb = v),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _amountController,
+                        focusNode: _amountFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => FocusScope.of(context).requestFocus(_descFocus),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Importe (\$)',
+                          prefixIcon: const Icon(Icons.attach_money_rounded, color: DesignTokens.primary),
+                          filled: true,
+                          fillColor: DesignTokens.surface,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          enabledBorder: inputBorder,
+                          focusedBorder: focusBorder,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedMetodoWeb,
+                        decoration: InputDecoration(
+                          labelText: 'Forma de Pago',
+                          prefixIcon: const Icon(Icons.payment_rounded, color: DesignTokens.primary),
+                          filled: true,
+                          fillColor: DesignTokens.surface,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          enabledBorder: inputBorder,
+                          focusedBorder: focusBorder,
+                        ),
+                        items: ['Efectivo', 'Tarjeta', 'Transferencia', 'Cuenta Corriente']
+                            .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                            .toList(),
+                        onChanged: (v) => setState(() => _selectedMetodoWeb = v),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _descController,
+                  focusNode: _descFocus,
+                  textInputAction: TextInputAction.done,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'Observaciones',
+                    alignLabelWithHint: true,
+                    prefixIcon: const Icon(Icons.notes_rounded, color: DesignTokens.primary),
+                    filled: true,
+                    fillColor: DesignTokens.surface,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    enabledBorder: inputBorder,
+                    focusedBorder: focusBorder,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final ImagePicker picker = ImagePicker();
+                    final XFile? image = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
+                    if (image != null) {
+                      setState(() => _pickedFileWeb = image);
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: DesignTokens.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
+                    ),
+                    child: _pickedFileWeb != null 
+                      ? Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: kIsWeb
+                              ? Image.network(_pickedFileWeb!.path, height: 100, width: double.infinity, fit: BoxFit.cover)
+                              : Image.file(File(_pickedFileWeb!.path), height: 100, width: double.infinity, fit: BoxFit.cover),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text('FOTO ADJUNTADA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+                          ],
+                        )
+                      : const Column(
+                         mainAxisAlignment: MainAxisAlignment.center,
+                         children: [
+                           Icon(Icons.add_photo_alternate_rounded, size: 32, color: DesignTokens.primary),
+                           SizedBox(height: 8),
+                           Text('ADJUNTAR TICKET (GALERÍA/PC)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+                          ],
+                        ),
+                  ),
                 ),
               ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddGastoDialog,
-        backgroundColor: DesignTokens.primary,
-        icon: const Icon(Icons.payments_rounded, color: Colors.white),
-        label: const Text('NUEVO GASTO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _savingForm ? null : _saveGastoWeb,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: honeyGold,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: _savingForm 
+              ? const CircularProgressIndicator(color: Colors.white)
+              : const Text('GUARDAR GASTO (Ctrl+Enter)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ],
     );
+  }
+
+  void _clearWebForm() {
+    setState(() {
+      _amountController.clear();
+      _descController.clear();
+      _comprobanteController.clear();
+      _litrosController.clear();
+      _selectedTipoWeb = 'Combustible';
+      _selectedMetodoWeb = 'Efectivo';
+      _selectedFechaWeb = DateTime.now();
+      _pickedFileWeb = null;
+    });
+  }
+
+  Future<void> _saveGastoWeb() async {
+    if (_savingForm) return;
+
+    if (_amountController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingrese el importe del gasto'), backgroundColor: Colors.orangeAccent));
+      return;
+    }
+    
+    final importeStr = _amountController.text.replaceAll(',', '.');
+    final importe = double.tryParse(importeStr) ?? 0.0;
+    if (importe <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('El importe debe ser mayor a 0'), backgroundColor: Colors.orangeAccent));
+      return;
+    }
+
+    if (_comprobanteController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debe ingresar el número de comprobante'), backgroundColor: Colors.orangeAccent));
+      return;
+    }
+    if (_selectedViajeIdWeb == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debe seleccionar un viaje para vincular el gasto'), backgroundColor: Colors.orangeAccent));
+      return;
+    }
+    if (_selectedTipoWeb == 'Combustible') {
+      if (_litrosController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debe ingresar la cantidad en litros para Combustible'), backgroundColor: Colors.orangeAccent));
+        return;
+      }
+      final litresVal = double.tryParse(_litrosController.text.replaceAll(',', '.')) ?? 0.0;
+      if (litresVal <= 0.0) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debe ingresar una cantidad válida en litros'), backgroundColor: Colors.orangeAccent));
+        return;
+      }
+    }
+
+    setState(() => _savingForm = true);
+    
+    try {
+      String? publicUrl;
+      if (_pickedFileWeb != null) {
+        final bytes = await _pickedFileWeb!.readAsBytes();
+        String ext = p.extension(_pickedFileWeb!.path);
+        if (ext.isEmpty) ext = p.extension(_pickedFileWeb!.name);
+        if (ext.isEmpty) ext = '.jpg';
+        final fileName = 'gasto_${DateTime.now().millisecondsSinceEpoch}$ext';
+        
+        await Supabase.instance.client.storage.from('gastos').uploadBinary(
+          fileName, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'),
+        );
+        publicUrl = Supabase.instance.client.storage.from('gastos').getPublicUrl(fileName);
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      final userNombre = prefs.getString('user_nombre') ?? '';
+      final userApellido = prefs.getString('user_apellido') ?? '';
+      final userPuesto = prefs.getString('user_puesto') ?? '';
+      
+      final auditSuffix = '\n[Registrado por: $userNombre $userApellido ($userPuesto)]';
+
+      final selectedTrip = _viajesParaGasto.firstWhere((v) => v['id']?.toString() == _selectedViajeIdWeb, orElse: () => <String, dynamic>{});
+      final tripChoferId = selectedTrip['chofer_id'];
+      final choferIdToInsert = tripChoferId ?? userId;
+
+      if (choferIdToInsert == null || choferIdToInsert.isEmpty) {
+        throw Exception('No se pudo determinar el chofer del viaje seleccionado.');
+      }
+
+      final litresVal = _selectedTipoWeb == 'Combustible' ? (double.tryParse(_litrosController.text.replaceAll(',', '.')) ?? 0.0) : 0.0;
+      final String prefix = _selectedTipoWeb == 'Combustible' ? 'Litros: $litresVal L\n' : '';
+      final String descWithLitres = prefix + _descController.text + auditSuffix;
+
+      await Supabase.instance.client.from('gastos').insert({
+        'tipo_gasto': _selectedTipoWeb,
+        'importe': importe,
+        'descripcion': descWithLitres,
+        'nro_comprobante': _comprobanteController.text,
+        'forma_pago': _selectedMetodoWeb,
+        'viaje_id': _selectedViajeIdWeb,
+        'fecha': _selectedFechaWeb.toIso8601String(),
+        'chofer_id': choferIdToInsert,
+        'comprobante_url': publicUrl,
+        'cantidad_litros': litresVal > 0 ? litresVal : null,
+      });
+
+      if (mounted) {
+        _clearWebForm();
+        _fetchData();
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gasto registrado con éxito'), backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _savingForm = false);
+    }
   }
 
   Widget _buildGastoCard(Map<String, dynamic> g) {
@@ -955,217 +1389,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
   void _showGastoDetailDialog(BuildContext context, Map<String, dynamic> g) {
     showDialog(
       context: context,
-      builder: (ctx) {
-        final tipo = g['tipo_gasto'] ?? 'Gasto';
-        final importe = g['importe']?.toString() ?? '0';
-        final fecha = DateTime.tryParse(g['fecha']?.toString() ?? '') ?? DateTime.now();
-        final fechaStr = DateFormat('dd/MM/yyyy HH:mm').format(fecha);
-        final chofer = g['profiles'] != null 
-            ? '${g['profiles']['nombre']} ${g['profiles']['apellido']}' 
-            : 'S/D';
-        final viaje = g['viajes']?['viaje_codigo'] ?? (g['viaje_codigo'] ?? 'S/D');
-        final metodo = g['forma_pago'] ?? 'S/D';
-        final comprobante = g['nro_comprobante'] ?? 'S/D';
-        final descripcion = g['descripcion'] ?? '';
-        final ticketUrl = g['comprobante_url'];
-
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: Colors.white,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  decoration: const BoxDecoration(
-                    color: DesignTokens.primary,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Detalle de Gasto',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, color: Colors.white),
-                        onPressed: () => Navigator.pop(ctx),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-                            child: Text(tipo.toUpperCase(), style: const TextStyle(color: Color(0xFF7D5700), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                          ),
-                          Text('\$ $importe', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: DesignTokens.primary)),
-                        ],
-                      ),
-                      const Divider(height: 32),
-                      _buildDetailRow(Icons.calendar_today_rounded, 'Fecha de registro', fechaStr),
-                      const SizedBox(height: 16),
-                      _buildDetailRow(Icons.person_rounded, 'Registrado por', chofer),
-                      const SizedBox(height: 16),
-                      _buildDetailRow(Icons.local_shipping_rounded, 'Viaje asociado', viaje),
-                      const SizedBox(height: 16),
-                      _buildDetailRow(Icons.payment_rounded, 'Forma de pago', metodo),
-                      const SizedBox(height: 16),
-                      _buildDetailRow(Icons.receipt_rounded, 'Nro. Comprobante', comprobante),
-                      
-                      if (tipo == 'Combustible' && g['cantidad_litros'] != null) ...[
-                        const SizedBox(height: 16),
-                        _buildDetailRow(Icons.local_gas_station_rounded, 'Litros cargados', '${g['cantidad_litros']} L'),
-                      ],
-
-                      if (descripcion.toString().trim().isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        const Text('Observaciones', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: DesignTokens.primary)),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF9F9F9),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFEEEEEE)),
-                          ),
-                          child: Text(descripcion, style: const TextStyle(fontSize: 12, color: Colors.black87, height: 1.4)),
-                        ),
-                      ],
-
-                      if (ticketUrl != null && ticketUrl.toString().isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        const Text('Ticket / Comprobante', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: DesignTokens.primary)),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (zoomCtx) => Dialog(
-                                backgroundColor: Colors.transparent,
-                                insetPadding: const EdgeInsets.all(10),
-                                child: Stack(
-                                  children: [
-                                    InteractiveViewer(
-                                      panEnabled: true,
-                                      minScale: 0.5,
-                                      maxScale: 4.0,
-                                      child: Center(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(16),
-                                          child: Image.network(ticketUrl, fit: BoxFit.contain),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 10,
-                                      right: 10,
-                                      child: CircleAvatar(
-                                        backgroundColor: Colors.black54,
-                                        child: IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.white),
-                                          onPressed: () => Navigator.pop(zoomCtx),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Image.network(
-                                  ticketUrl,
-                                  height: 180,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      height: 180,
-                                      color: const Color(0xFFF5F5F5),
-                                      child: const Center(child: CircularProgressIndicator(color: DesignTokens.secondary)),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    height: 180,
-                                    color: const Color(0xFFFEE2E2),
-                                    child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.redAccent, size: 40)),
-                                  ),
-                                ),
-                                Container(
-                                  height: 180,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
-                                    ),
-                                  ),
-                                ),
-                                const Positioned(
-                                  bottom: 12,
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.zoom_in_rounded, color: Colors.white, size: 16),
-                                      SizedBox(width: 4),
-                                      Text('Toca para ampliar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: DesignTokens.secondary),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontSize: 13, color: DesignTokens.primary, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-      ],
+      builder: (ctx) => GastosDetalleDialog(gasto: g),
     );
   }
 }

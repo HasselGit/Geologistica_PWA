@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../backend/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'apicultor_detalle.dart';
 import 'package:go_router/go_router.dart';
 import '../backend/design_tokens.dart';
+import 'package:hive/hive.dart';
 
 class ApicultoresPageWidget extends StatefulWidget {
   const ApicultoresPageWidget({super.key});
@@ -17,6 +19,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
   List<Map<String, dynamic>> _filtered = [];
   bool _loading = true;
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -24,12 +27,41 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
     _fetchData();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchData() async {
     setState(() => _loading = true);
+    
+    try {
+      final box = await Hive.openBox('apicultoresCache');
+      if (box.containsKey('data')) {
+        final cached = box.get('data');
+        if (cached != null && cached is List && mounted) {
+          final parsed = List<Map<String, dynamic>>.from(
+            cached.map((e) => Map<String, dynamic>.from(e as Map))
+          );
+          parsed.sort((a, b) => (a['nombre'] ?? '').toString().toLowerCase()
+              .compareTo((b['nombre'] ?? '').toString().toLowerCase()));
+          setState(() {
+            _apicultores = parsed;
+            _filtered = parsed;
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Hive cache error: $e');
+    }
+
     try {
       final data = await SupabaseService().getApicultores();
+      
       if (mounted) {
-        // Forzar ordenamiento alfabético en memoria
         data.sort((a, b) => (a['nombre'] ?? '').toString().toLowerCase()
             .compareTo((b['nombre'] ?? '').toString().toLowerCase()));
             
@@ -38,9 +70,15 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
           _filtered = data;
           _loading = false;
         });
+
+        try {
+          final box = await Hive.openBox('apicultoresCache');
+          await box.put('data', data);
+        } catch (e) {
+          print('Hive save error: $e');
+        }
       }
     } catch (e) {
-      // Intento directo si falla el servicio
       try {
         final resp = await Supabase.instance.client
           .from('apicultores')
@@ -59,6 +97,13 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
     }
   }
 
+  void _onSearchChanged(String val) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _onSearch(val);
+    });
+  }
+
   void _onSearch(String val) {
     setState(() {
       final filtered = _apicultores.where((a) {
@@ -67,7 +112,6 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
         return name.contains(val.toLowerCase()) || loc.contains(val.toLowerCase());
       }).toList();
       
-      // Re-ordenar siempre al buscar
       filtered.sort((a, b) => (a['nombre'] ?? '').toString().trim().toLowerCase()
           .compareTo((b['nombre'] ?? '').toString().trim().toLowerCase()));
           
@@ -98,7 +142,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
             padding: const EdgeInsets.all(20),
             child: TextField(
               controller: _searchController,
-              onChanged: _onSearch,
+              onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Buscar por nombre o localidad...',
                 prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
@@ -109,20 +153,88 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
             ),
           ),
           Expanded(
-            child: _loading
+            child: _loading && _apicultores.isEmpty
                 ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                : ListView.builder(
-                    key: ValueKey(_filtered.length + (_searchController.text.length)),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: _filtered.length,
-                    itemBuilder: (context, index) {
-                      final a = _filtered[index];
-                      return _buildApicultorCard(a);
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth >= 900) {
+                        return _buildWebTable();
+                      } else {
+                        return _buildMobileList();
+                      }
                     },
                   ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWebTable() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.05), blurRadius: 10)],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(DesignTokens.primary.withOpacity(0.05)),
+            columns: const [
+              DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('LOCALIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('TELÉFONO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+            ],
+            rows: _filtered.map((a) {
+              final nombre = a['nombre'] ?? 'Sin nombre';
+              final localidad = a['localidad'] ?? 'Sin localidad';
+              final telefono = a['telefono'] ?? '-';
+              final id = a['id']?.toString() ?? '';
+              final codigo = a['apicultor_codigo'] ?? (id.length > 6 ? id.substring(0, 6).toUpperCase() : id);
+
+              return DataRow(
+                cells: [
+                  DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600))),
+                  DataCell(Text(nombre)),
+                  DataCell(Text(localidad)),
+                  DataCell(Text(telefono)),
+                  DataCell(
+                    TextButton.icon(
+                      icon: const Icon(Icons.visibility, size: 18),
+                      label: const Text('Ver Detalles'),
+                      style: TextButton.styleFrom(foregroundColor: DesignTokens.secondary),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: a)),
+                        );
+                      },
+                    )
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileList() {
+    return ListView.builder(
+      key: ValueKey(_filtered.length + (_searchController.text.length)),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: _filtered.length,
+      itemBuilder: (context, index) {
+        final a = _filtered[index];
+        return _buildApicultorCard(a);
+      },
     );
   }
 

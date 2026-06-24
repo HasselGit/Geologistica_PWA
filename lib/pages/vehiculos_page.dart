@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 
 class VehiculosPageWidget extends StatefulWidget {
   const VehiculosPageWidget({super.key});
@@ -13,10 +15,10 @@ class VehiculosPageWidget extends StatefulWidget {
 
 class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
   List<Map<String, dynamic>> _vehiculos = [];
+  List<Map<String, dynamic>> _filtered = [];
   bool _loading = true;
-
-  // Design system constants
-
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -24,14 +26,69 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
     _fetchData();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchData() async {
-    final data = await SupabaseService().getVehiculos();
-    if (mounted) {
-      setState(() {
-        _vehiculos = data;
-        _loading = false;
-      });
+    setState(() => _loading = true);
+    
+    try {
+      final box = await Hive.openBox('vehiculosCache');
+      if (box.containsKey('data')) {
+        final cached = box.get('data');
+        if (cached != null && cached is List && mounted) {
+          final parsed = List<Map<String, dynamic>>.from(
+            cached.map((e) => Map<String, dynamic>.from(e as Map))
+          );
+          setState(() {
+            _vehiculos = parsed;
+            _filtered = parsed;
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Hive cache error: $e');
     }
+
+    try {
+      final data = await SupabaseService().getVehiculos();
+      if (mounted) {
+        setState(() {
+          _vehiculos = data;
+          _filtered = data;
+          _loading = false;
+        });
+
+        try {
+          final box = await Hive.openBox('vehiculosCache');
+          await box.put('data', data);
+        } catch (e) {
+          print('Hive save error: $e');
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _onSearchChanged(String val) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      setState(() {
+        _filtered = _vehiculos.where((v) {
+          final codigo = (v['vehiculo_codigo'] ?? v['codigo'] ?? '').toString().toLowerCase();
+          final patente = (v['patente'] ?? '').toString().toLowerCase();
+          final modelo = (v['modelo'] ?? '').toString().toLowerCase();
+          final query = val.toLowerCase();
+          return codigo.contains(query) || patente.contains(query) || modelo.contains(query);
+        }).toList();
+      });
+    });
   }
 
   @override
@@ -50,39 +107,126 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
           style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'FLOTA ACTIVA',
-                    style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.1),
-                  ),
-                  const SizedBox(height: 16),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 1,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 2.2,
-                    ),
-                    itemCount: _vehiculos.length,
-                    itemBuilder: (context, index) {
-                      final v = _vehiculos[index];
-                      return _buildVehicleCard(v);
-                    },
-                  ),
-                ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Buscar por código, patente o modelo...',
+                prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
+          ),
+          Expanded(
+            child: _loading && _vehiculos.isEmpty
+              ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth >= 900) {
+                      return _buildWebTable();
+                    } else {
+                      return _buildMobileList();
+                    }
+                  },
+                ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addVehiculo,
         backgroundColor: DesignTokens.secondary,
         child: const Icon(Icons.add, color: DesignTokens.primary),
+      ),
+    );
+  }
+
+  Widget _buildWebTable() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.05), blurRadius: 10)],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(DesignTokens.primary.withOpacity(0.05)),
+            columns: const [
+              DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('MODELO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('PATENTE', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('CAPACIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+              DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+            ],
+            rows: _filtered.map((v) {
+              final codigo = v['vehiculo_codigo'] ?? v['codigo'] ?? 'S/D';
+              final modelo = v['modelo'] ?? 'Modelo desconocido';
+              final patente = v['patente'] ?? 'S/P';
+              final capKg = v['capacidad_kg']?.toString() ?? '0';
+
+              return DataRow(
+                cells: [
+                  DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600))),
+                  DataCell(Text(modelo)),
+                  DataCell(Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                    child: Text(patente, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+                  )),
+                  DataCell(Text('$capKg kg')),
+                  DataCell(
+                    TextButton.icon(
+                      icon: const Icon(Icons.visibility, size: 18),
+                      label: const Text('Ver Detalles'),
+                      style: TextButton.styleFrom(foregroundColor: DesignTokens.secondary),
+                      onPressed: () => context.push('/vehiculoDetalle?id=${v['id']}'),
+                    )
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileList() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'FLOTA ACTIVA',
+            style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.1),
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+              mainAxisSpacing: 16,
+              childAspectRatio: 2.2,
+            ),
+            itemCount: _filtered.length,
+            itemBuilder: (context, index) {
+              final v = _filtered[index];
+              return _buildVehicleCard(v);
+            },
+          ),
+          const SizedBox(height: 80),
+        ],
       ),
     );
   }

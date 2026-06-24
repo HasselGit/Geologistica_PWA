@@ -929,6 +929,21 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
 
   // Helper para construir capas Glassmorphic consistentes con BackdropFilter blur sigma 10
   Widget _buildGlassmorphicOverlay({required Widget child, required EdgeInsetsGeometry padding}) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+
+    if (!isDesktop) {
+      // Degradar en móviles para evitar el carísimo BackdropFilter
+      return Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          color: const Color(0xFF08201A).withOpacity(0.9), // Fondo oscuro sólido
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.0),
+        ),
+        child: child,
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(

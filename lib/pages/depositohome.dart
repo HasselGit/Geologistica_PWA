@@ -782,49 +782,209 @@ class _DepositohomeWidgetState extends State<DepositohomeWidget> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DesignTokens.surfaceLow,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('GeoLogística Depósito', style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 18)),
-            Text('Gestión de Cargas y Salidas', style: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant).copyWith(fontSize: 12)),
-          ],
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: DesignTokens.primary,
-          unselectedLabelColor: DesignTokens.onSurfaceVariant,
-          indicatorColor: DesignTokens.secondary,
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(text: 'PENDIENTES'),
-            Tab(text: 'EN CURSO'),
-            Tab(text: 'TERMINADAS'),
-          ],
-        ),
-      ),
-      body: _loading 
-        ? const Center(child: CircularProgressIndicator())
-        : TabBarView(
-            controller: _tabController,
-            children: [
-              _buildPendientesTab(),
-              _buildEnCursoTab(),
-              _buildTerminadasTab(),
-            ],
-          ),
-      floatingActionButton: _loading || _isChofer
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _showAddCargaDialog,
-              backgroundColor: DesignTokens.primary,
-              icon: Icon(Icons.add_box_rounded, color: DesignTokens.accent),
-              label: const Text('AGREGAR CARGA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 900) {
+          // WEB LAYOUT
+          return Scaffold(
+            backgroundColor: DesignTokens.surfaceLow,
+            body: Row(
+              children: [
+                // LEFT PANEL (280px)
+                Container(
+                  width: 280,
+                  color: const Color(0xFF08201A),
+                  child: SafeArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 32),
+                        const Center(
+                          child: Text(
+                            'GeoLogística',
+                            style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 32, color: Colors.white),
+                          ),
+                        ),
+                        const Center(
+                          child: Text(
+                            'DEPÓSITO',
+                            style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, color: Color(0xFFFDBE49), letterSpacing: 2),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        const Divider(color: Colors.white12),
+                        const SizedBox(height: 16),
+                        
+                        // Tabs List
+                        _buildSidebarTab(0, 'PENDIENTES', Icons.hourglass_empty_rounded),
+                        _buildSidebarTab(1, 'EN CURSO', Icons.local_shipping_rounded),
+                        _buildSidebarTab(2, 'TERMINADAS', Icons.check_circle_rounded),
+
+                        const Spacer(),
+                        const Divider(color: Colors.white12),
+                        const SizedBox(height: 16),
+                        
+                        IconButton(
+                          onPressed: _fetchData,
+                          icon: const Icon(Icons.refresh_rounded, color: Colors.white54, size: 28),
+                        ),
+                        
+                        if (!_loading && !_isChofer) ...[
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: ElevatedButton.icon(
+                              onPressed: _showAddCargaDialog,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFDBE49),
+                                foregroundColor: const Color(0xFF08201A),
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              icon: const Icon(Icons.add_box_rounded),
+                              label: const Text('AGREGAR CARGA', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, letterSpacing: 1)),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // RIGHT PANEL
+                Expanded(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border(bottom: BorderSide(color: DesignTokens.primary.withOpacity(0.05))),
+                        ),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => context.go('/home'),
+                              child: const Icon(Icons.home_rounded, color: DesignTokens.primary, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text('/', style: TextStyle(color: Colors.black26)),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'DEPÓSITO',
+                              style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.primary, letterSpacing: 1.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: _loading 
+                          ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                          : TabBarView(
+                              controller: _tabController,
+                              children: [
+                                _buildPendientesTab(),
+                                _buildEnCursoTab(),
+                                _buildTerminadasTab(),
+                              ],
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+          );
+        }
+
+        // MOBILE LAYOUT
+        return Scaffold(
+          backgroundColor: DesignTokens.surfaceLow,
+          appBar: AppBar(
+            backgroundColor: DesignTokens.surface,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+              onPressed: () => context.go('/home'),
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('GeoLogística Depósito', style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 18)),
+                Text('Gestión de Cargas y Salidas', style: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant).copyWith(fontSize: 12)),
+              ],
+            ),
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: DesignTokens.primary,
+              unselectedLabelColor: DesignTokens.onSurfaceVariant,
+              indicatorColor: DesignTokens.secondary,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(text: 'PENDIENTES'),
+                Tab(text: 'EN CURSO'),
+                Tab(text: 'TERMINADAS'),
+              ],
+            ),
+          ),
+          body: _loading 
+            ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildPendientesTab(),
+                  _buildEnCursoTab(),
+                  _buildTerminadasTab(),
+                ],
+              ),
+          floatingActionButton: _loading || _isChofer
+              ? null
+              : FloatingActionButton.extended(
+                  onPressed: _showAddCargaDialog,
+                  backgroundColor: DesignTokens.primary,
+                  icon: Icon(Icons.add_box_rounded, color: DesignTokens.accent),
+                  label: const Text('AGREGAR CARGA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSidebarTab(int index, String label, IconData icon) {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        final isActive = _tabController.index == index;
+        return GestureDetector(
+          onTap: () => _tabController.animateTo(index),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: isActive ? const Color(0xFFFDBE49) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: isActive ? const Color(0xFF08201A) : Colors.white70),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Work Sans',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: isActive ? const Color(0xFF08201A) : Colors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

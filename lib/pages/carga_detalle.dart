@@ -235,14 +235,24 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: DesignTokens.secondary)));
-    if (widget.isNew) return _buildNewCarga();
-    if (_carga == null) return Scaffold(appBar: AppBar(title: const Text('Carga no encontrada')));
-    return _buildDetalle();
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+        
+        if (widget.isNew) {
+           return isDesktop ? _buildNewCargaDesktop() : _buildNewCarga();
+        }
+        
+        if (_carga == null) return Scaffold(appBar: AppBar(title: const Text('Carga no encontrada')));
+        
+        return isDesktop ? _buildDetalleDesktop() : _buildDetalleMobile();
+      },
+    );
   }
 
-  // ─── DETALLE DE CARGA EXISTENTE ───────────────────────────────────────────
-
-  Widget _buildDetalle() {
+  // ─── DETALLE DE CARGA EXISTENTE (MOBILE) ──────────────────────────────────
+  Widget _buildDetalleMobile() {
     final estado = _carga!['estado'] ?? AppStates.pendiente;
     final viaje = _carga!['viaje'] as Map<String, dynamic>? ?? {};
     final chofer = _carga!['chofer'] as Map<String, dynamic>? ?? {};
@@ -396,13 +406,34 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('⚠️ Capacidad excedida',
-              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-          content: const Text('Esta carga excede la capacidad del vehículo. ¿Confirmar de todas formas?'),
+          backgroundColor: DesignTokens.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text('Capacidad excedida',
+                  style: TextStyle(fontFamily: 'Manrope', color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 18)),
+              ),
+            ],
+          ),
+          content: const Text('Esta carga excede la capacidad del vehículo. ¿Confirmar de todas formas?', style: TextStyle(fontFamily: 'Inter', fontSize: 14)),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCELAR')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('CONFIRMAR', style: TextStyle(color: Colors.orange))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('CANCELAR', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+              child: const Text('CONFIRMAR', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
       );
@@ -415,22 +446,30 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: DesignTokens.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
             SizedBox(width: 8),
-            Text('Eliminar Carga', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Eliminar Carga', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
-        content: const Text('Esta acción eliminará de forma permanente esta carga y todos sus ítems. ¿Confirmar eliminación?'),
+        content: const Text('Esta acción eliminará de forma permanente esta carga y todos sus ítems. ¿Confirmar eliminación?', style: TextStyle(fontFamily: 'Inter', fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('CANCELAR'),
+            child: const Text('CANCELAR', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, color: DesignTokens.primary)),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('ELIMINAR', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            child: const Text('ELIMINAR', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -628,7 +667,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
       width: double.infinity, height: 56,
       child: ElevatedButton.icon(
         onPressed: onPressed,
-        icon: _saving
+        icon: _saving && onPressed != null
             ? const SizedBox(width: 18, height: 18,
                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
             : Icon(icon, color: Colors.white),
@@ -638,6 +677,222 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
             backgroundColor: color, foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             elevation: 0),
+      ),
+    );
+  }
+
+  // ─── DETALLE DE CARGA EXISTENTE (DESKTOP) ─────────────────────────────────
+  Widget _buildDetalleDesktop() {
+    final estado = _carga!['estado'] ?? AppStates.pendiente;
+    final viaje = _carga!['viaje'] as Map<String, dynamic>? ?? {};
+    final chofer = _carga!['chofer'] as Map<String, dynamic>? ?? {};
+    final vehiculo = _carga!['vehiculo'] as Map<String, dynamic>? ?? {};
+    final items = List<Map<String, dynamic>>.from(_carga!['carga_items'] ?? []);
+    final codigo = _carga!['carga_codigo'] ?? 'S/C';
+    final viajeCode = viaje['viaje_codigo'] ?? 'S/V';
+    final vehiculoCode = viaje['vehiculo_codigo'] ?? 'S/V';
+    final choferNombre = chofer.isNotEmpty
+        ? '${chofer['nombre'] ?? ''} ${chofer['apellido'] ?? ''}'.trim()
+        : 'Sin chofer';
+
+    final capKg = (vehiculo['capacidad_kg'] as num?)?.toDouble() ?? 0;
+    final capTamb = (vehiculo['capacidad_tambores'] as num?)?.toInt() ?? 0;
+    final cargaActualKg = (vehiculo['carga_actual_kg'] as num?)?.toDouble() ?? 0;
+    final cargaActualTamb = (vehiculo['carga_actual_tambores'] as num?)?.toInt() ?? 0;
+
+    double estaCargaKg = 0;
+    int estaCargaTamb = 0;
+    for (final it in items) {
+      final qty = (it['cantidad'] as num?)?.toDouble() ?? 0;
+      final prod = (it['producto_codigo'] ?? '').toString().toUpperCase();
+      if (prod == 'TCM' || prod.contains('TAMBOR')) {
+        estaCargaKg += qty * 300;
+        estaCargaTamb += qty.round();
+      } else if ((prod.startsWith('T') && prod != 'TV' && prod != 'TE') ||
+          prod.contains('VACIO') ||
+          prod.contains('VACÍO')) {
+        estaCargaKg += qty * 20;
+        estaCargaTamb += qty.round();
+      } else if (prod == 'AZ') {
+        estaCargaKg += qty * 50;
+      } else {
+        estaCargaKg += qty;
+      }
+    }
+
+    final proyectadoKg = cargaActualKg + estaCargaKg;
+    final excede = capKg > 0 && proyectadoKg > capKg;
+    final progreso = capKg > 0 ? (proyectadoKg / capKg).clamp(0.0, 1.2) : 0.0;
+
+    return Scaffold(
+      backgroundColor: DesignTokens.surfaceLow,
+      appBar: AppBar(
+        backgroundColor: DesignTokens.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(codigo,
+            style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
+                fontSize: 17, color: DesignTokens.primary)),
+        bottom: PreferredSize(preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08))),
+      ),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // COLUMNA IZQUIERDA (Detalles y Acciones)
+          Expanded(
+            flex: 4,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionHeader(codigo, estado, viajeCode, vehiculoCode, choferNombre),
+                  const SizedBox(height: 24),
+                  if (vehiculo.isNotEmpty) ...[
+                    _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
+                    const SizedBox(height: 10),
+                    _depositoCard(capKg, capTamb, cargaActualKg, cargaActualTamb,
+                        estaCargaKg, estaCargaTamb, proyectadoKg, excede, progreso),
+                    const SizedBox(height: 24),
+                  ],
+                  // BOTONES
+                  if ((_isDeposito || _isChoferDepositoHuinca) && _canChangeEstado) ...[
+                    if (estado == AppStates.pendiente)
+                      _actionButton(
+                        label: 'INICIAR CARGA',
+                        icon: Icons.play_circle_outline_rounded,
+                        color: const Color(0xFF1565C0),
+                        onPressed: _saving ? null : () => _cambiarEstado(AppStates.enCurso),
+                      ),
+                    if (estado == AppStates.enCurso)
+                      _actionButton(
+                        label: 'CONFIRMAR CARGA TERMINADA',
+                        icon: Icons.check_circle_outline_rounded,
+                        color: excede ? Colors.orange : const Color(0xFF1A6B43),
+                        onPressed: _saving ? null : () => _confirmarTerminar(excede),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_isManagement && estado == AppStates.pendiente) ...[
+                    _actionButton(
+                      label: 'ELIMINAR CARGA',
+                      icon: Icons.delete_forever_rounded,
+                      color: Colors.redAccent,
+                      onPressed: _saving ? null : () => _confirmarEliminarCarga(),
+                    ),
+                  ],
+                  if (estado == AppStates.terminado) ...[
+                    Container(
+                      width: double.infinity, padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFD4F0E1), borderRadius: BorderRadius.circular(14)),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_rounded, color: Color(0xFF1A6B43)),
+                          SizedBox(width: 10),
+                          Text('Carga completada',
+                              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1A6B43))),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          
+          // DIVIDER
+          Container(width: 1, color: DesignTokens.primary.withOpacity(0.08)),
+
+          // COLUMNA DERECHA (Ítems en Data Table)
+          Expanded(
+            flex: 6,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _labelText('ÍTEMS DE LA CARGA'),
+                      if (_canChangeEstado)
+                        ElevatedButton.icon(
+                          onPressed: () => _showEditCargaDialog(),
+                          icon: const Icon(Icons.edit_rounded, size: 16),
+                          label: const Text('Editar', style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: DesignTokens.surface,
+                            foregroundColor: DesignTokens.primary,
+                            elevation: 0,
+                            side: BorderSide(color: DesignTokens.primary.withOpacity(0.1)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (items.isEmpty)
+                    _emptyCard('No hay ítems en esta carga')
+                  else
+                    _buildItemsTable(items),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── HELPER PARA DATA TABLE (DESKTOP) ─────────────────────────────────────
+  Widget _buildItemsTable(List<Map<String, dynamic>> items, {bool isNew = false, void Function(int)? onRemove}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8)],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: DataTable(
+          headingRowColor: MaterialStateProperty.all(DesignTokens.surfaceLow),
+          dataRowMinHeight: 56,
+          dataRowMaxHeight: 56,
+          columns: [
+            DataColumn(label: Text('PRODUCTO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
+            DataColumn(label: Text('CANTIDAD', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
+            DataColumn(label: Text('UNIDAD', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
+            if (isNew)
+              DataColumn(label: Text('', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
+          ],
+          rows: items.asMap().entries.map((e) {
+            final idx = e.key;
+            final it = e.value;
+            return DataRow(cells: [
+              DataCell(Text(it['producto_codigo'] ?? 'Producto', style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, color: DesignTokens.primary))),
+              DataCell(Text('${it['cantidad']}', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: DesignTokens.primary))),
+              DataCell(Text(it['unidad'] ?? '', style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant))),
+              if (isNew)
+                DataCell(
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
+                    onPressed: () => onRemove?.call(idx),
+                  )
+                ),
+            ]);
+          }).toList(),
+        ),
       ),
     );
   }
@@ -810,6 +1065,167 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           ),
           const SizedBox(height: 40),
         ]),
+      ),
+    );
+  }
+
+  // ─── NUEVA CARGA (DESKTOP) ────────────────────────────────────────────────
+  Widget _buildNewCargaDesktop() {
+    if (_isChofer) return _buildNewCarga();
+
+    return Scaffold(
+      backgroundColor: DesignTokens.surfaceLow,
+      appBar: AppBar(
+        backgroundColor: DesignTokens.surface,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Nueva Carga',
+            style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
+                fontSize: 17, color: DesignTokens.primary)),
+        bottom: PreferredSize(preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08))),
+      ),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 4,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _labelText('1. SELECCIONAR VIAJE'),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: DesignTokens.primary.withOpacity(0.1))),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        hint: const Text('Seleccionar viaje...', style: TextStyle(color: Colors.black38)),
+                        value: _selectedViajeId,
+                        items: _viajes.map((v) => DropdownMenuItem<String>(
+                          value: v['id'].toString(),
+                          child: Text('${v['viaje_codigo'] ?? 'S/C'} — ${v['vehiculo_codigo'] ?? 'S/V'} [${v['estado'] ?? ''}]'),
+                        )).toList(),
+                        onChanged: (v) => setState(() {
+                          _selectedViajeId = v;
+                          _selectedViaje = _viajes.firstWhere((x) => x['id'].toString() == v);
+                          final vEstado = AppStates.normalize(_selectedViaje!['estado'] ?? '');
+                          if (vEstado == AppStates.enCurso) {
+                            _selectedDeposito = 'Depósito Huinca';
+                            _depositoBloqueado = true;
+                          } else {
+                            _selectedDeposito = 'Parque Industrial';
+                            _depositoBloqueado = false;
+                          }
+                        }),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _labelText('2. DEPÓSITO DE ORIGEN'),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: _depositoBloqueado ? DesignTokens.surfaceLow : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _depositoBloqueado
+                        ? DesignTokens.secondary.withOpacity(0.4)
+                        : DesignTokens.primary.withOpacity(0.1))),
+                    child: _depositoBloqueado
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Row(children: [
+                              const Icon(Icons.warehouse_rounded, size: 18, color: DesignTokens.primary),
+                              const SizedBox(width: 10),
+                              Text(_selectedDeposito,
+                                  style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700,
+                                      fontSize: 14, color: DesignTokens.primary)),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: DesignTokens.secondary.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10)),
+                                child: const Text('FIJO', style: TextStyle(fontFamily: 'Work Sans',
+                                    fontWeight: FontWeight.w800, fontSize: 9, color: DesignTokens.primary)),
+                              ),
+                            ]),
+                          )
+                        : DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedDeposito,
+                              items: ['Parque Industrial', 'Depósito Huinca'].map((d) => DropdownMenuItem<String>(
+                                value: d,
+                                child: Text(d),
+                              )).toList(),
+                              onChanged: (v) => setState(() {
+                                if (v != null) _selectedDeposito = v;
+                              }),
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity, height: 56,
+                    child: ElevatedButton(
+                      onPressed: _saving ? null : _crearCarga,
+                      style: DesignTokens.primaryButtonStyle,
+                      child: _saving
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('CREAR CARGA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(width: 1, color: DesignTokens.primary.withOpacity(0.08)),
+          Expanded(
+            flex: 6,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    _labelText('3. ÍTEMS DE CARGA'),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddItemDialog(),
+                      icon: const Icon(Icons.add_rounded, size: 16),
+                      label: const Text('Agregar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DesignTokens.surface,
+                        foregroundColor: DesignTokens.primary,
+                        elevation: 0,
+                        side: BorderSide(color: DesignTokens.primary.withOpacity(0.1)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+                  if (_newItems.isEmpty)
+                    _emptyCard('Agregue ítems a la carga')
+                  else
+                    _buildItemsTable(
+                      _newItems,
+                      isNew: true,
+                      onRemove: (idx) => setState(() => _newItems.removeAt(idx))
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

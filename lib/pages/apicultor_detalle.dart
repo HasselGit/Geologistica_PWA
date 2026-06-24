@@ -332,49 +332,14 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  _buildProfileHeader(a),
-                  const SizedBox(height: 24),
-                  _buildInfoGrid(a),
-                  
-                  const SizedBox(height: 40),
-                  _buildSectionHeader('Solicitudes Activas', null),
-                  const SizedBox(height: 16),
-                  if (_pendientes.isEmpty)
-                    _buildEmptyState('No hay solicitudes activas')
-                  else
-                    ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
-
-                  const SizedBox(height: 40),
-                  _buildSectionHeader('Total Estimado Pendiente', null),
-                  const SizedBox(height: 16),
-                  if (_resumenPendiente.isEmpty)
-                    _buildEmptyState('No hay solicitudes pendientes o en proceso')
-                  else
-                    _buildProductSummaryPendiente(),
- 
-                  const SizedBox(height: 40),
-                  _buildStatusOverview(),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader('Resumen por Producto (Histórico)', null),
-                  const SizedBox(height: 16),
-                  if (_resumenDetallado.isEmpty)
-                    _buildEmptyState('Sin operaciones registradas')
-                  else
-                    _buildProductSummary(),
-
-                  const SizedBox(height: 40),
-                  _buildSectionHeader('Operaciones Recientes', null, showIcons: true),
-                  const SizedBox(height: 16),
-                  if (_recientes.isEmpty)
-                    _buildEmptyState('No hay operaciones terminadas recientemente')
-                  else
-                    ..._recientes.map((s) => _buildRecienteCard(s)).toList(),
-                  
-                  const SizedBox(height: 80),
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth >= 900) {
+                    return _buildBentoLayout(a);
+                  } else {
+                    return _buildMobileLayout(a);
+                  }
+                },
               ),
             ),
           ),
@@ -386,6 +351,126 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             child: const Icon(Icons.add_rounded, color: DesignTokens.primary, size: 32),
           )
         : null,
+    );
+  }
+
+  Widget _buildBentoLayout(Map<String, dynamic> a) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Columna Izquierda
+        Expanded(
+          flex: 4,
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              _buildProfileHeader(a),
+              const SizedBox(height: 24),
+              _buildInfoGrid(a),
+              const SizedBox(height: 40),
+              _buildStatusOverview(),
+            ],
+          ),
+        ),
+        const SizedBox(width: 32),
+        // Columna Central
+        Expanded(
+          flex: 5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildSectionHeader('Solicitudes Activas', null),
+              const SizedBox(height: 16),
+              if (_pendientes.isEmpty)
+                _buildEmptyState('No hay solicitudes activas')
+              else
+                ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
+
+              const SizedBox(height: 40),
+              _buildSectionHeader('Total Estimado Pendiente', null),
+              const SizedBox(height: 16),
+              if (_resumenPendiente.isEmpty)
+                _buildEmptyState('No hay solicitudes pendientes o en proceso')
+              else
+                _buildProductSummaryPendiente(),
+
+              const SizedBox(height: 40),
+              _buildSectionHeader('Resumen por Producto (Histórico)', null),
+              const SizedBox(height: 16),
+              if (_resumenDetallado.isEmpty)
+                _buildEmptyState('Sin operaciones registradas')
+              else
+                _buildProductSummary(),
+            ],
+          ),
+        ),
+        const SizedBox(width: 32),
+        // Columna Derecha
+        Expanded(
+          flex: 4,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildSectionHeader('Operaciones Recientes', null, showIcons: true),
+              const SizedBox(height: 16),
+              if (_recientes.isEmpty)
+                _buildEmptyState('No hay operaciones terminadas recientemente')
+              else
+                ..._recientes.map((s) => _buildRecienteCard(s)).toList(),
+              const SizedBox(height: 80),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(Map<String, dynamic> a) {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        _buildProfileHeader(a),
+        const SizedBox(height: 24),
+        _buildInfoGrid(a),
+        
+        const SizedBox(height: 40),
+        _buildSectionHeader('Solicitudes Activas', null),
+        const SizedBox(height: 16),
+        if (_pendientes.isEmpty)
+          _buildEmptyState('No hay solicitudes activas')
+        else
+          ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
+
+        const SizedBox(height: 40),
+        _buildSectionHeader('Total Estimado Pendiente', null),
+        const SizedBox(height: 16),
+        if (_resumenPendiente.isEmpty)
+          _buildEmptyState('No hay solicitudes pendientes o en proceso')
+        else
+          _buildProductSummaryPendiente(),
+
+        const SizedBox(height: 40),
+        _buildStatusOverview(),
+        const SizedBox(height: 24),
+        _buildSectionHeader('Resumen por Producto (Histórico)', null),
+        const SizedBox(height: 16),
+        if (_resumenDetallado.isEmpty)
+          _buildEmptyState('Sin operaciones registradas')
+        else
+          _buildProductSummary(),
+
+        const SizedBox(height: 40),
+        _buildSectionHeader('Operaciones Recientes', null, showIcons: true),
+        const SizedBox(height: 16),
+        if (_recientes.isEmpty)
+          _buildEmptyState('No hay operaciones terminadas recientemente')
+        else
+          ..._recientes.map((s) => _buildRecienteCard(s)).toList(),
+        
+        const SizedBox(height: 80),
+      ],
     );
   }
 

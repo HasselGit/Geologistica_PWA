@@ -97,16 +97,19 @@ class _LoginWidgetState extends State<LoginWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+
     return Scaffold(
       backgroundColor: DesignTokens.surface,
       body: Stack(
         children: [
           // Aislamiento de Redibujado: TechnicalGridPainter interactivo envuelto en su propio RepaintBoundary
-          const Positioned.fill(
-            child: RepaintBoundary(
-              child: InteractiveTechnicalGrid(),
+          if (isDesktop)
+            const Positioned.fill(
+              child: RepaintBoundary(
+                child: InteractiveTechnicalGrid(),
+              ),
             ),
-          ),
           // Contenido principal
           SafeArea(
             child: Center(

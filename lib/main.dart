@@ -38,6 +38,10 @@ import 'pages/agregar_pesaje.dart';
 import 'pages/cargas_page.dart';
 import 'pages/carga_detalle.dart';
 import 'pages/remito_carga_page.dart';
+import 'pages/reportes_page.dart';
+import 'pages/trazabilidad_page.dart';
+import 'pages/configuracion_page.dart';
+import 'pages/perfil_usuario.dart';
 
 // Completer global para que WelcomePage pueda esperar a que Supabase esté listo
 import 'dart:async';
@@ -349,6 +353,26 @@ final GoRouter _router = GoRouter(
         final cargaId = state.uri.queryParameters['cargaId'] ?? '';
         return RemitoCargaPageWidget(cargaId: cargaId);
       },
+    ),
+    GoRoute(
+      path: '/reportes',
+      name: 'ReportesPage',
+      builder: (context, state) => const ReportesPage(),
+    ),
+    GoRoute(
+      path: '/trazabilidad',
+      name: 'TrazabilidadPage',
+      builder: (context, state) => const TrazabilidadPage(),
+    ),
+    GoRoute(
+      path: '/configuracion',
+      name: 'ConfiguracionPage',
+      builder: (context, state) => const ConfiguracionPage(),
+    ),
+    GoRoute(
+      path: '/perfil',
+      name: 'PerfilUsuarioPage',
+      builder: (context, state) => const PerfilUsuarioPage(),
     ),
   ],
 );

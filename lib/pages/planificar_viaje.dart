@@ -391,207 +391,383 @@ class _PlanificarViajeWidgetState extends State<PlanificarViajeWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: Color(0xFFFDBE49))));
 
     return Scaffold(
-      backgroundColor: DesignTokens.surface,
+      backgroundColor: const Color(0xFFF5F3F3),
       appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        title: Text('Planificador de Ruta', style: DesignTokens.headlineStyle()),
+        backgroundColor: const Color(0xFFFBF9F8),
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.primary),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          widget.editId != null ? 'Editar Ruta' : 'Planificador de Ruta',
+          style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF08201A)),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ElevatedButton(
+              onPressed: _saving ? null : _crearViaje,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF08201A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: _saving
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text(
+                      widget.editId != null ? 'GUARDAR' : 'PLANIFICAR',
+                      style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.8),
+                    ),
+            ),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('1. Seleccionar Solicitudes', style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 18)),
-            const SizedBox(height: 12),
-            
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Buscar por apicultor, localidad o tipo...',
-                prefixIcon: const Icon(Icons.search_rounded),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-              ),
-            ),
-            const SizedBox(height: 12),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 900) {
+            return _buildWebLayout(context);
+          }
+          return _buildMobileLayout(context);
+        },
+      ),
+    );
+  }
 
-            Container(
-              height: 280,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF08201A).withOpacity(0.1)),
-              ),
-              child: ListView.separated(
-                padding: const EdgeInsets.all(8),
-                itemCount: _filteredNecesidades.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final n = _filteredNecesidades[index];
-                  final isSelected = _selectedNecesidades.any((element) => element['id'] == n['id']);
-                  final String productoRaw = n['producto']?.toString() ?? 'Producto';
-                  final String apicultorNombre = (n['apicultores']?['nombre'] ?? n['apicultor_nombre'] ?? n['apicultor'] ?? 'Sin Nombre').toString().toUpperCase();
-                  final String localidad = (n['apicultores']?['localidad'] ?? n['localidad_nombre'] ?? n['localidad'] ?? 'Sin Localidad').toString();
-                  final String tipo = n['tipo'] ?? 'S/T';
-                  
-                  final bool esUnidades = _isUnitProduct(productoRaw);
-                  final String unidad = esUnidades ? 'Un.' : 'Kg';
-                  
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: DesignTokens.primary.withOpacity(isSelected ? 0.3 : 0.05), width: isSelected ? 1.5 : 1),
-                    ),
-                    child: CheckboxListTile(
-                      value: isSelected,
-                      activeColor: DesignTokens.secondary,
-                      onChanged: (val) {
-                        setState(() {
-                          if (val == true) {
-                            _selectedNecesidades.add(n);
-                          } else {
-                            _selectedNecesidades.removeWhere((item) => item['id'] == n['id']);
-                          }
-                          _updateCalculos();
-                        });
-                      },
-                      title: Text(apicultorNombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                      subtitle: Text('$productoRaw ($tipo) • $localidad', style: const TextStyle(fontSize: 11, color: Colors.black54)),
-                      secondary: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('${n['cantidad']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                          Text(unidad.toUpperCase(), style: const TextStyle(fontSize: 8)),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: _excedeCapacidad ? const Color(0xFFFFEBEE) : const Color(0xFFF0F4F3),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _excedeCapacidad ? Colors.red.withOpacity(0.3) : Colors.transparent),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildWebLayout(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // LEFT: Needs list (60%)
+        Expanded(
+          flex: 6,
+          child: Container(
+            color: const Color(0xFFF5F3F3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(28, 24, 28, 16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFBF9F8),
+                    border: Border(bottom: BorderSide(color: Color(0x0D08201A))),
+                  ),
+                  child: Row(
                     children: [
-                      Column(children: [const Text('KG TOTAL'), Text('${_totalKg.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18))]),
-                      Column(children: [const Text('TAMBORES'), Text('$_totalTambores', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18))]),
-                      Column(children: [const Text('KM EST.'), Text('${_distanciaEstimada.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18))]),
+                      Container(
+                        width: 32, height: 32,
+                        decoration: BoxDecoration(color: const Color(0xFF08201A), borderRadius: BorderRadius.circular(8)),
+                        child: const Center(child: Text('1', style: TextStyle(color: Colors.white, fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14))),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Solicitudes de Recolección', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF08201A))),
+                      const Spacer(),
+                      Text('${_selectedNecesidades.length} seleccionadas', style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11, color: Color(0x80424846))),
                     ],
                   ),
-                  if (_selectedNecesidades.isNotEmpty) ...[
-                    const Divider(height: 24),
-                    SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: _openPreviewMap, icon: const Icon(Icons.map_rounded), label: const Text('VER RECORRIDO'), style: ElevatedButton.styleFrom(backgroundColor: DesignTokens.primary, foregroundColor: Colors.white))),
-                  ]
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildTextField(label: 'Descripción del Viaje', controller: _descripcionController, hint: 'Ej: Recolección Zona Norte...'),
                 ),
-                const SizedBox(width: 16),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 16, 28, 8),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por apicultor o localidad...',
+                      prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFC2C8C4))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFC2C8C4))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFFDBE49), width: 1.5)),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Fecha Planificada', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846))),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context, 
-                            initialDate: _fechaPlanificada, 
-                            firstDate: DateTime.now().subtract(const Duration(days: 365)), 
-                            lastDate: DateTime.now().add(const Duration(days: 365)),
-                            locale: const Locale('es', 'AR'),
-                          );
-                          if (date != null) setState(() => _fechaPlanificada = date);
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(28, 8, 28, 28),
+                    itemCount: _filteredNecesidades.length,
+                    itemBuilder: (context, index) {
+                      final n = _filteredNecesidades[index];
+                      final isSelected = _selectedNecesidades.any((e) => e['id'] == n['id']);
+                      final String productoRaw = n['producto']?.toString() ?? 'Producto';
+                      final String apicultorNombre = (n['apicultores']?['nombre'] ?? n['apicultor_nombre'] ?? n['apicultor'] ?? 'Sin Nombre').toString().toUpperCase();
+                      final String localidad = (n['apicultores']?['localidad'] ?? n['localidad_nombre'] ?? n['localidad'] ?? 'Sin Localidad').toString();
+                      final String tipo = n['tipo'] ?? 'S/T';
+                      final bool esUnidades = _isUnitProduct(productoRaw);
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedNecesidades.removeWhere((item) => item['id'] == n['id']);
+                            } else {
+                              _selectedNecesidades.add(n);
+                            }
+                            _updateCalculos();
+                          });
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF08201A).withOpacity(0.1))),
-                          child: Text(DateFormat('dd/MM/yy').format(_fechaPlanificada), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0x0A08201A) : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFFFDBE49) : const Color(0xFFC2C8C4),
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 20, height: 20,
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFFFDBE49) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: isSelected ? const Color(0xFFFDBE49) : const Color(0xFFC2C8C4), width: 1.5),
+                                ),
+                                child: isSelected ? const Icon(Icons.check_rounded, size: 12, color: Color(0xFF08201A)) : null,
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(apicultorNombre, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF08201A))),
+                                    const SizedBox(height: 2),
+                                    Text('$productoRaw  •  $tipo  •  $localidad', style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: Color(0xFF424846))),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text('${n['cantidad']}', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF08201A))),
+                                  Text((esUnidades ? 'Un.' : 'Kg').toUpperCase(), style: const TextStyle(fontFamily: 'Work Sans', fontSize: 9, color: Color(0xFF424846))),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 32),
-
-            Text('2. Logística', style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 18)),
-            const SizedBox(height: 12),
-            
-            _buildDropdown<String>(
-              label: 'Vehículo',
-              hint: 'Seleccione un vehículo...',
-              value: _selectedVehiculo?['id']?.toString(),
-              items: _vehiculos.map((v) {
-                String display = v['vehiculo_codigo']?.toString() ?? '';
-                // Limpia el texto eliminando lo que esté entre paréntesis (ej: MB 1634 (Taller) -> MB 1634)
-                if (display.contains('(')) {
-                  display = display.split('(')[0].trim();
-                }
-                return DropdownMenuItem(
-                  value: v['id'].toString(), 
-                  child: Text(display)
-                );
-              }).toList(),
-              onChanged: (v) => setState(() => _selectedVehiculo = _vehiculos.firstWhere((e) => e['id'].toString() == v)),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            _buildDropdown<String>(
-              label: 'Chofer',
-              hint: 'Seleccione un chofer...',
-              value: _selectedChofer?['id']?.toString(),
-              items: _choferes.map((c) => DropdownMenuItem(value: c['id'].toString(), child: Text('${c['nombre']} ${c['apellido']}'))).toList(),
-              onChanged: (v) => setState(() => _selectedChofer = _choferes.firstWhere((e) => e['id'].toString() == v)),
-            ),
-
-            const SizedBox(height: 40),
-            
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _crearViaje,
-                style: DesignTokens.primaryButtonStyle,
-                child: _saving 
-                  ? const CircularProgressIndicator(color: Colors.white) 
-                  : Text(widget.editId != null ? 'GUARDAR CAMBIOS' : 'PLANIFICAR VIAJE'),
+          ),
+        ),
+        Container(width: 1, color: const Color(0x0D08201A)),
+        // RIGHT: Config panel (40%)
+        Expanded(
+          flex: 4,
+          child: Container(
+            color: const Color(0xFFFBF9F8),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 32, height: 32,
+                        decoration: BoxDecoration(color: const Color(0xFF08201A), borderRadius: BorderRadius.circular(8)),
+                        child: const Center(child: Text('2', style: TextStyle(color: Colors.white, fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14))),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Configuración', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF08201A))),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Stats panel
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: _excedeCapacidad ? const Color(0xFFFFEBEE) : const Color(0xFF08201A),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(children: [Text('KG TOTAL', style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.w700, color: _excedeCapacidad ? Colors.red.shade400 : Colors.white60, letterSpacing: 0.8)), Text('${_totalKg.toStringAsFixed(0)}', style: TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w900, fontSize: 22, color: _excedeCapacidad ? Colors.red : Colors.white))]),
+                            Column(children: [Text('TAMBORES', style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.w700, color: _excedeCapacidad ? Colors.red.shade400 : Colors.white60, letterSpacing: 0.8)), Text('$_totalTambores', style: TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w900, fontSize: 22, color: _excedeCapacidad ? Colors.red : Colors.white))]),
+                            Column(children: [Text('KM EST.', style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.w700, color: _excedeCapacidad ? Colors.red.shade400 : Colors.white60, letterSpacing: 0.8)), Text('${_distanciaEstimada.toStringAsFixed(0)}', style: TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w900, fontSize: 22, color: _excedeCapacidad ? Colors.red : Colors.white))]),
+                          ],
+                        ),
+                        if (_selectedNecesidades.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _openPreviewMap,
+                              icon: const Icon(Icons.map_rounded, size: 16),
+                              label: const Text('VER RECORRIDO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11)),
+                              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white38), padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(label: 'DESCRIPCIÓN DEL VIAJE', controller: _descripcionController, hint: 'Ej: Recolección Zona Norte...'),
+                  const SizedBox(height: 16),
+                  const Text('FECHA PLANIFICADA', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 10, color: Color(0xFF424846), letterSpacing: 0.8)),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(context: context, initialDate: _fechaPlanificada, firstDate: DateTime.now().subtract(const Duration(days: 365)), lastDate: DateTime.now().add(const Duration(days: 365)), locale: const Locale('es', 'AR'));
+                      if (date != null) setState(() => _fechaPlanificada = date);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFC2C8C4))),
+                      child: Row(children: [const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF08201A)), const SizedBox(width: 10), Text(DateFormat('dd/MM/yyyy').format(_fechaPlanificada), style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, color: Color(0xFF1B1C1C)))]),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDropdown<String>(
+                    label: 'VEHÍCULO',
+                    hint: 'Seleccione un vehículo...',
+                    value: _selectedVehiculo?['id']?.toString(),
+                    items: _vehiculos.map((v) { String display = v['vehiculo_codigo']?.toString() ?? ''; if (display.contains('(')) display = display.split('(')[0].trim(); return DropdownMenuItem(value: v['id'].toString(), child: Text(display)); }).toList(),
+                    onChanged: (v) => setState(() => _selectedVehiculo = _vehiculos.firstWhere((e) => e['id'].toString() == v)),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDropdown<String>(
+                    label: 'CHOFER',
+                    hint: 'Seleccione un chofer...',
+                    value: _selectedChofer?['id']?.toString(),
+                    items: _choferes.map((c) => DropdownMenuItem(value: c['id'].toString(), child: Text('${c['nombre']} ${c['apellido']}' ))).toList(),
+                    onChanged: (v) => setState(() => _selectedChofer = _choferes.firstWhere((e) => e['id'].toString() == v)),
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity, height: 50,
+                    child: ElevatedButton(
+                      onPressed: _saving ? null : _crearViaje,
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF08201A), foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      child: _saving
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text(widget.editId != null ? 'GUARDAR CAMBIOS' : 'PLANIFICAR VIAJE', style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 13)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => context.pop(),
+                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF08201A), side: const BorderSide(color: Color(0x3308201A)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      child: const Text('CANCELAR', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12)),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('1. Solicitudes', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF08201A))),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Buscar por apicultor, localidad...',
+              prefixIcon: const Icon(Icons.search_rounded),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            height: 280,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0x1A08201A))),
+            child: ListView.separated(
+              padding: const EdgeInsets.all(8),
+              itemCount: _filteredNecesidades.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final n = _filteredNecesidades[index];
+                final isSelected = _selectedNecesidades.any((element) => element['id'] == n['id']);
+                final String productoRaw = n['producto']?.toString() ?? 'Producto';
+                final String apicultorNombre = (n['apicultores']?['nombre'] ?? n['apicultor_nombre'] ?? n['apicultor'] ?? 'Sin Nombre').toString().toUpperCase();
+                final String localidad = (n['apicultores']?['localidad'] ?? n['localidad_nombre'] ?? n['localidad'] ?? 'Sin Localidad').toString();
+                final String tipo = n['tipo'] ?? 'S/T';
+                final bool esUnidades = _isUnitProduct(productoRaw);
+                final String unidad = esUnidades ? 'Un.' : 'Kg';
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF08201A).withOpacity(isSelected ? 0.3 : 0.05), width: isSelected ? 1.5 : 1)),
+                  child: CheckboxListTile(
+                    value: isSelected, activeColor: const Color(0xFFC68E17),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) { _selectedNecesidades.add(n); } else { _selectedNecesidades.removeWhere((item) => item['id'] == n['id']); }
+                        _updateCalculos();
+                      });
+                    },
+                    title: Text(apicultorNombre, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                    subtitle: Text('$productoRaw ($tipo) • $localidad', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                    secondary: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('${n['cantidad']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)), Text(unidad.toUpperCase(), style: const TextStyle(fontSize: 8))]),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: _excedeCapacidad ? const Color(0xFFFFEBEE) : const Color(0xFFF0F4F3), borderRadius: BorderRadius.circular(12), border: Border.all(color: _excedeCapacidad ? const Color(0x4DFF0000) : Colors.transparent)),
+            child: Column(
+              children: [
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Column(children: [const Text('KG TOTAL'), Text('${_totalKg.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18))]),
+                  Column(children: [const Text('TAMBORES'), Text('$_totalTambores', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18))]),
+                  Column(children: [const Text('KM EST.'), Text('${_distanciaEstimada.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18))]),
+                ]),
+                if (_selectedNecesidades.isNotEmpty) ...[const Divider(height: 24), SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: _openPreviewMap, icon: const Icon(Icons.map_rounded), label: const Text('VER RECORRIDO'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF08201A), foregroundColor: Colors.white)))],
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildTextField(label: 'Descripción del Viaje', controller: _descripcionController, hint: 'Ej: Recolección Zona Norte...'),
+          const SizedBox(height: 16),
+          const Text('Fecha Planificada', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846))),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () async {
+              final date = await showDatePicker(context: context, initialDate: _fechaPlanificada, firstDate: DateTime.now().subtract(const Duration(days: 365)), lastDate: DateTime.now().add(const Duration(days: 365)), locale: const Locale('es', 'AR'));
+              if (date != null) setState(() => _fechaPlanificada = date);
+            },
+            child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0x1A08201A))), child: Text(DateFormat('dd/MM/yy').format(_fechaPlanificada), style: const TextStyle(fontWeight: FontWeight.bold))),
+          ),
+          const SizedBox(height: 24),
+          const Text('2. Logística', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF08201A))),
+          const SizedBox(height: 12),
+          _buildDropdown<String>(label: 'Vehículo', hint: 'Seleccione un vehículo...', value: _selectedVehiculo?['id']?.toString(), items: _vehiculos.map((v) { String display = v['vehiculo_codigo']?.toString() ?? ''; if (display.contains('(')) display = display.split('(')[0].trim(); return DropdownMenuItem(value: v['id'].toString(), child: Text(display)); }).toList(), onChanged: (v) => setState(() => _selectedVehiculo = _vehiculos.firstWhere((e) => e['id'].toString() == v))),
+          const SizedBox(height: 16),
+          _buildDropdown<String>(label: 'Chofer', hint: 'Seleccione un chofer...', value: _selectedChofer?['id']?.toString(), items: _choferes.map((c) => DropdownMenuItem(value: c['id'].toString(), child: Text('${c['nombre']} ${c['apellido']}' ))).toList(), onChanged: (v) => setState(() => _selectedChofer = _choferes.firstWhere((e) => e['id'].toString() == v))),
+          const SizedBox(height: 36),
+          SizedBox(width: double.infinity, height: 55, child: ElevatedButton(onPressed: _saving ? null : _crearViaje, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF08201A), foregroundColor: Colors.white, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _saving ? const CircularProgressIndicator(color: Colors.white) : Text(widget.editId != null ? 'GUARDAR CAMBIOS' : 'PLANIFICAR VIAJE', style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 13)))),
+        ],
       ),
     );
   }

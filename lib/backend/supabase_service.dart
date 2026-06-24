@@ -2321,6 +2321,16 @@ class SupabaseService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getPesajes() async {
+    try {
+      final response = await _client.from('pesajes').select('*, apicultores(nombre, apellido), paradas(viaje_id, rutas(viajes(chofer_id)))');
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('SupabaseService: Error en getPesajes (todas): $e');
+      return [];
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getPesajesOfflineSafe(String paradaId) async {
     final bool online = await checkConnectivity();
     final cacheBox = Hive.box('pesajes_cache');

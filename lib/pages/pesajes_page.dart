@@ -222,97 +222,267 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFBFB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: DesignTokens.primary, size: 20),
-          onPressed: () => context.go('/home'),
-        ),
-        centerTitle: false,
-        title: Text('Pesajes', style: DesignTokens.headlineStyle()),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: DesignTokens.primary),
-            onPressed: _fetchData,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Buscar apicultor, localidad...',
-                            prefixIcon: const Icon(Icons.search),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                          ),
-                          onChanged: (val) {
-                            _searchQuery = val;
-                            _applyFilters();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton.filled(
-                        onPressed: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDate ?? DateTime.now(),
-                            firstDate: DateTime(2024),
-                            lastDate: DateTime.now(),
-                          );
-                          if (date != null) {
-                            setState(() => _selectedDate = date);
-                            _applyFilters();
-                          }
-                        },
-                        icon: Icon(Icons.calendar_month, color: _selectedDate != null ? DesignTokens.accent : Colors.white),
-                        style: IconButton.styleFrom(backgroundColor: DesignTokens.primary),
-                      ),
-                      if (_selectedDate != null)
-                        IconButton(
-                          onPressed: () {
-                            setState(() => _selectedDate = null);
-                            _applyFilters();
-                          },
-                          icon: const Icon(Icons.clear, color: Colors.red),
-                        ),
-                    ],
+      backgroundColor: const Color(0xFFF5F3F3),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header bar
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              color: const Color(0xFFFBF9F8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.go('/home'),
+                    child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
                   ),
-                ),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _fetchData,
-                    color: DesignTokens.secondary,
-                    child: _filteredGrupos.isEmpty
-                        ? ListView(
-                            children: const [
-                              SizedBox(height: 100),
-                              Center(child: Text('No se encontraron pesajes.', style: TextStyle(color: Colors.grey, fontSize: 14))),
-                            ],
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: _filteredGrupos.length,
-                            itemBuilder: (context, index) => _buildCard(_filteredGrupos[index]),
-                          ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'Registro de Pesajes',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                      color: Color(0xFF08201A),
+                    ),
                   ),
-                ),
-              ],
+                  const Spacer(),
+                  // Search field
+                  SizedBox(
+                    width: 220,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Buscar...',
+                        prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                        filled: true,
+                        fillColor: const Color(0xFFF5F3F3),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFC2C8C4)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFC2C8C4)),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                          _applyFilters();
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded, color: Color(0xFF08201A)),
+                    onPressed: _fetchData,
+                  ),
+                ],
+              ),
             ),
+            // Content
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Color(0xFFFDBE49)),
+                    )
+                  : _filteredGrupos.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.scale_rounded, size: 56, color: Color(0x33424846)),
+                              SizedBox(height: 16),
+                              Text(
+                                'Sin pesajes registrados',
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: Color(0xFF424846),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _fetchData,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(20),
+                            itemCount: _filteredGrupos.length,
+                            itemBuilder: (context, index) =>
+                                _buildGrupoCard(_filteredGrupos[index]),
+                          ),
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGrupoCard(Map<String, dynamic> grupo) {
+    final viajeCodigo = grupo['viaje_codigo']?.toString() ?? 'S/V';
+    final paradaLocalidad =
+        grupo['localidad']?.toString() ?? grupo['apicultor']?.toString() ?? 'S/P';
+    final List<dynamic> pesajes =
+        (grupo['items'] as List?)?.cast<dynamic>() ?? [];
+    final totalNeto = (grupo['total_neto'] as double?) ?? 0.0;
+    final totalBruto = (grupo['total_bruto'] as double?) ?? 0.0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0x0D08201A)),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              decoration: const BoxDecoration(
+                color: Color(0xFF08201A),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.alt_route_rounded,
+                            size: 14, color: Color(0xFF08201A)),
+                        const SizedBox(width: 6),
+                        Text(
+                          viajeCodigo,
+                          style: const TextStyle(
+                            fontFamily: 'JetBrains Mono',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: Color(0xFF08201A),
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4F0E1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${pesajes.length} pesajes',
+                            style: const TextStyle(
+                              fontFamily: 'Work Sans',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 10,
+                              color: Color(0xFF1A6B43),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      paradaLocalidad,
+                      style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          color: Color(0xFF424846)),
+                    ),
+                    if (pesajes.isNotEmpty) ...[
+                      const Divider(height: 20),
+                      ...pesajes.map((p) {
+                        final item = p as Map<String, dynamic>;
+                        final bruto =
+                            (double.tryParse(item['peso_bruto']?.toString() ?? '0') ?? 0);
+                        final tara =
+                            (double.tryParse(item['tara']?.toString() ?? '0') ?? 0);
+                        final neto = bruto - tara;
+                        final senasa =
+                            item['senasa_codigo']?.toString() ??
+                            item['codigo_senasa']?.toString() ??
+                            'S/C';
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.circle,
+                                  size: 6, color: Color(0xFFC68E17)),
+                              const SizedBox(width: 8),
+                              Text(
+                                senasa,
+                                style: const TextStyle(
+                                  fontFamily: 'JetBrains Mono',
+                                  fontSize: 11,
+                                  color: Color(0xFF424846),
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'Bruto: ${bruto.toStringAsFixed(1)}kg',
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 11,
+                                  color: Color(0xFF424846),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Neto: ${neto.toStringAsFixed(1)}kg',
+                                style: const TextStyle(
+                                  fontFamily: 'JetBrains Mono',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11,
+                                  color: Color(0xFF08201A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const Divider(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const Text(
+                            'TOTAL NETO: ',
+                            style: TextStyle(
+                              fontFamily: 'Work Sans',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                              color: Color(0xFF424846),
+                            ),
+                          ),
+                          Text(
+                            '${totalNeto.toStringAsFixed(1)} kg',
+                            style: const TextStyle(
+                              fontFamily: 'JetBrains Mono',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: Color(0xFFC68E17),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -17,9 +17,6 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
   bool _loading = true;
   String? _error;
 
-
-
-
   @override
   void initState() {
     super.initState();
@@ -64,87 +61,143 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
         ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
         : _error != null
           ? Center(child: Text('Error: $_error'))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Hero Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: DesignTokens.primary,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.local_shipping_rounded, size: 64, color: DesignTokens.secondary),
-                        const SizedBox(height: 16),
-                        Text(_vehiculo?['vehiculo_codigo'] ?? 'S/D', 
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                        Text(_vehiculo?['patente'] ?? 'SIN PATENTE', 
-                          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  const Text('INFORMACIÓN TÉCNICA', 
-                    style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
-                  const SizedBox(height: 16),
-                  
-                  _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado'),
-                  _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG'),
-                  _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades'),
-                  
-                  const SizedBox(height: 32),
-                  const Text('ESTADO OPERATIVO', 
-                    style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
-                  const SizedBox(height: 16),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.green.withOpacity(0.2)),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 12, height: 12,
-                              decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text('DISPONIBLE PARA VIAJE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13)),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        _buildProgressBar(
-                          label: 'CARGA EN KG',
-                          current: (_vehiculo?['carga_actual_kg'] as num?)?.toDouble() ?? 0,
-                          total: (_vehiculo?['capacidad_kg'] as num?)?.toDouble() ?? 1,
-                          unit: 'KG',
-                          color: Colors.blue,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildProgressBar(
-                          label: 'CARGA EN TAMBORES',
-                          current: (_vehiculo?['carga_actual_tambores'] as num?)?.toDouble() ?? 0,
-                          total: (_vehiculo?['capacidad_tambores'] as num?)?.toDouble() ?? 1,
-                          unit: 'UN',
-                          color: const Color(0xFFC68E17),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final isWeb = constraints.maxWidth >= 900;
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: isWeb ? _buildBentoLayout() : _buildMobileLayout(),
+                );
+              },
             ),
+    );
+  }
+
+  Widget _buildBentoLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Columna 1: Hero
+        Expanded(
+          flex: 4,
+          child: _buildHeroCard(),
+        ),
+        const SizedBox(width: 24),
+        // Columna 2: Info Técnica
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('INFORMACIÓN TÉCNICA', 
+                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+              const SizedBox(height: 16),
+              _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado'),
+              _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG'),
+              _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades'),
+            ],
+          ),
+        ),
+        const SizedBox(width: 24),
+        // Columna 3: Estado Operativo
+        Expanded(
+          flex: 5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('ESTADO OPERATIVO', 
+                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+              const SizedBox(height: 16),
+              _buildEstadoCard(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHeroCard(),
+        const SizedBox(height: 32),
+        const Text('INFORMACIÓN TÉCNICA', 
+          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+        const SizedBox(height: 16),
+        _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado'),
+        _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG'),
+        _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades'),
+        const SizedBox(height: 32),
+        const Text('ESTADO OPERATIVO', 
+          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+        const SizedBox(height: 16),
+        _buildEstadoCard(),
+      ],
+    );
+  }
+
+  Widget _buildHeroCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: DesignTokens.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.local_shipping_rounded, size: 64, color: DesignTokens.secondary),
+          const SizedBox(height: 16),
+          Text(_vehiculo?['vehiculo_codigo'] ?? 'S/D', 
+            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+          Text(_vehiculo?['patente'] ?? 'SIN PATENTE', 
+            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 2)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEstadoCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 12, height: 12,
+                decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 12),
+              const Text('DISPONIBLE PARA VIAJE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildProgressBar(
+            label: 'CARGA EN KG',
+            current: (_vehiculo?['carga_actual_kg'] as num?)?.toDouble() ?? 0,
+            total: (_vehiculo?['capacidad_kg'] as num?)?.toDouble() ?? 1,
+            unit: 'KG',
+            color: Colors.blue,
+          ),
+          const SizedBox(height: 20),
+          _buildProgressBar(
+            label: 'CARGA EN TAMBORES',
+            current: (_vehiculo?['carga_actual_tambores'] as num?)?.toDouble() ?? 0,
+            total: (_vehiculo?['capacidad_tambores'] as num?)?.toDouble() ?? 1,
+            unit: 'UN',
+            color: const Color(0xFFC68E17),
+          ),
+        ],
+      ),
     );
   }
 
@@ -193,6 +246,7 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
       ),
       child: Row(
         children: [

@@ -1,7 +1,7 @@
 {
     "name": "GeoLogística",
     "short_name": "GeoLogística",
-    "start_url": ".",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#08201A",
     "theme_color": "#C68E17",

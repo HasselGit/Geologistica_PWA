@@ -78,190 +78,222 @@ class _ChoferHomeWidgetState extends State<ChoferHomeWidget> {
 
     return Scaffold(
       backgroundColor: theme.primaryBackground,
-      body: Column(
-        children: [
-          // Header premium — Stitch light
-          Container(
-            color: const Color(0xFFFBF9F8),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  // Top bar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Row(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWeb = constraints.maxWidth >= 700;
+          
+          if (isWeb) {
+            return Row(
+              children: [
+                // LEFT sidebar (280px, dark green)
+                Container(
+                  width: 280,
+                  color: const Color(0xFF08201A),
+                  child: SafeArea(
+                    child: Column(
                       children: [
+                        const SizedBox(height: 28),
+                        // User avatar
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 60, height: 60,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(color: const Color(0xFFFDBE49), width: 2),
-                            color: const Color(0xFF08201A).withOpacity(0.08),
+                            color: Colors.white.withOpacity(0.1),
                           ),
-                          child: Center(
-                            child: Text(
-                              iniciales,
-                              style: const TextStyle(
-                                fontFamily: 'Manrope',
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                                color: Color(0xFF08201A),
-                              ),
-                            ),
-                          ),
+                          child: Center(child: Text(iniciales, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 20, color: Colors.white))),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Bienvenido',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  color: const Color(0xFF424846).withOpacity(0.6),
-                                ),
-                              ),
-                              Text(
-                                nombre,
-                                style: const TextStyle(
-                                  fontFamily: 'Manrope',
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 17,
-                                  color: Color(0xFF08201A),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Badge chip
+                        const SizedBox(height: 12),
+                        Text(nombre, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white), textAlign: TextAlign.center),
+                        const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFDBE49).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: const Color(0xFFFDBE49).withOpacity(0.4)),
                           ),
-                          child: const Text(
-                            'CHOFER',
-                            style: TextStyle(
-                              fontFamily: 'Work Sans',
-                              fontWeight: FontWeight.w800,
-                              fontSize: 9,
-                              color: Color(0xFF7D5700),
-                              letterSpacing: 1,
-                            ),
-                          ),
+                          child: const Text('CHOFER', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 9, color: Color(0xFFFDBE49), letterSpacing: 1)),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.logout_rounded, color: Color(0xFF08201A), size: 22),
-                          onPressed: () async {
-                            await Supabase.instance.client.auth.signOut();
-                            if (context.mounted) context.go('/');
-                          },
-                        ),
+                        const SizedBox(height: 32),
+                        const Divider(color: Colors.white12),
+                        const SizedBox(height: 16),
+                        // Vertical tab filters
+                        _sidebarTab(0, 'PENDIENTES', Icons.schedule_rounded, theme),
+                        _sidebarTab(1, 'EN CURSO', Icons.local_shipping_rounded, theme),
+                        _sidebarTab(2, 'TERMINADOS', Icons.check_circle_rounded, theme),
+                        const Spacer(),
+                        const Divider(color: Colors.white12),
+                        // Quick actions
+                        _sidebarAction(Icons.inventory_2_rounded, 'CARGAS', () => context.push('/depositoHome')),
+                        _sidebarAction(Icons.account_balance_wallet_rounded, 'GASTOS', () => context.push('/gastos')),
+                        _sidebarAction(Icons.local_shipping_rounded, 'VEHÍCULOS', () => context.push('/vehiculos')),
+                        const SizedBox(height: 12),
+                        _sidebarAction(Icons.logout_rounded, 'SALIR', () async {
+                          await Supabase.instance.client.auth.signOut();
+                          if (context.mounted) context.go('/');
+                        }),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // Title row
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ),
+                // RIGHT content
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFFF5F3F3),
+                    child: Column(
                       children: [
-                        const Text(
-                          'Mis Viajes',
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontWeight: FontWeight.w800,
-                            fontSize: 24,
-                            color: Color(0xFF08201A),
+                        // Top bar
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(28, 20, 28, 20),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFBF9F8),
+                            border: Border(bottom: BorderSide(color: Color(0x0D08201A))),
+                          ),
+                          child: Row(
+                            children: [
+                              const Text('Mis Viajes', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 22, color: Color(0xFF08201A))),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: _fetchData,
+                                child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0x0A08201A), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.refresh_rounded, color: Color(0xFF08201A), size: 18)),
+                              ),
+                            ],
                           ),
                         ),
-                        GestureDetector(
-                          onTap: _fetchData,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF08201A).withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(10),
+                        // Trip list
+                        Expanded(
+                          child: _loading
+                              ? Center(child: CircularProgressIndicator(color: theme.secondary))
+                              : _error != null
+                                  ? _buildError(theme)
+                                  : _filtered.isEmpty
+                                      ? _buildEmpty(theme)
+                                      : RefreshIndicator(
+                                          color: theme.secondary,
+                                          onRefresh: _fetchData,
+                                          child: ListView.builder(
+                                            padding: const EdgeInsets.all(28),
+                                            itemCount: _filtered.length,
+                                            itemBuilder: (ctx, i) => _buildTripCard(_filtered[i], theme),
+                                          ),
+                                        ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+          
+          return Column(
+            children: [
+              // existing mobile header
+              Container(
+                color: const Color(0xFFFBF9F8),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48, height: 48,
+                              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFDBE49), width: 2), color: const Color(0x1408201A)),
+                              child: Center(child: Text(iniciales, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF08201A)))),
                             ),
-                            child: const Icon(Icons.refresh_rounded, color: Color(0xFF08201A), size: 18),
-                          ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text('Bienvenido', style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: const Color(0xFF424846).withOpacity(0.6))),
+                                Text(nombre, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF08201A))),
+                              ]),
+                            ),
+                            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: const Color(0x26FDBE49), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0x66FDBE49))), child: const Text('CHOFER', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 9, color: Color(0xFF7D5700), letterSpacing: 1))),
+                            const SizedBox(width: 8),
+                            IconButton(icon: const Icon(Icons.logout_rounded, color: Color(0xFF08201A), size: 22), onPressed: () async { await Supabase.instance.client.auth.signOut(); if (context.mounted) context.go('/'); }),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Quick Actions
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        Expanded(child: _quickAction(Icons.inventory_2_rounded, 'CARGAS', () => context.push('/depositoHome'))),
-                        const SizedBox(width: 12),
-                        Expanded(child: _quickAction(Icons.account_balance_wallet_rounded, 'GASTOS', () => context.push('/gastos'))),
-                        const SizedBox(width: 12),
-                        Expanded(child: _quickAction(Icons.local_shipping_rounded, 'VEHÍCULOS', () => context.push('/vehiculos'))),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Tab pills
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _tabPill(theme, 0, 'PENDIENTES'),
-                          const SizedBox(width: 8),
-                          _tabPill(theme, 1, 'EN CURSO'),
-                          const SizedBox(width: 8),
-                          _tabPill(theme, 2, 'TERMINADOS'),
-                        ],
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Mis Viajes', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: Color(0xFF08201A))), GestureDetector(onTap: _fetchData, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0x0A08201A), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.refresh_rounded, color: Color(0xFF08201A), size: 18)))])),
+                      const SizedBox(height: 16),
+                      Padding(padding: const EdgeInsets.symmetric(horizontal: 20), child: Row(children: [Expanded(child: _quickAction(Icons.inventory_2_rounded, 'CARGAS', () => context.push('/depositoHome'))), const SizedBox(width: 12), Expanded(child: _quickAction(Icons.account_balance_wallet_rounded, 'GASTOS', () => context.push('/gastos'))), const SizedBox(width: 12), Expanded(child: _quickAction(Icons.local_shipping_rounded, 'VEHÍCULOS', () => context.push('/vehiculos')))])),
+                      const SizedBox(height: 16),
+                      Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 20), child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [_tabPill(theme, 0, 'PENDIENTES'), const SizedBox(width: 8), _tabPill(theme, 1, 'EN CURSO'), const SizedBox(width: 8), _tabPill(theme, 2, 'TERMINADOS')]))),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-
-          // Body
-          Expanded(
-            child: _loading
-                ? Center(child: CircularProgressIndicator(color: theme.secondary))
-                : _error != null
-                    ? _buildError(theme)
-                    : _filtered.isEmpty
-                        ? _buildEmpty(theme)
-                        : RefreshIndicator(
-                            color: theme.secondary,
-                            onRefresh: _fetchData,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                              itemCount: _filtered.length,
-                              itemBuilder: (ctx, i) => _buildTripCard(_filtered[i], theme),
-                            ),
-                          ),
-          ),
-        ],
+              Expanded(
+                child: Container(
+                  color: const Color(0xFFF5F3F3),
+                  child: _loading
+                      ? Center(child: CircularProgressIndicator(color: theme.secondary))
+                      : _error != null
+                          ? _buildError(theme)
+                          : _filtered.isEmpty
+                              ? _buildEmpty(theme)
+                              : RefreshIndicator(
+                                  color: theme.secondary,
+                                  onRefresh: _fetchData,
+                                  child: ListView.builder(
+                                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                                    itemCount: _filtered.length,
+                                    itemBuilder: (ctx, i) => _buildTripCard(_filtered[i], theme),
+                                  ),
+                                ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
+      bottomNavigationBar: MediaQuery.of(context).size.width >= 700 ? null : _buildBottomNav(theme),
+    );
+  }
 
-      // Bottom nav
-      bottomNavigationBar: _buildBottomNav(theme),
+  Widget _sidebarTab(int idx, String label, IconData icon, FlutterFlowTheme theme) {
+    final active = _selectedTab == idx;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = idx),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFFDBE49).withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: active ? const Color(0xFFFDBE49).withOpacity(0.3) : Colors.transparent),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: active ? const Color(0xFFFDBE49) : Colors.white54),
+            const SizedBox(width: 10),
+            Text(label, style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: active ? const Color(0xFFFDBE49) : Colors.white54, letterSpacing: 0.5)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sidebarAction(IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.white38),
+            const SizedBox(width: 10),
+            Text(label, style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w600, fontSize: 11, color: Colors.white38, letterSpacing: 0.5)),
+          ],
+        ),
+      ),
     );
   }
 
