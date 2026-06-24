@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:hive/hive.dart';
 import 'dart:async';
+import 'dart:ui';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 
@@ -35,6 +36,10 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
   StreamSubscription? _queueSub;
   StreamSubscription? _errorsSub;
   Timer? _connectivityTimer;
+
+  // Dynamic Dashboard Events
+  List<Map<String, dynamic>> _latestEvents = [];
+  bool _loadingEvents = true;
 
   @override
   void initState() {
@@ -110,21 +115,74 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       }
 
       final userId = prefs.getString('user_id');
+      if (userId == null || userId.isEmpty) {
+        print('HomePage: No user session found. Redirecting to welcome/login.');
+        if (mounted) {
+          context.go('/');
+        }
+        return;
+      }
       print('HomePage: Obteniendo stats para $_userRole ($userId)');
       
       final stats = await SupabaseService().getStats(userId: userId, role: _userRole);
       final cargasStats = await SupabaseService().getCargasStats(userId: userId, role: _userRole);
 
+      // Fetch dynamic events from Supabase (pesajes / remitos) if available
+      List<Map<String, dynamic>> events = [];
+      try {
+        final client = Supabase.instance.client;
+        final res = await client
+            .from('pesajes')
+            .select('created_at, peso_neto, apicultores(nombre)')
+            .order('created_at', ascending: false)
+            .limit(3);
+        if (res != null) {
+          for (var item in (res as List)) {
+            final name = item['apicultores'] != null ? item['apicultores']['nombre'] : 'Apicultor';
+            final kg = item['peso_neto'] ?? 0;
+            events.add({
+              'title': 'Ingreso Pesaje: $name',
+              'subtitle': 'Peso Neto registrado: ${kg}kg',
+              'time': _formatTimestamp(item['created_at']),
+              'type': 'normal',
+              'icon': Icons.scale_rounded,
+            });
+          }
+        }
+      } catch (e) {
+        print('HomePage: Error obteniendo pesajes reales, usando mockup: $e');
+      }
+
       if (mounted) {
         setState(() {
           _stats = stats;
           _cargasStats = cargasStats;
+          _latestEvents = events;
           _loadingStats = false;
+          _loadingEvents = false;
         });
       }
     } catch (e) {
       print('HomePage: Error en _fetchData: $e');
-      if (mounted) setState(() => _loadingStats = false);
+      if (mounted) {
+        setState(() {
+          _loadingStats = false;
+          _loadingEvents = false;
+        });
+      }
+    }
+  }
+
+  String _formatTimestamp(String? ts) {
+    if (ts == null) return 'Ahora';
+    try {
+      final dt = DateTime.parse(ts).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
+      if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
+      return '${dt.day}/${dt.month}';
+    } catch (e) {
+      return 'Reciente';
     }
   }
 
@@ -328,6 +386,8 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 children: [
                   _sidebarItem(Icons.logout_rounded, 'Cerrar Sesión', () async {
                     await Supabase.instance.client.auth.signOut();
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.remove('keep_session'); // Eliminar persistencia de sesión activa al hacer logout
                     if (context.mounted) context.go('/');
                   }),
                   _sidebarItem(Icons.power_settings_new_rounded, 'Salir', () {
@@ -459,6 +519,838 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       },
     );
   }
+
+  // ─── DESKTOP PREMIUM LAYOUT FOR MANAGEMENT ─────────────────────────────────
+
+  Widget _buildGerenteAdminDesktopContent(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Cabecera Principal Premium
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Centro de Comando',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 32,
+                      color: DesignTokens.primary,
+                      letterSpacing: -1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const _PulsingDot(),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Operación activa: 12 unidades en tránsito',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: DesignTokens.onSurfaceVariant.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  // Buscador
+                  Container(
+                    width: 240,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: DesignTokens.outline.withOpacity(0.4)),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search_rounded, color: DesignTokens.onSurfaceVariant.withOpacity(0.6), size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Buscar unidad...',
+                              hintStyle: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 13,
+                                color: DesignTokens.onSurfaceVariant.withOpacity(0.4),
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Botón Nueva Operación
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/planificarViaje'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DesignTokens.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    ),
+                    icon: const Icon(Icons.add_rounded, size: 20),
+                    label: const Text(
+                      'NUEVA OPERACIÓN',
+                      style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          // 2. Métricas Bento Premium
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 4,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.6,
+            children: [
+              const CircularProgressLoader(
+                progress: 0.82,
+                label: 'Capacidad Planta',
+                valueText: '82%',
+              ),
+              const SparklineCard(
+                label: 'Unidades Activas',
+                valueText: '24/30',
+                trendText: 'En ruta en este momento',
+                data: [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0],
+              ),
+              _bentoCard(
+                title: 'Logísticos Libres',
+                value: '08',
+                trend: 'Personal disponible',
+                iconWidget: const Icon(Icons.supervisor_account_rounded, color: DesignTokens.secondary, size: 24),
+              ),
+              _bentoCard(
+                title: 'Tonelaje Semanal',
+                value: '4.2 Tn',
+                trend: 'Meta semanal: 5.0 Tn',
+                accentColor: DesignTokens.secondary, // Fondo dorado llamativo
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          // 3. Grid de Operaciones (Mapa y Listas / Tablas)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Columna Izquierda (Ancho 8/12)
+              Expanded(
+                flex: 8,
+                child: Column(
+                  children: [
+                    // Mapa Satelital Embebido
+                    _buildSatelliteMap(),
+                    const SizedBox(height: 32),
+                    // Tabla de Estado de Flota
+                    _buildFleetTable(),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 32),
+              // Columna Derecha (Ancho 4/12)
+              Expanded(
+                flex: 4,
+                child: Column(
+                  children: [
+                    // Monitor de Planta
+                    _buildPlantaMonitor(),
+                    const SizedBox(height: 32),
+                    // Log de Operaciones
+                    _buildOperationsLog(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSatelliteMap() {
+    return Container(
+      height: 600,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Mapa base en escala de grises con contraste verdoso
+            Positioned.fill(
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.matrix([
+                  0.15, 0.45, 0.1, 0, 0,
+                  0.1, 0.55, 0.15, 0, 0,
+                  0.05, 0.35, 0.1, 0, 0,
+                  0,   0,   0,   1, 0,
+                ]),
+                child: Image.network(
+                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCAzxfqauJaxsGfgvA24P_vpOzTrxFNXF9nhGT7f3zzaz_OMraIKNexJ6XAHm2-fOQDYNlSQsV9EKst3h0Nyo7nM2KbnjNJEL_SPZ0BTlLcjdUZNshituAPhsA-FrTyTeXZA5SkU7w66G0qg9nFFFgAMev1t9lq48JylO-s-wKtc9Th9v_c1-30VPemfIhr9SVHx3MM1LvII0bTuFOqkyZYNKm_Xp11nql-ybMra0d1MmOUpFjcbbkA2R9aLjfvaq9SkXjCvjRHYD8',
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, o, s) => Container(
+                    color: const Color(0xFF0D1B17),
+                    child: Center(
+                      child: Icon(Icons.map_rounded, size: 64, color: Colors.white.withOpacity(0.1)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Capa de retícula de radar fina
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.05,
+                child: CustomPaint(
+                  painter: const HoneycombPainter(),
+                ),
+              ),
+            ),
+            // Cabecera del Mapa
+            Positioned(
+              top: 24,
+              left: 24,
+              right: 24,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Sincronización Satelital tag esmerilado
+                  _buildGlassmorphicOverlay(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'SINCRONIZACIÓN SATELITAL',
+                          style: TextStyle(
+                            fontFamily: 'Work Sans',
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: DesignTokens.secondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle)),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'Región Pampeana Norte',
+                              style: TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Botón Expandir
+                  _buildGlassmorphicOverlay(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: const Text(
+                      'VER EN PANTALLA COMPLETA',
+                      style: TextStyle(
+                        fontFamily: 'Work Sans',
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Marcador de Camión Flotante AR-402 (Centro-Izquierda)
+            Positioned(
+              top: 180,
+              left: 150,
+              child: Column(
+                children: [
+                  _buildGlassmorphicOverlay(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                          child: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 16),
+                        ),
+                        const SizedBox(width: 10),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('UNIDAD AR-402', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                            Text('EN RUTA: 82 KM/H', style: TextStyle(color: DesignTokens.secondary, fontSize: 9, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 2,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.white.withOpacity(0.5), Colors.transparent],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(color: DesignTokens.secondary, shape: BoxShape.circle),
+                  ),
+                ],
+              ),
+            ),
+            // Marcador de Apiario COL-98 (Centro-Derecha)
+            Positioned(
+              bottom: 160,
+              right: 180,
+              child: Column(
+                children: [
+                  _buildGlassmorphicOverlay(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                          child: const Icon(Icons.hive_rounded, color: Colors.white, size: 16),
+                        ),
+                        const SizedBox(width: 10),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('APIARIO COL-98', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                            Text('COSECHA ACTIVA', style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 2,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.white.withOpacity(0.5), Colors.transparent],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  ),
+                ],
+              ),
+            ),
+            // Telemetría inferior
+            Positioned(
+              bottom: 24,
+              left: 24,
+              child: Row(
+                children: [
+                  _buildGlassmorphicOverlay(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.gps_fixed_rounded, color: Colors.blueAccent, size: 12),
+                        SizedBox(width: 6),
+                        Text('GPS: 24 LAT', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, fontFamily: 'Work Sans')),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _buildGlassmorphicOverlay(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.thermostat_rounded, color: Colors.orangeAccent, size: 12),
+                        SizedBox(width: 6),
+                        Text('TEMP: 21°C', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, fontFamily: 'Work Sans')),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper para construir capas Glassmorphic consistentes con BackdropFilter blur sigma 10
+  Widget _buildGlassmorphicOverlay({required Widget child, required EdgeInsetsGeometry padding}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: const Color(0xFF08201A).withOpacity(0.75),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.0),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFleetTable() {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Estado de Flota',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: DesignTokens.primary,
+                ),
+              ),
+              Text(
+                'MONITOREO EN VIVO',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: DesignTokens.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(height: 1),
+          // Filas de operadores (Ricardo Gomez & Elena Vazquez)
+          _buildFleetRow(
+            initials: 'RG',
+            name: 'Ricardo Gomez',
+            unit: 'Unidad: SC-550',
+            status: 'En Desplazamiento',
+            isMoving: true,
+            destination: 'Sector Balcarce • Zona B',
+            volume: '82 Alzas',
+          ),
+          const Divider(height: 1),
+          _buildFleetRow(
+            initials: 'EV',
+            name: 'Elena Vazquez',
+            unit: 'Unidad: SC-901',
+            status: 'Descargando',
+            isMoving: false,
+            destination: 'Planta Central • Muelle 4',
+            volume: '140 Alzas',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFleetRow({
+    required String initials,
+    required String name,
+    required String unit,
+    required String status,
+    required bool isMoving,
+    required String destination,
+    required String volume,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(color: DesignTokens.primary, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Text(
+              initials,
+              style: const TextStyle(fontFamily: 'Manrope', color: DesignTokens.secondary, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Identificación
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(name, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 14, color: DesignTokens.primary)),
+                const SizedBox(height: 2),
+                Text(unit, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.onSurfaceVariant)),
+              ],
+            ),
+          ),
+          // Estado badge
+          Expanded(
+            flex: 3,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isMoving ? Colors.green.shade50 : DesignTokens.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: 'Work Sans',
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    color: isMoving ? Colors.green.shade700 : DesignTokens.secondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Destino
+          Expanded(
+            flex: 3,
+            child: Text(
+              destination,
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: DesignTokens.onSurfaceVariant, fontWeight: FontWeight.w300),
+            ),
+          ),
+          // Volumen
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                volume,
+                style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold, fontSize: 13, color: DesignTokens.primary),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlantaMonitor() {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: DesignTokens.primary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.primary.withOpacity(0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Monitor de Planta',
+            style: TextStyle(fontFamily: 'Manrope', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 24),
+          // Eficiencia operativa bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'EFICIENCIA OPERATIVA',
+                    style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.6), letterSpacing: 0.5),
+                  ),
+                  const Text(
+                    '94%',
+                    style: TextStyle(fontFamily: 'Manrope', fontSize: 12, fontWeight: FontWeight.bold, color: DesignTokens.secondary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 4,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: 0.94,
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.secondary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Grid controles rápidos
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.08))),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('REMITOS HOY', style: TextStyle(fontFamily: 'Work Sans', fontSize: 8, color: DesignTokens.secondary, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      SizedBox(height: 6),
+                      Text('48', style: TextStyle(fontFamily: 'Manrope', fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.08))),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ALERTAS', style: TextStyle(fontFamily: 'Work Sans', fontSize: 8, color: DesignTokens.error, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      SizedBox(height: 6),
+                      Text('03', style: TextStyle(fontFamily: 'Manrope', fontSize: 24, fontWeight: FontWeight.w800, color: DesignTokens.error)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOperationsLog() {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Log de Operaciones',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: DesignTokens.primary,
+                ),
+              ),
+              Icon(Icons.history_toggle_off_rounded, color: DesignTokens.primary.withOpacity(0.4), size: 20),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Items del feed
+          if (_loadingEvents)
+            const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+          else ...[
+            ..._latestEvents.map((ev) => _buildLogItem(
+              icon: ev['icon'] ?? Icons.scale_rounded,
+              title: ev['title'] ?? 'Evento',
+              time: ev['time'] ?? 'Ahora',
+              subtitle: ev['subtitle'] ?? '',
+              type: ev['type'] ?? 'normal',
+            )),
+            // Mock items for premium look if database log is short
+            if (_latestEvents.length < 3) ...[
+              _buildLogItem(
+                icon: Icons.verified_rounded,
+                title: 'Cosecha Balcarce Completada',
+                time: 'Hace 20 min',
+                subtitle: 'Líder: Mario S. - Alta Pureza',
+                type: 'success',
+              ),
+              _buildLogItem(
+                icon: Icons.sensors_rounded,
+                title: 'Calibración de Sensores',
+                time: 'Hace 2 h',
+                subtitle: 'Realizado en Taller Central Huinca',
+                type: 'normal',
+              ),
+              _buildLogItem(
+                icon: Icons.error_outline_rounded,
+                title: 'Alerta Térmica: AR-402',
+                time: 'Hace 4 h',
+                subtitle: 'Exceso en cabina (+2°C sobre ideal)',
+                type: 'critical',
+              ),
+            ],
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                backgroundColor: DesignTokens.surfaceLow,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text(
+                'AUDITORÍA COMPLETA',
+                style: TextStyle(fontFamily: 'Work Sans', fontSize: 10, fontWeight: FontWeight.bold, color: DesignTokens.primary, letterSpacing: 0.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogItem({
+    required IconData icon,
+    required String title,
+    required String time,
+    required String subtitle,
+    required String type,
+  }) {
+    Color itemColor = DesignTokens.primary;
+    Color bgColor = DesignTokens.primary.withOpacity(0.06);
+    if (type == 'success') {
+      itemColor = Colors.green.shade700;
+      bgColor = Colors.green.shade50;
+    } else if (type == 'critical') {
+      itemColor = DesignTokens.error;
+      bgColor = DesignTokens.error.withOpacity(0.08);
+    } else if (type == 'warning') {
+      itemColor = DesignTokens.secondary;
+      bgColor = DesignTokens.secondary.withOpacity(0.1);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
+            alignment: Alignment.center,
+            child: Icon(icon, color: itemColor, size: 18),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 13, color: DesignTokens.primary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(time, style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: DesignTokens.onSurfaceVariant.withOpacity(0.5))),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.onSurfaceVariant.withOpacity(0.7), fontWeight: FontWeight.w300),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── END OF DESKTOP LAYOUT ─────────────────────────────────────────────────
 
   Widget _buildMainContent(BuildContext context, bool isDesktop) {
     return RefreshIndicator(
@@ -740,17 +1632,36 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     List<double>? sparklineData,
     VoidCallback? onTap,
   }) {
-    final bool isDark = accentColor == DesignTokens.secondary;
+    final bool isGold = accentColor == DesignTokens.secondary;
+    final bool isDark = accentColor == DesignTokens.primary;
+    
+    Color cardBg = Colors.white;
+    Color textColor = DesignTokens.primary;
+    Color subColor = DesignTokens.onSurfaceVariant.withOpacity(0.6);
+    Color valueColor = DesignTokens.primary;
+    
+    if (isGold) {
+      cardBg = DesignTokens.secondary;
+      textColor = DesignTokens.primary;
+      subColor = DesignTokens.primary.withOpacity(0.7);
+      valueColor = DesignTokens.primary;
+    } else if (isDark) {
+      cardBg = DesignTokens.primary;
+      textColor = Colors.white;
+      subColor = Colors.white60;
+      valueColor = DesignTokens.secondary;
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isDark ? DesignTokens.primary : Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? Colors.transparent : DesignTokens.primary.withOpacity(0.05),
+            color: (isGold || isDark) ? Colors.transparent : DesignTokens.primary.withOpacity(0.05),
             width: 1.5,
           ),
           boxShadow: [
@@ -775,7 +1686,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                     fontWeight: FontWeight.w700,
                     fontSize: 9,
                     letterSpacing: 0.5,
-                    color: isDark ? Colors.white60 : DesignTokens.onSurfaceVariant.withOpacity(0.6),
+                    color: subColor,
                   ),
                 ),
                 if (iconWidget != null) iconWidget,
@@ -792,7 +1703,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                     fontFamily: 'Manrope',
                     fontWeight: FontWeight.w800,
                     fontSize: 28,
-                    color: isDark ? DesignTokens.secondary : DesignTokens.primary,
+                    color: valueColor,
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -814,7 +1725,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 10,
-                color: isDark ? Colors.white54 : DesignTokens.onSurfaceVariant.withOpacity(0.5),
+                color: subColor.withOpacity(0.8),
               ),
             ),
           ],
@@ -828,9 +1739,11 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 1024;
+        final bool isGerenteAdminDesktop = isDesktop && (_isManagement || _isAdmin);
+        
         return Scaffold(
           backgroundColor: DesignTokens.surface,
-          drawer: isDesktop ? null : _buildDrawer(),
+          drawer: isGerenteAdminDesktop ? null : (isDesktop ? null : _buildDrawer()),
           appBar: isDesktop
               ? null
               : AppBar(
@@ -897,7 +1810,9 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                     child: Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
-                        child: _buildMainContent(context, isDesktop),
+                        child: isGerenteAdminDesktop
+                            ? _buildGerenteAdminDesktopContent(context)
+                            : _buildMainContent(context, isDesktop),
                       ),
                     ),
                   ),
@@ -905,49 +1820,9 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
               ),
             ],
           ),
-          bottomNavigationBar: isDesktop ? null : _buildBottomNav(),
+          bottomNavigationBar: isGerenteAdminDesktop ? null : (isDesktop ? null : _buildBottomNav()),
         );
       },
-    );
-  }
-
-  Widget _statCard(String label, int value, Color textColor, Color bgColor, {VoidCallback? onTap}) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _loadingStats ? '—' : value.toString(),
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 26,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Work Sans',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 8,
-                  color: textColor,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -1106,6 +1981,8 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
           const Divider(),
           _drawerItem(Icons.logout_rounded, 'Cerrar Sesión', () async {
             await Supabase.instance.client.auth.signOut();
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('keep_session'); // Eliminar persistencia al hacer logout
             if (context.mounted) context.go('/');
           }),
           _drawerItem(Icons.power_settings_new_rounded, 'Salir', () {
@@ -1159,6 +2036,247 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
             Text(label, style: DesignTokens.labelStyle().copyWith(fontSize: 10, color: DesignTokens.primary, fontWeight: FontWeight.w800)),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// ─── HELPER WIDGETS FOR PREMIUM DASHBOARD ────────────────────────────────────
+
+// Loader circular para capacidad de planta
+class CircularProgressLoader extends StatelessWidget {
+  final double progress;
+  final String label;
+  final String valueText;
+
+  const CircularProgressLoader({
+    super.key,
+    required this.progress,
+    required this.label,
+    required this.valueText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: DesignTokens.primary,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.primary.withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'Work Sans',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 9,
+                    letterSpacing: 0.5,
+                    color: Colors.white60,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  valueText,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    color: DesignTokens.secondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '+2.4% vs semana ant.',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 10,
+                    color: Colors.greenAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 64,
+            height: 64,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CircularProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.white.withOpacity(0.08),
+                    color: DesignTokens.secondary,
+                    strokeWidth: 4,
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    '${(progress * 100).toInt()}%',
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Tarjeta con Sparkline chart
+class SparklineCard extends StatelessWidget {
+  final String label;
+  final String valueText;
+  final String trendText;
+  final List<double> data;
+  final VoidCallback? onTap;
+
+  const SparklineCard({
+    super.key,
+    required this.label,
+    required this.valueText,
+    required this.trendText,
+    required this.data,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: DesignTokens.primary.withOpacity(0.05),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: 'Work Sans',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 9,
+                      letterSpacing: 0.5,
+                      color: DesignTokens.onSurfaceVariant.withOpacity(0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    valueText,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 28,
+                      color: DesignTokens.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    trendText,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10,
+                      color: DesignTokens.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 80,
+              height: 40,
+              child: CustomPaint(
+                painter: SparklinePainter(data, DesignTokens.secondary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Punto verde parpadeante de status
+class _PulsingDot extends StatefulWidget {
+  const _PulsingDot();
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+
+    _opacityAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacityAnimation,
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: const BoxDecoration(
+          color: Colors.greenAccent,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }

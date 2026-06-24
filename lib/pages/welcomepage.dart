@@ -4,6 +4,8 @@ import '../index.dart';
 import 'package:flutter/material.dart';
 import '../backend/design_tokens.dart';
 import '../main.dart' show supabaseReady;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 import 'welcome_page_model.dart';
 export 'welcome_page_model.dart';
@@ -55,8 +57,19 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
     _animateProgress();
 
     // Esperar a Supabase en paralelo
-    supabaseReady.future.then((_) {
-      if (mounted) setState(() => _supabaseReady = true);
+    supabaseReady.future.then((_) async {
+      if (mounted) {
+        setState(() => _supabaseReady = true);
+        final prefs = await SharedPreferences.getInstance();
+        final keep = prefs.getBool('keep_session') ?? false;
+        final userId = prefs.getString('user_id');
+        if (keep && userId != null && userId.isNotEmpty) {
+          print('WelcomePage: Sesión activa detectada en caché. Auto-redirigiendo a /home');
+          if (mounted) {
+            context.go('/home');
+          }
+        }
+      }
     });
   }
 
@@ -255,7 +268,7 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
                                   ),
                                   child: ElevatedButton(
                                     onPressed: _supabaseReady
-                                        ? () => context.pushNamed('Login')
+                                        ? () => GoRouter.of(context).pushNamed('Login')
                                         : null,
                                     style: DesignTokens.secondaryButtonStyle,
                                     child: _supabaseReady

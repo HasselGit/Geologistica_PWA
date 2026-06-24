@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -45,6 +46,25 @@ final Completer<void> supabaseReady = Completer<void>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Verificación de sesión persistente (Mantener sesión activa)
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final keep = prefs.getBool('keep_session') ?? false;
+    if (!keep) {
+      await prefs.remove('user_id');
+      await prefs.remove('user_email');
+      await prefs.remove('user_nombre');
+      await prefs.remove('user_apellido');
+      await prefs.remove('user_puesto');
+      print('Main: keep_session es falso o nulo. Sesión temporal limpia al inicio.');
+    } else {
+      print('Main: keep_session es verdadero. Conservando sesión activa.');
+    }
+  } catch (e) {
+    print('Main: Error al verificar keep_session en inicio: $e');
+  }
+
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
