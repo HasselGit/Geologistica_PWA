@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:hive/hive.dart';
+import 'dart:async';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 
@@ -25,7 +27,14 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
   String? _userRole;
   String? _userEmail;
 
-  // Stitch exact colors are now in DesignTokens
+  // Stitch Redesign state variables
+  bool _isSidebarHovered = false;
+  bool _isOnlineForSyncMonitor = true;
+  late final ValueNotifier<int> _queueLengthNotifier;
+  late final ValueNotifier<int> _errorsLengthNotifier;
+  StreamSubscription? _queueSub;
+  StreamSubscription? _errorsSub;
+  Timer? _connectivityTimer;
 
   @override
   void initState() {
@@ -33,11 +42,48 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     SupabaseService().processQueue();
     _fetchData();
+
+    // Set up ValueNotifiers and Hive listeners to prevent memory leaks
+    _queueLengthNotifier = ValueNotifier<int>(Hive.box('sync_queue').length);
+    _errorsLengthNotifier = ValueNotifier<int>(Hive.box('sync_errors').length);
+    
+    _queueSub = Hive.box('sync_queue').watch().listen((_) {
+      if (mounted) {
+        _queueLengthNotifier.value = Hive.box('sync_queue').length;
+      }
+    });
+    _errorsSub = Hive.box('sync_errors').watch().listen((_) {
+      if (mounted) {
+        _errorsLengthNotifier.value = Hive.box('sync_errors').length;
+      }
+    });
+    
+    // Periodic check of connectivity
+    SupabaseService().checkConnectivity().then((online) {
+      if (mounted) {
+        setState(() {
+          _isOnlineForSyncMonitor = online;
+        });
+      }
+    });
+    _connectivityTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      final online = await SupabaseService().checkConnectivity();
+      if (mounted) {
+        setState(() {
+          _isOnlineForSyncMonitor = online;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _queueSub?.cancel();
+    _errorsSub?.cancel();
+    _queueLengthNotifier.dispose();
+    _errorsLengthNotifier.dispose();
+    _connectivityTimer?.cancel();
     super.dispose();
   }
 
@@ -143,141 +189,155 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
   }
 
   Widget _buildSidebar(BuildContext context) {
-    return Container(
-      width: 260,
-      color: DesignTokens.primary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 40, 24, 30),
-            child: Row(
-              children: [
-                ClipOval(
-                  child: Image.asset(
-                    'assets/images/logo_Geologistica_Verde.png',
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
+    final double sidebarWidth = _isSidebarHovered ? 260 : 80;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isSidebarHovered = true),
+      onExit: (_) => setState(() => _isSidebarHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        width: sidebarWidth,
+        color: DesignTokens.primary,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 40, 20, 30),
+              child: Row(
+                mainAxisAlignment: _isSidebarHovered ? MainAxisAlignment.start : MainAxisAlignment.center,
+                children: [
+                  ClipOval(
+                    child: Image.asset(
+                      'assets/images/logo_Geologistica_Verde.png',
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'GeoLogística',
-                        style: TextStyle(
-                          fontFamily: 'Manrope',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
+                  if (_isSidebarHovered) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'GeoLogística',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'APIARY LOGISTICS',
+                            style: TextStyle(
+                              fontFamily: 'Work Sans',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 8,
+                              color: Colors.white.withOpacity(0.4),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'APIARY LOGISTICS',
-                        style: TextStyle(
-                          fontFamily: 'Work Sans',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 8,
-                          color: Colors.white.withOpacity(0.4),
-                          letterSpacing: 1.2,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Container(
+                padding: EdgeInsets.all(_isSidebarHovered ? 12 : 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: _isSidebarHovered ? MainAxisAlignment.start : MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: DesignTokens.secondary,
+                      ),
+                      child: Text(
+                        _initials,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                      ),
+                    ),
+                    if (_isSidebarHovered) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _displayName,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              _userRole ?? 'Operador',
+                              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: DesignTokens.secondary,
-                    ),
-                    child: Text(
-                      _initials,
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _displayName,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          _userRole ?? 'Operador',
-                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
+                  if (_isAdmin || _isManagement)
+                    _sidebarItem(Icons.dashboard_rounded, 'Dashboard', () => context.push('/gerenteHome'), active: true),
+                  if (_isAdmin || _isManagement)
+                    _sidebarItem(Icons.alt_route_rounded, 'Gestión de Viajes', () => context.push('/viajes')),
+                  _sidebarItem(Icons.local_shipping_rounded, 'Vehículos', () => context.push('/vehiculos')),
+                  if (!_isDeposito && !_isChofer && !_isCompras)
+                    _sidebarItem(Icons.inventory_2_rounded, 'Productos', () => context.push('/productos')),
+                  if (!_isChofer) ...[
+                    if (!_isCompras)
+                      _sidebarItem(Icons.payments_rounded, 'Gestión de Gastos', () => context.push('/gastos')),
+                    _sidebarItem(Icons.scale_rounded, 'Control de Pesajes', () => context.push('/pesajes')),
+                  ],
+                  if (_isDeposito || _isManagement || _isChofer)
+                    _sidebarItem(Icons.warehouse_rounded, (_isDeposito || _isManagement) ? 'Cargas Depósito' : 'Depósito Huinca', () => context.push('/depositoHome')),
+                  if ((_isAdmin || _isManagement) && !_isDeposito)
+                    _sidebarItem(Icons.inventory_2_rounded, 'Gestión de Cargas', () => context.push('/cargas')),
+                  const Divider(color: Colors.white10, height: 20),
+                  if (!_isDeposito)
+                    _sidebarItem(Icons.group_rounded, 'Apicultores', () => context.push('/apicultores')),
+                  _sidebarItem(Icons.receipt_long_rounded, 'Remitos Digitales', () => context.push('/remitosLista')),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                if (_isAdmin || _isManagement)
-                  _sidebarItem(Icons.dashboard_rounded, 'Dashboard', () => context.push('/gerenteHome'), active: true),
-                if (_isAdmin || _isManagement)
-                  _sidebarItem(Icons.alt_route_rounded, 'Gestión de Viajes', () => context.push('/viajes')),
-                _sidebarItem(Icons.local_shipping_rounded, 'Vehículos', () => context.push('/vehiculos')),
-                if (!_isDeposito && !_isChofer && !_isCompras)
-                  _sidebarItem(Icons.inventory_2_rounded, 'Productos', () => context.push('/productos')),
-                if (!_isChofer) ...[
-                  if (!_isCompras)
-                    _sidebarItem(Icons.payments_rounded, 'Gestión de Gastos', () => context.push('/gastos')),
-                  _sidebarItem(Icons.scale_rounded, 'Control de Pesajes', () => context.push('/pesajes')),
+            _buildSyncMonitor(),
+            const Divider(color: Colors.white10, height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+              child: Column(
+                children: [
+                  _sidebarItem(Icons.logout_rounded, 'Cerrar Sesión', () async {
+                    await Supabase.instance.client.auth.signOut();
+                    if (context.mounted) context.go('/');
+                  }),
+                  _sidebarItem(Icons.power_settings_new_rounded, 'Salir', () {
+                    SystemNavigator.pop();
+                  }, color: Colors.redAccent.shade100),
                 ],
-                if (_isDeposito || _isManagement || _isChofer)
-                  _sidebarItem(Icons.warehouse_rounded, (_isDeposito || _isManagement) ? 'Cargas Depósito' : 'Depósito Huinca', () => context.push('/depositoHome')),
-                if ((_isAdmin || _isManagement) && !_isDeposito)
-                  _sidebarItem(Icons.inventory_2_rounded, 'Gestión de Cargas', () => context.push('/cargas')),
-                const Divider(color: Colors.white10, height: 20),
-                if (!_isDeposito)
-                  _sidebarItem(Icons.group_rounded, 'Apicultores', () => context.push('/apicultores')),
-                _sidebarItem(Icons.receipt_long_rounded, 'Remitos Digitales', () => context.push('/remitosLista')),
-              ],
+              ),
             ),
-          ),
-          const Divider(color: Colors.white10, height: 1),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Column(
-              children: [
-                _sidebarItem(Icons.logout_rounded, 'Cerrar Sesión', () async {
-                  await Supabase.instance.client.auth.signOut();
-                  if (context.mounted) context.go('/');
-                }),
-                _sidebarItem(Icons.power_settings_new_rounded, 'Salir', () {
-                  SystemNavigator.pop();
-                }, color: Colors.redAccent.shade100),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -292,18 +352,111 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       child: ListTile(
         visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
         leading: Icon(icon, color: active ? DesignTokens.secondary : (color ?? Colors.white70), size: 20),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 12.5,
-            color: active ? DesignTokens.secondary : (color ?? Colors.white70),
-          ),
-        ),
+        title: _isSidebarHovered
+            ? Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 12.5,
+                  color: active ? DesignTokens.secondary : (color ?? Colors.white70),
+                ),
+              )
+            : null,
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
+    );
+  }
+
+  Widget _buildSyncMonitor() {
+    return ValueListenableBuilder<int>(
+      valueListenable: _queueLengthNotifier,
+      builder: (context, pendingCount, _) {
+        return ValueListenableBuilder<int>(
+          valueListenable: _errorsLengthNotifier,
+          builder: (context, errorCount, _) {
+            final bool isOnline = _isOnlineForSyncMonitor;
+            
+            if (!_isSidebarHovered) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(
+                      isOnline ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                      color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
+                      size: 16,
+                    ),
+                    if (pendingCount > 0) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: DesignTokens.secondary, shape: BoxShape.circle),
+                        child: Text(
+                          '$pendingCount',
+                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }
+            
+            return Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isOnline ? 'ONLINE' : 'OFFLINE',
+                        style: const TextStyle(
+                          fontFamily: 'Work Sans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Cola: $pendingCount pendientes',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11, fontFamily: 'Inter'),
+                  ),
+                  if (errorCount > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Errores: $errorCount en cola',
+                      style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Inter'),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -357,15 +510,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
             if (!_isDeposito) ...[
               Text('ESTADO DE VIAJES', style: DesignTokens.labelStyle().copyWith(letterSpacing: 1.1, fontSize: 11)),
               const SizedBox(height: 14),
-              Row(
-                children: [
-                  _statCard('PENDIENTE', _stats['planificados']!, const Color(0xFF1565C0), const Color(0xFFD6E4FF), onTap: () => context.push('/viajes?estado=Pendiente')),
-                  const SizedBox(width: 10),
-                  _statCard('EN CURSO', _stats['en_curso']!, const Color(0xFF7D5700), const Color(0xFFFDEFCC), onTap: () => context.push('/viajes?estado=En%20Curso')),
-                  const SizedBox(width: 10),
-                  _statCard('TERMINADOS', _stats['terminados']!, const Color(0xFF1A6B43), const Color(0xFFD4F0E1), onTap: () => context.push('/viajes?estado=Terminado')),
-                ],
-              ),
+              _buildBentoGrid(isDesktop),
               const SizedBox(height: 28),
             ],
 
@@ -544,6 +689,140 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     );
   }
 
+  Widget _buildBentoGrid(bool isDesktop) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: isDesktop ? 4 : 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: isDesktop ? 1.45 : 1.1,
+      children: [
+        _bentoCard(
+          title: 'PENDIENTES',
+          value: _loadingStats ? '—' : '${_stats['planificados']}',
+          trend: 'Viajes planificados',
+          iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 24),
+          onTap: () => context.push('/viajes?estado=Pendiente'),
+        ),
+        _bentoCard(
+          title: 'EN CURSO',
+          value: _loadingStats ? '—' : '${_stats['en_curso']}',
+          trend: 'Viajes activos',
+          accentColor: DesignTokens.secondary,
+          sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0],
+          onTap: () => context.push('/viajes?estado=En%20Curso'),
+        ),
+        _bentoCard(
+          title: 'TERMINADOS',
+          value: _loadingStats ? '—' : '${_stats['terminados']}',
+          trend: 'Historial',
+          iconWidget: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 24),
+          onTap: () => context.push('/viajes?estado=Terminado'),
+        ),
+        _bentoCard(
+          title: 'CARGAS HOY',
+          value: _loadingStats ? '—' : '${_cargasStats['planificadas']! + _cargasStats['en_curso']! + _cargasStats['terminadas']!}',
+          trend: 'Cargas en depósito',
+          iconWidget: const Icon(Icons.warehouse_rounded, color: DesignTokens.primary, size: 24),
+          onTap: () => context.push('/depositoHome'),
+        ),
+      ],
+    );
+  }
+
+  Widget _bentoCard({
+    required String title,
+    required String value,
+    required String trend,
+    Widget? iconWidget,
+    Color? accentColor,
+    List<double>? sparklineData,
+    VoidCallback? onTap,
+  }) {
+    final bool isDark = accentColor == DesignTokens.secondary;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: isDark ? DesignTokens.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? Colors.transparent : DesignTokens.primary.withOpacity(0.05),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Work Sans',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 9,
+                    letterSpacing: 0.5,
+                    color: isDark ? Colors.white60 : DesignTokens.onSurfaceVariant.withOpacity(0.6),
+                  ),
+                ),
+                if (iconWidget != null) iconWidget,
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    color: isDark ? DesignTokens.secondary : DesignTokens.primary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                if (sparklineData != null)
+                  Expanded(
+                    child: Container(
+                      height: 24,
+                      padding: const EdgeInsets.only(left: 12, right: 4),
+                      child: CustomPaint(
+                        painter: SparklinePainter(sparklineData, DesignTokens.secondary),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              trend,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 10,
+                color: isDark ? Colors.white54 : DesignTokens.onSurfaceVariant.withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -602,16 +881,27 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                     const SizedBox(width: 8),
                   ],
                 ),
-          body: Row(
+          body: Stack(
             children: [
-              if (isDesktop) _buildSidebar(context),
-              Expanded(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
-                    child: _buildMainContent(context, isDesktop),
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: HoneycombPainter(),
                   ),
                 ),
+              ),
+              Row(
+                children: [
+                  if (isDesktop) _buildSidebar(context),
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
+                        child: _buildMainContent(context, isDesktop),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

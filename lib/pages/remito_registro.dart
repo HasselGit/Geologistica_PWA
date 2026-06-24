@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:easy_debounce/easy_debounce.dart';
 import '../backend/design_tokens.dart';
 import '../backend/supabase_service.dart';
 import '../backend/pdf_invoice_generator.dart';
@@ -93,6 +94,27 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
   }
 
 
+  Uint8List? _logoBytes;
+
+  void _onFormFieldsChanged() {
+    EasyDebounce.debounce('fields-debouncer', const Duration(milliseconds: 500), () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _loadLogoBytes() async {
+    try {
+      final logoData = await rootBundle.load('assets/images/geomiel_logo.png');
+      if (mounted) {
+        setState(() {
+          _logoBytes = logoData.buffer.asUint8List();
+        });
+      }
+    } catch (e) {
+      print('Error pre-loading logo: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -100,11 +122,20 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
     _titularNombre = widget.apicultorNombre;
     _titularDni = widget.apicultorDni;
     _loadItems();
+    _loadLogoBytes();
     if (widget.apicultorNombre != null) {
       _firmanteNombreController.text = widget.apicultorNombre!;
       _firmanteDniController.text = widget.apicultorDni ?? '';
     }
     _loadUserProfile();
+
+    _firmanteNombreController.addListener(_onFormFieldsChanged);
+    _firmanteDniController.addListener(_onFormFieldsChanged);
+    _signatureController.addListener(() {
+      EasyDebounce.debounce('sig-debouncer', const Duration(milliseconds: 500), () {
+        if (mounted) setState(() {});
+      });
+    });
   }
 
   List<Map<String, dynamic>> _pesajes = [];
@@ -318,10 +349,13 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
 
   @override
   void dispose() {
+    _firmanteNombreController.removeListener(_onFormFieldsChanged);
+    _firmanteDniController.removeListener(_onFormFieldsChanged);
     _signatureController.dispose();
     _firmanteNombreController.dispose();
     _firmanteDniController.dispose();
     _telefonoController.dispose();
+    _terceroTelefonoController.dispose();
     super.dispose();
   }
 
@@ -1575,36 +1609,84 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
     );
   }
 
-  Widget _buildLeftColumnCard(String displayOperacion, bool isRecoleccion) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.08), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          )
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCabecera(displayOperacion, isRecoleccion),
-          _buildApicultorTitular(),
-          _buildQuienFirma(),
-          _buildDetalleProductos(),
-          _buildPlanillaPesaje(),
-        ],
-      ),
+  Future<Uint8List> _generateCurrentPdf() async {
+    final String receptorNombre = _firmanteNombreController.text.trim();
+    final String receptorDni = _firmanteDniController.text.trim();
+
+    final List<Map<String, dynamic>> itemsToInclude = [];
+    for (var item in _availableItems) {
+      final String itemId = item['id'].toString();
+      final int qty = (_selectedQuantities[itemId] ?? 0).toInt();
+      if (qty > 0) {
+        itemsToInclude.add({
+          'producto_codigo': item['codigo'],
+          'producto_nombre': item['nombre'],
+          'cantidad': qty,
+          'unidad': item['unidad'],
+        });
+      }
+    }
+
+    final List<Map<String, dynamic>> filteredPesajes = _pesajes.where((p) {
+      final apicId = p['apicultor_id']?.toString().trim().toLowerCase();
+      final titId = _titularId?.trim().toLowerCase();
+      return apicId == titId;
+    }).toList();
+
+    double totalBruto = 0.0;
+    double totalTara = 0.0;
+    double totalNeto = 0.0;
+    for (var p in filteredPesajes) {
+      final double b = (p['peso_bruto'] as num?)?.toDouble() ?? 0.0;
+      final double t = (p['tara'] as num?)?.toDouble() ?? 0.0;
+      totalBruto += b;
+      totalTara += t;
+      totalNeto += (b - t).clamp(0, double.infinity);
+    }
+
+    Uint8List signatureBytes;
+    if (!_signatureController.isEmpty) {
+      final bytes = await _signatureController.toPngBytes();
+      signatureBytes = bytes ?? base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
+    } else {
+      signatureBytes = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
+    }
+
+    Uint8List? logoBytes = _logoBytes;
+    if (logoBytes == null) {
+      try {
+        final logoData = await rootBundle.load('assets/images/geomiel_logo.png');
+        logoBytes = logoData.buffer.asUint8List();
+        _logoBytes = logoBytes;
+      } catch (_) {}
+    }
+
+    final String numeroRemito = 'PREV-REM';
+
+    return await PdfInvoiceGenerator.generateWeighingRemitoPDF(
+      paradaId: widget.paradaId,
+      tipoOperacion: widget.tipoOperacion,
+      vehiculoCodigo: _viajeData?['vehiculo_codigo'],
+      viajeCodigo: _viajeData?['viaje_codigo'],
+      titularNombre: _titularNombre,
+      titularDni: _titularDni,
+      receptorNombre: receptorNombre,
+      receptorDni: receptorDni,
+      items: itemsToInclude,
+      pesajes: filteredPesajes,
+      totalBruto: totalBruto,
+      totalTara: totalTara,
+      totalNeto: totalNeto,
+      signatureBytes: signatureBytes,
+      logoBytes: logoBytes,
+      depositoOrigen: _depositoOrigen,
+      numeroRemito: numeroRemito,
     );
   }
 
-  Widget _buildRightColumnCard() {
+  Widget _buildPdfPreviewCard() {
     return Container(
+      height: 800,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -1617,13 +1699,19 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
           )
         ],
       ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFirmasConformidad(),
-          _buildFooterLegal(),
-        ],
+      padding: const EdgeInsets.all(12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: PdfPreview(
+          build: (format) => _generateCurrentPdf(),
+          allowPrinting: true,
+          allowSharing: true,
+          canChangePageFormat: false,
+          dynamicLayout: false,
+          pdfPreviewPageDecoration: const BoxDecoration(
+            color: Colors.transparent,
+          ),
+        ),
       ),
     );
   }
@@ -1654,18 +1742,18 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
               children: [
                 Expanded(
                   flex: 6,
-                  child: _buildLeftColumnCard(displayOperacion, isRecoleccion),
-                ),
-                const SizedBox(width: 24),
-                Expanded(
-                  flex: 5,
                   child: Column(
                     children: [
-                      _buildRightColumnCard(),
+                      _buildPaperSheet(true, displayOperacion, isRecoleccion),
                       const SizedBox(height: 24),
                       _buildSubmitButton(),
                     ],
                   ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  flex: 5,
+                  child: _buildPdfPreviewCard(),
                 ),
               ],
             ),
@@ -1724,16 +1812,27 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
           ),
           body: _isLoading
               ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-              : Row(
+              : Stack(
                   children: [
-                    if (isDesktop) _buildSidebar(context),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
-                          child: _buildMainContent(isDesktop, displayOperacion, isRecoleccion),
+                    const Positioned.fill(
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter: HoneycombPainter(),
                         ),
                       ),
+                    ),
+                    Row(
+                      children: [
+                        if (isDesktop) _buildSidebar(context),
+                        Expanded(
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
+                              child: _buildMainContent(isDesktop, displayOperacion, isRecoleccion),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

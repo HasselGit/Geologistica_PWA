@@ -295,7 +295,7 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
       _senasaController.clear();
       _brutoController.clear();
       _taraController.clear();
-      FocusScope.of(context).unfocus();
+      _senasaFocusNode.requestFocus();
     } catch (e) {
       debugPrint('Error inserting pesaje: $e');
       if (mounted) {
@@ -605,12 +605,106 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
     );
   }
 
+  Widget _buildDigitalScaleDisplay() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0F0D),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.secondary.withOpacity(0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.accent.withOpacity(0.2),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'BÁSCULA DIGITAL - PESO NETO ACUMULADO',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white54,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.wifi_rounded, size: 10, color: Colors.greenAccent),
+                    SizedBox(width: 4),
+                    Text(
+                      'CONECTADO',
+                      style: TextStyle(fontFamily: 'Work Sans', fontSize: 8, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                _totalNeto.toStringAsFixed(1),
+                style: const TextStyle(
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: DesignTokens.secondary,
+                  shadows: [
+                    Shadow(
+                      color: Color(0x66FDBE49),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'kg',
+                style: TextStyle(
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: DesignTokens.secondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMainContent(bool isDesktop) {
     if (!isDesktop) {
       return CustomScrollView(
         slivers: [
           if (!_isOnline) SliverToBoxAdapter(child: _buildOfflineBanner()),
           SliverToBoxAdapter(child: _buildContextCard()),
+          if (_pesarTambores) SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: _buildDigitalScaleDisplay(),
+            ),
+          ),
           SliverToBoxAdapter(child: _buildFormCard()),
           SliverToBoxAdapter(child: _buildTamboresHeader()),
           if (_tambores.where((t) => _isSameApicId(t['apicultor_id']?.toString(), _selectedApicultorId)).isEmpty)
@@ -632,6 +726,10 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
             if (!_isOnline) _buildOfflineBanner(),
             _buildContextCard(),
             const SizedBox(height: 20),
+            if (_pesarTambores) ...[
+              _buildDigitalScaleDisplay(),
+              const SizedBox(height: 20),
+            ],
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -694,16 +792,27 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
           ),
           body: _loadingExisting
               ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-              : Row(
+              : Stack(
                   children: [
-                    if (isDesktop) _buildSidebar(context),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
-                          child: _buildMainContent(isDesktop),
+                    const Positioned.fill(
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter: HoneycombPainter(),
                         ),
                       ),
+                    ),
+                    Row(
+                      children: [
+                        if (isDesktop) _buildSidebar(context),
+                        Expanded(
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
+                              child: _buildMainContent(isDesktop),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -888,6 +997,14 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
             TextFormField(
               controller: _senasaController,
               focusNode: _senasaFocusNode,
+              textInputAction: _pesarTambores ? TextInputAction.next : TextInputAction.done,
+              onFieldSubmitted: (_) {
+                if (_pesarTambores) {
+                  FocusScope.of(context).requestFocus(_brutoFocusNode);
+                } else {
+                  _agregarTambor();
+                }
+              },
               decoration: _inputDecoration(
                 'CÓDIGO SENASA',
                 Icons.qr_code_rounded,
@@ -932,6 +1049,8 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
                     child: TextFormField(
                       controller: _brutoController,
                       focusNode: _brutoFocusNode,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_taraFocusNode),
                       decoration: _inputDecoration('PESO BRUTO (kg)', Icons.monitor_weight_rounded),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (_) => setState(() {}),
@@ -949,6 +1068,8 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
                     child: TextFormField(
                       controller: _taraController,
                       focusNode: _taraFocusNode,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _agregarTambor(),
                       decoration: _inputDecoration('TARA (kg)', Icons.scale_rounded),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (_) => setState(() {}),

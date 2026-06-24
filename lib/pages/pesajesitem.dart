@@ -283,6 +283,94 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
     );
   }
 
+  Widget _buildDigitalScaleDisplay(double neto) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0F0D),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.secondary.withOpacity(0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.accent.withOpacity(0.2),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'BÁSCULA DIGITAL - PESO NETO',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white54,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.wifi_rounded, size: 10, color: Colors.greenAccent),
+                    SizedBox(width: 4),
+                    Text(
+                      'CONECTADO',
+                      style: TextStyle(fontFamily: 'Work Sans', fontSize: 8, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                neto.toStringAsFixed(2),
+                style: const TextStyle(
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: DesignTokens.secondary,
+                  shadows: [
+                    Shadow(
+                      color: Color(0x66FDBE49),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'kg',
+                style: TextStyle(
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: DesignTokens.secondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMainContent(bool isDesktop, List<ParadaItemsRow> containerParadaItemsRowList, double neto) {
     Widget capacidadCard = Container(
       padding: const EdgeInsets.all(20),
@@ -428,35 +516,7 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
           ],
         ),
         const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: DesignTokens.secondary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: DesignTokens.secondary.withOpacity(0.2)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PESO NETO',
-                    style: DesignTokens.labelStyle(color: DesignTokens.secondary),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${neto.toStringAsFixed(2)} KG', 
-                    style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, color: DesignTokens.primary, fontSize: 24),
-                  ),
-                ],
-              ),
-              const Icon(Icons.scale_rounded, color: DesignTokens.secondary, size: 28),
-            ],
-          ),
-        ),
+        _buildDigitalScaleDisplay(neto),
       ],
     );
 
@@ -614,34 +674,45 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
               ),
             ),
             body: SafeArea(
-              child: FutureBuilder<List<ParadaItemsRow>>(
-                future: _paradaItemsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: DesignTokens.secondary),
-                    );
-                  }
-                  List<ParadaItemsRow> containerParadaItemsRowList = snapshot.data ?? [];
-
-                  double bruto = double.tryParse(_model.brutoController!.text) ?? 0;
-                  double tara = double.tryParse(_model.taraController!.text) ?? 0;
-                  double neto = bruto > tara ? bruto - tara : 0;
-
-                  return Row(
-                    children: [
-                      if (isDesktop) _buildSidebar(context),
-                      Expanded(
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
-                            child: _buildMainContent(isDesktop, containerParadaItemsRowList, neto),
-                          ),
-                        ),
+              child: Stack(
+                children: [
+                  const Positioned.fill(
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        painter: HoneycombPainter(),
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                  FutureBuilder<List<ParadaItemsRow>>(
+                    future: _paradaItemsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: DesignTokens.secondary),
+                        );
+                      }
+                      List<ParadaItemsRow> containerParadaItemsRowList = snapshot.data ?? [];
+
+                      double bruto = double.tryParse(_model.brutoController!.text) ?? 0;
+                      double tara = double.tryParse(_model.taraController!.text) ?? 0;
+                      double neto = bruto > tara ? bruto - tara : 0;
+
+                      return Row(
+                        children: [
+                          if (isDesktop) _buildSidebar(context),
+                          Expanded(
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
+                                child: _buildMainContent(isDesktop, containerParadaItemsRowList, neto),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           );

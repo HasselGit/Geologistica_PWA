@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class DesignTokens {
   // Brand Colors
@@ -62,3 +63,85 @@ class DesignTokens {
     textStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1),
   );
 }
+
+class HoneycombPainter extends CustomPainter {
+  const HoneycombPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF08201A).withOpacity(0.015) // Faint 1.5% opac.
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    const double radius = 25.0;
+    final double h = radius * math.sqrt(3);
+    final double w = radius * 2;
+
+    for (double y = 0; y < size.height + h; y += h) {
+      for (double x = 0; x < size.width + w; x += radius * 3) {
+        _drawHex(canvas, x, y, radius, paint);
+        _drawHex(canvas, x + radius * 1.5, y + h / 2, radius, paint);
+      }
+    }
+  }
+
+  void _drawHex(Canvas canvas, double cx, double cy, double radius, Paint paint) {
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      final double angle = i * math.pi / 3;
+      final double x = cx + radius * math.cos(angle);
+      final double y = cy + radius * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant HoneycombPainter oldDelegate) => false;
+}
+
+class SparklinePainter extends CustomPainter {
+  final List<double> data;
+  final Color color;
+
+  SparklinePainter(this.data, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    final double dx = size.width / (data.length - 1);
+    final double maxVal = data.reduce((a, b) => a > b ? a : b);
+    final double minVal = data.reduce((a, b) => a < b ? a : b);
+    final double range = maxVal - minVal == 0 ? 1 : maxVal - minVal;
+
+    for (int i = 0; i < data.length; i++) {
+      final double x = i * dx;
+      final double y = size.height - ((data[i] - minVal) / range) * size.height;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant SparklinePainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.data != data;
+  }
+}
+
