@@ -5,15 +5,15 @@ urls_to_cache = ['/']
 
 for root, dirs, files in os.walk(build_dir):
     for file in files:
-        if file == 'flutter_service_worker.js':
-            continue # Don't cache the service worker itself
+        if file == 'flutter_service_worker.js' or file.startswith('.') or '.vercel' in root or '.git' in root:
+            continue # Don't cache the service worker itself or dotfiles
         # Get relative path
         rel_path = os.path.relpath(os.path.join(root, file), build_dir)
         # Convert to forward slashes and ensure leading slash
         url = '/' + rel_path.replace('\\', '/')
         urls_to_cache.append(url)
 
-sw_content = f"""var CACHE_NAME = 'geologistica-pwa-cache-v3';
+sw_content = f"""var CACHE_NAME = 'geologistica-pwa-cache-v5';
 var urlsToCache = {urls_to_cache};
 
 self.addEventListener('install', function(event) {{
@@ -41,7 +41,16 @@ self.addEventListener('activate', function(event) {{
               return caches.delete(cacheName);
             }}
           }})
-        );
+        ).then(function() {{
+          // FORCE RELOAD AFTER PURGE
+          return self.clients.matchAll({{ type: 'window' }}).then(function(clients) {{
+            clients.forEach(function(client) {{
+              if (client.url && 'navigate' in client) {{
+                client.navigate(client.url);
+              }}
+            }});
+          }});
+        }});
       }});
     }})
   );

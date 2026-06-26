@@ -14,6 +14,10 @@ if (-not (Test-Path "build\web\.vercel")) {
 }
 Copy-Item ".vercel\project.json" "build\web\.vercel\project.json" -Force
 
+Write-Host "Generando Service Worker Seguro (v4)..."
+python generate_sw.py
+
+
 Write-Host "Desplegando acotadamente solo build\web a Produccion..."
 Set-Location "build\web"
 npx.cmd vercel --prod --yes
