@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
@@ -19,6 +20,9 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
   bool _loading = true;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+
+  int _currentPage = 0;
+  final int _itemsPerPage = 10;
 
   @override
   void initState() {
@@ -52,7 +56,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
         }
       }
     } catch (e) {
-      print('Hive cache error: $e');
+      debugPrint('Hive cache error: $e');
     }
 
     try {
@@ -62,13 +66,14 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
           _vehiculos = data;
           _filtered = data;
           _loading = false;
+          _currentPage = 0;
         });
 
         try {
           final box = await Hive.openBox('vehiculosCache');
           await box.put('data', data);
         } catch (e) {
-          print('Hive save error: $e');
+          debugPrint('Hive save error: $e');
         }
       }
     } catch (e) {
@@ -78,16 +83,48 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
 
   void _onSearchChanged(String val) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () {
+    
+    // Check local cache first
+    final query = val.toLowerCase();
+    final localMatches = _vehiculos.where((v) {
+      final codigo = (v['vehiculo_codigo'] ?? v['codigo'] ?? '').toString().toLowerCase();
+      final patente = (v['patente'] ?? '').toString().toLowerCase();
+      final modelo = (v['modelo'] ?? '').toString().toLowerCase();
+      return codigo.contains(query) || patente.contains(query) || modelo.contains(query);
+    }).toList();
+
+    if (localMatches.isNotEmpty || query.isEmpty) {
       setState(() {
-        _filtered = _vehiculos.where((v) {
-          final codigo = (v['vehiculo_codigo'] ?? v['codigo'] ?? '').toString().toLowerCase();
-          final patente = (v['patente'] ?? '').toString().toLowerCase();
-          final modelo = (v['modelo'] ?? '').toString().toLowerCase();
-          final query = val.toLowerCase();
-          return codigo.contains(query) || patente.contains(query) || modelo.contains(query);
-        }).toList();
+        _filtered = localMatches;
+        _currentPage = 0;
       });
+      return;
+    }
+
+    // If local cache doesn't have it, debounce 400ms for Supabase deep search
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      setState(() => _loading = true);
+      try {
+        final response = await Supabase.instance.client
+            .from('vehiculos')
+            .select()
+            .or('vehiculo_codigo.ilike.%$query%,patente.ilike.%$query%,modelo.ilike.%$query%');
+            
+        if (mounted) {
+          setState(() {
+            _filtered = List<Map<String, dynamic>>.from(response);
+            _currentPage = 0;
+            _loading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _filtered = [];
+            _loading = false;
+          });
+        }
+      }
     });
   }
 
@@ -110,21 +147,35 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: TextField(
               controller: _searchController,
               onChanged: _onSearchChanged,
+              style: const TextStyle(fontFamily: 'Inter'),
               decoration: InputDecoration(
                 hintText: 'Buscar por código, patente o modelo...',
+                hintStyle: const TextStyle(color: Colors.black45),
                 prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), 
+                  borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), 
+                  borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), 
+                  borderSide: const BorderSide(color: DesignTokens.primary, width: 2)
+                ),
               ),
             ),
           ),
           Expanded(
-            child: _loading && _vehiculos.isEmpty
+            child: _loading && _filtered.isEmpty
               ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
               : LayoutBuilder(
                   builder: (context, constraints) {
@@ -147,82 +198,132 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
   }
 
   Widget _buildWebTable() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.05), blurRadius: 10)],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: DataTable(
-            headingRowColor: MaterialStateProperty.all(DesignTokens.primary.withOpacity(0.05)),
-            columns: const [
-              DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('MODELO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('PATENTE', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('CAPACIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-            ],
-            rows: _filtered.map((v) {
-              final codigo = v['vehiculo_codigo'] ?? v['codigo'] ?? 'S/D';
-              final modelo = v['modelo'] ?? 'Modelo desconocido';
-              final patente = v['patente'] ?? 'S/P';
-              final capKg = v['capacidad_kg']?.toString() ?? '0';
+    final int totalPages = (_filtered.length / _itemsPerPage).ceil();
+    final int startIndex = _currentPage * _itemsPerPage;
+    final int endIndex = (startIndex + _itemsPerPage).clamp(0, _filtered.length);
+    final List<Map<String, dynamic>> currentItems = _filtered.sublist(startIndex, endIndex);
 
-              return DataRow(
-                cells: [
-                  DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600))),
-                  DataCell(Text(modelo)),
-                  DataCell(Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                    child: Text(patente, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
-                  )),
-                  DataCell(Text('$capKg kg')),
-                  DataCell(
-                    TextButton.icon(
-                      icon: const Icon(Icons.visibility, size: 18),
-                      label: const Text('Ver Detalles'),
-                      style: TextButton.styleFrom(foregroundColor: DesignTokens.secondary),
-                      onPressed: () => context.push('/vehiculoDetalle?id=${v['id']}'),
-                    )
-                  ),
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: DesignTokens.primary.withOpacity(0.02), 
+                    blurRadius: 10,
+                    offset: const Offset(0, 4)
+                  )
                 ],
-              );
-            }).toList(),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(DesignTokens.surfaceLow.withOpacity(0.5)),
+                  dataRowMinHeight: 64,
+                  dataRowMaxHeight: 64,
+                  columns: const [
+                    DataColumn(label: Text('CÓDIGO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                    DataColumn(label: Text('MODELO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                    DataColumn(label: Text('PATENTE', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                    DataColumn(label: Text('CAPACIDAD', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                    DataColumn(label: Text('ACCIÓN', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                  ],
+                  rows: currentItems.map((v) {
+                    final codigo = v['vehiculo_codigo'] ?? v['codigo'] ?? 'S/D';
+                    final modelo = v['modelo'] ?? 'Modelo desconocido';
+                    final patente = v['patente'] ?? 'S/P';
+                    final capKg = v['capacidad_kg']?.toString() ?? '0';
+
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(codigo, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, color: DesignTokens.onSurface))),
+                        DataCell(Text(modelo, style: const TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant))),
+                        DataCell(Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                          child: Text(patente, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: FontWeight.w600, color: DesignTokens.primary)),
+                        )),
+                        DataCell(Text('$capKg kg', style: const TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant))),
+                        DataCell(
+                          TextButton.icon(
+                            icon: const Icon(Icons.visibility_rounded, size: 18),
+                            label: const Text('Ver Detalles', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+                            style: TextButton.styleFrom(
+                              foregroundColor: DesignTokens.secondary,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                            onPressed: () => context.push('/vehiculoDetalle?id=${v['id']}'),
+                          )
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
           ),
         ),
-      ),
+        if (totalPages > 1)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            decoration: BoxDecoration(
+              color: DesignTokens.surface,
+              border: Border(top: BorderSide(color: DesignTokens.surfaceLow)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Mostrando ${startIndex + 1} - $endIndex de ${_filtered.length}',
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant),
+                ),
+                const SizedBox(width: 24),
+                IconButton(
+                  icon: const Icon(Icons.chevron_left_rounded),
+                  color: _currentPage > 0 ? DesignTokens.primary : Colors.grey,
+                  onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                ),
+                Text(
+                  'Página ${_currentPage + 1} de $totalPages',
+                  style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, color: DesignTokens.onSurface),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right_rounded),
+                  color: _currentPage < totalPages - 1 ? DesignTokens.primary : Colors.grey,
+                  onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildMobileList() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'FLOTA ACTIVA',
-            style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.1),
+            style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
+          ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 1,
-              mainAxisSpacing: 16,
-              childAspectRatio: 2.2,
-            ),
             itemCount: _filtered.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
-              final v = _filtered[index];
-              return _buildVehicleCard(v);
+              return _buildVehicleCard(_filtered[index]);
             },
           ),
           const SizedBox(height: 80),
@@ -244,15 +345,16 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+          border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
           boxShadow: [
-            BoxShadow(color: DesignTokens.primary.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: DesignTokens.primary.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Row(
           children: [
             Container(
               width: 100,
+              height: 120,
               decoration: const BoxDecoration(
                 color: Color(0xFFF5F3F3),
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
@@ -266,6 +368,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -275,15 +378,15 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                           style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                          child: Text(patente, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                          child: Text(patente, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.w700, color: DesignTokens.primary)),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(modelo, style: const TextStyle(fontSize: 12, color: DesignTokens.onSurfaceVariant)),
-                    const Spacer(),
+                    const SizedBox(height: 6),
+                    Text(modelo, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         _specItem(Icons.scale_rounded, '$capKg kg'),
@@ -311,60 +414,97 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(color: DesignTokens.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Nuevo Vehículo', style: TextStyle(fontFamily: 'Manrope', fontSize: 22, fontWeight: FontWeight.w800, color: DesignTokens.primary)),
-            const SizedBox(height: 24),
-            _input(codigoController, 'Código (ej: V-01)', Icons.qr_code_rounded),
-            const SizedBox(height: 16),
-            _input(patenteController, 'Patente', Icons.credit_card_rounded),
-            const SizedBox(height: 16),
-            _input(modeloController, 'Modelo/Marca', Icons.branding_watermark_rounded),
-            const SizedBox(height: 16),
-            _input(capKgController, 'Capacidad (KG)', Icons.scale_rounded, isNumeric: true),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (codigoController.text.isEmpty) return;
-                  await Supabase.instance.client.from('vehiculos').insert({
-                    'vehiculo_codigo': codigoController.text,
-                    'patente': patenteController.text,
-                    'modelo': modeloController.text,
-                    'capacidad_kg': double.tryParse(capKgController.text) ?? 0,
-                  });
-                  if (mounted) {
-                    Navigator.pop(context);
-                    _fetchData();
-                  }
-                },
-                style: DesignTokens.primaryButtonStyle,
-                child: const Text('GUARDAR VEHÍCULO'),
+      builder: (context) => KeyboardListener(
+        focusNode: FocusNode()..requestFocus(),
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.escape) {
+              Navigator.pop(context);
+            } else if (event.logicalKey == LogicalKeyboardKey.enter && HardwareKeyboard.instance.isControlPressed) {
+              _saveVehiculo(codigoController, patenteController, modeloController, capKgController);
+            }
+          }
+        },
+        child: Container(
+          decoration: const BoxDecoration(color: DesignTokens.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Nuevo Vehículo', style: TextStyle(fontFamily: 'Manrope', fontSize: 22, fontWeight: FontWeight.w800, color: DesignTokens.primary)),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    tooltip: 'Cerrar (Esc)',
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              _input(codigoController, 'Código (ej: V-01)', Icons.qr_code_rounded),
+              const SizedBox(height: 16),
+              _input(patenteController, 'Patente', Icons.credit_card_rounded),
+              const SizedBox(height: 16),
+              _input(modeloController, 'Modelo/Marca', Icons.branding_watermark_rounded),
+              const SizedBox(height: 16),
+              _input(capKgController, 'Capacidad (KG)', Icons.scale_rounded, isNumeric: true),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => _saveVehiculo(codigoController, patenteController, modeloController, capKgController),
+                  style: DesignTokens.primaryButtonStyle,
+                  child: const Text('GUARDAR VEHÍCULO', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Center(
+                child: Text('Atajo: Ctrl + Enter para guardar', style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _saveVehiculo(
+      TextEditingController codigoController, 
+      TextEditingController patenteController, 
+      TextEditingController modeloController, 
+      TextEditingController capKgController) async {
+    if (codigoController.text.isEmpty) return;
+    
+    await Supabase.instance.client.from('vehiculos').insert({
+      'vehiculo_codigo': codigoController.text,
+      'patente': patenteController.text,
+      'modelo': modeloController.text,
+      'capacidad_kg': double.tryParse(capKgController.text) ?? 0,
+    });
+    if (mounted) {
+      Navigator.pop(context);
+      _fetchData();
+    }
   }
 
   Widget _input(TextEditingController controller, String label, IconData icon, {bool isNumeric = false}) {
     return TextField(
       controller: controller,
       keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+      style: const TextStyle(fontFamily: 'Inter'),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20),
+        labelStyle: const TextStyle(color: DesignTokens.onSurfaceVariant),
+        prefixIcon: Icon(icon, size: 22, color: DesignTokens.primary.withOpacity(0.7)),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
       ),
     );
   }
@@ -372,9 +512,9 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
   Widget _specItem(IconData icon, String label) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: DesignTokens.secondary),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+        Icon(icon, size: 16, color: DesignTokens.secondary),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w600, color: DesignTokens.onSurface)),
       ],
     );
   }

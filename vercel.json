@@ -1,3 +1,10 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/flutter_service_worker.js", "destination": "/flutter_service_worker.js" },
+    { "source": "/flutter_bootstrap.js", "destination": "/flutter_bootstrap.js" },
+    { "source": "/manifest.json", "destination": "/manifest.json" },
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

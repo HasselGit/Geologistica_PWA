@@ -24,12 +24,17 @@ class GastosDetalleDialog extends StatelessWidget {
     final litros = gasto['cantidad_litros']?.toString();
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: DesignTokens.surface,
+      elevation: 0,
       child: Container(
         width: 800,
         constraints: const BoxConstraints(maxWidth: 800, maxHeight: 900),
         padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: DesignTokens.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,11 +42,11 @@ class GastosDetalleDialog extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Detalle de Gasto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28, color: DesignTokens.primary, fontFamily: 'Manrope')),
-                IconButton(icon: const Icon(Icons.close_rounded, size: 28), onPressed: () => Navigator.pop(context)),
+                const Text('Detalle de Gasto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: DesignTokens.primary, fontFamily: 'Manrope')),
+                IconButton(icon: const Icon(Icons.close_rounded, size: 24), onPressed: () => Navigator.pop(context)),
               ],
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             Flexible(
               child: SingleChildScrollView(
                 child: Wrap(
@@ -74,31 +79,31 @@ class GastosDetalleDialog extends StatelessWidget {
   Widget _buildBentoItem(String label, String value, IconData icon, Color bgColor, {required double width, bool isHighlight = false, Color? textColor}) {
     return Container(
       width: width,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: DesignTokens.secondary),
+              Icon(icon, size: 16, color: DesignTokens.secondary),
               const SizedBox(width: 8),
-              Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold)),
+              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold, fontFamily: 'Work Sans')),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
-              fontSize: isHighlight ? 32 : 18,
-              fontWeight: FontWeight.w900,
+              fontSize: isHighlight ? 28 : 16,
+              fontWeight: FontWeight.w800,
               color: textColor ?? DesignTokens.primary,
-              fontFamily: isHighlight ? 'Manrope' : 'Work Sans',
+              fontFamily: isHighlight ? 'Manrope' : 'Inter',
             ),
           ),
         ],
@@ -112,11 +117,12 @@ class GastosDetalleDialog extends StatelessWidget {
       height: 280,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -131,15 +137,15 @@ class GastosDetalleDialog extends StatelessWidget {
               ),
             ),
             Positioned(
-              left: 24, bottom: 24,
-              child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              left: 20, bottom: 20,
+              child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'Manrope')),
             ),
             Positioned(
-              bottom: 24, right: 24,
+              bottom: 20, right: 20,
               child: FloatingActionButton.extended(
                 backgroundColor: DesignTokens.primary,
-                icon: const Icon(Icons.zoom_in_rounded, color: Colors.white),
-                label: const Text('Ampliar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.zoom_in_rounded, color: Colors.white, size: 20),
+                label: const Text('Ampliar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                 onPressed: () {
                   showDialog(
                     context: context,

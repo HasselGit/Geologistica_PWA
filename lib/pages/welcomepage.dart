@@ -116,7 +116,7 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: theme.primaryBackground,
+        backgroundColor: DesignTokens.surfaceLow,
         body: LayoutBuilder(
           builder: (context, constraints) {
             final bool isDesktop = constraints.maxWidth >= 1024;
@@ -127,7 +127,7 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
                 Positioned.fill(
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 800),
-                    color: _isSplashActive ? const Color(0xFFFBF9F8) : theme.primaryBackground,
+                    color: _isSplashActive ? DesignTokens.surface : DesignTokens.surfaceLow,
                   ),
                 ),
                 // Honeycomb Pattern Background
@@ -157,17 +157,13 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
                               ? Container(
                                   padding: const EdgeInsets.all(40),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.05),
+                                    color: Colors.white,
                                     borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.08),
-                                      width: 1.0,
-                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 40,
-                                        offset: const Offset(0, 20),
+                                        color: DesignTokens.primary.withOpacity(0.04),
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 8),
                                       ),
                                     ],
                                   ),

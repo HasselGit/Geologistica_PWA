@@ -119,6 +119,9 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
     });
   }
 
+  int _currentPage = 0;
+  final int _rowsPerPage = 15;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,7 +142,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: TextField(
               controller: _searchController,
               onChanged: _onSearchChanged,
@@ -148,7 +151,19 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                 prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.2)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.1)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: DesignTokens.primary),
+                ),
               ),
             ),
           ),
@@ -171,56 +186,122 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
   }
 
   Widget _buildWebTable() {
+    int totalPages = (_filtered.length / _rowsPerPage).ceil();
+    if (totalPages == 0) totalPages = 1;
+    if (_currentPage >= totalPages) _currentPage = totalPages - 1;
+    if (_currentPage < 0) _currentPage = 0;
+
+    int startIndex = _currentPage * _rowsPerPage;
+    int endIndex = startIndex + _rowsPerPage;
+    if (endIndex > _filtered.length) endIndex = _filtered.length;
+    
+    List<Map<String, dynamic>> paginated = _filtered.sublist(startIndex, endIndex);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.05), blurRadius: 10)],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: DataTable(
-            headingRowColor: MaterialStateProperty.all(DesignTokens.primary.withOpacity(0.05)),
-            columns: const [
-              DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('LOCALIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('TELÉFONO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-              DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
-            ],
-            rows: _filtered.map((a) {
-              final nombre = a['nombre'] ?? 'Sin nombre';
-              final localidad = a['localidad'] ?? 'Sin localidad';
-              final telefono = a['telefono'] ?? '-';
-              final id = a['id']?.toString() ?? '';
-              final codigo = a['apicultor_codigo'] ?? (id.length > 6 ? id.substring(0, 6).toUpperCase() : id);
-
-              return DataRow(
-                cells: [
-                  DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600))),
-                  DataCell(Text(nombre)),
-                  DataCell(Text(localidad)),
-                  DataCell(Text(telefono)),
-                  DataCell(
-                    TextButton.icon(
-                      icon: const Icon(Icons.visibility, size: 18),
-                      label: const Text('Ver Detalles'),
-                      style: TextButton.styleFrom(foregroundColor: DesignTokens.secondary),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: a)),
-                        );
-                      },
-                    )
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: DataTable(
+                headingRowColor: MaterialStateProperty.all(DesignTokens.surfaceLow),
+                dataRowMinHeight: 60,
+                dataRowMaxHeight: 60,
+                horizontalMargin: 24,
+                columns: const [
+                  DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('LOCALIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('TELÉFONO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
                 ],
-              );
-            }).toList(),
-          ),
+                rows: paginated.map((a) {
+                  final nombre = a['nombre'] ?? 'Sin nombre';
+                  final localidad = a['localidad'] ?? 'Sin localidad';
+                  final telefono = a['telefono'] ?? '-';
+                  final id = a['id']?.toString() ?? '';
+                  final codigo = a['apicultor_codigo'] ?? (id.length > 6 ? id.substring(0, 6).toUpperCase() : id);
+
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'JetBrains Mono'))),
+                      DataCell(Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600))),
+                      DataCell(Text(localidad, style: const TextStyle(color: DesignTokens.onSurfaceVariant))),
+                      DataCell(Text(telefono, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
+                      DataCell(
+                        TextButton.icon(
+                          icon: const Icon(Icons.visibility_rounded, size: 18),
+                          label: const Text('Ver Perfil', style: TextStyle(fontWeight: FontWeight.w600)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: DesignTokens.secondary,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: a)),
+                            );
+                          },
+                        )
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+            if (totalPages > 1)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: DesignTokens.outline.withOpacity(0.1))),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Mostrando ${startIndex + 1} - $endIndex de ${_filtered.length} apicultores',
+                      style: const TextStyle(color: DesignTokens.onSurfaceVariant, fontSize: 13),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left_rounded),
+                          onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                          color: _currentPage > 0 ? DesignTokens.primary : DesignTokens.outline,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Página ${_currentPage + 1} de $totalPages',
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right_rounded),
+                          onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+                          color: _currentPage < totalPages - 1 ? DesignTokens.primary : DesignTokens.outline,
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -251,19 +332,21 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
           MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: a)),
         );
       },
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2))],
+          border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Row(
           children: [
             Container(
               width: 44, height: 44,
-              decoration: BoxDecoration(color: DesignTokens.primary, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: DesignTokens.surfaceLow, borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.person_pin_circle_rounded, color: DesignTokens.secondary, size: 20),
             ),
             const SizedBox(width: 16),
@@ -271,23 +354,25 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(nombre, 
-                          style: DesignTokens.headlineStyle().copyWith(fontSize: 16),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  Text(nombre, 
+                    style: DesignTokens.headlineStyle().copyWith(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 4),
                   Text(localidad, style: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant).copyWith(fontSize: 12)),
                 ],
               ),
             ),
-            Text(
-              codigo,
-              style: DesignTokens.labelStyle().copyWith(fontSize: 10, color: DesignTokens.primary.withOpacity(0.3)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: DesignTokens.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                codigo,
+                style: const TextStyle(fontSize: 10, fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: DesignTokens.primary),
+              ),
             ),
           ],
         ),

@@ -6,6 +6,9 @@ import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'productos_data.dart';
 import 'app_states.dart';
@@ -52,26 +55,39 @@ class SupabaseService {
   Future<Map<String, dynamic>> login(String email, String password) async {
     final cleanEmail = email.trim().toLowerCase();
     final cleanPass = password.trim();
+    final bytes = utf8.encode(cleanPass);
+    final digest = sha256.convert(bytes).toString();
+    
+    // 1. Detector Web Nativo de Emergencia
+    final bool isOnline = await checkConnectivity();
+    final bool isOffline = !isOnline;
+
+    // 2. Ramificación del Flujo de Autenticación
+    if (isOffline) {
+      // ESCENARIO A: Modo Avión confirmado
+      return _offlineLogin(cleanEmail, digest, cleanPass);
+    }
+
     try {
-      print('SupabaseService: Intentando login para $cleanEmail');
+      print('SupabaseService: Intentando login online para $cleanEmail');
       
-      // Limpiar cualquier sesión vieja/stale de Supabase Auth
+      // ESCENARIO B: Intenta login contra Supabase
       try {
         await _client.auth.signOut();
-        print('SupabaseService: Sesión previa cerrada antes del login manual para garantizar anon RLS');
       } catch (_) {}
 
-      // Buscamos solo por email primero para ser más flexibles
       final profile = await _client.from('profiles')
           .select()
           .ilike('email', cleanEmail)
           .maybeSingle();
       
       if (profile != null) {
-        // Verificación manual de contraseña para evitar errores de tipo en la DB
         final dbPass = profile['contrasena']?.toString() ?? '';
         if (dbPass == cleanPass) {
-          return await _saveLocal(profile);
+          // Guardamos el Hash de la contraseña de forma silenciosa
+          final profileWithHash = Map<String, dynamic>.from(profile);
+          profileWithHash['contrasena_hash'] = digest;
+          return await _saveLocal(profileWithHash);
         } else {
           throw Exception('Contraseña incorrecta');
         }
@@ -79,12 +95,56 @@ class SupabaseService {
         throw Exception('Usuario no encontrado');
       }
     } catch (e) {
-      print('SupabaseService: Error en login: $e');
-      if (e is TimeoutException) {
-        throw Exception('Tiempo de espera agotado. Revisa tu conexión.');
+      final errorStr = e.toString();
+      
+      if (errorStr.contains('Contraseña incorrecta') || errorStr.contains('Usuario no encontrado')) {
+        throw Exception(errorStr.replaceAll('Exception:', '').trim());
       }
-      throw Exception(e.toString().replaceAll('Exception:', '').trim());
+      
+      // 3. Control de Excepciones Híbrido
+      if (errorStr.contains('Failed to fetch') || 
+          errorStr.contains('TypeError') || 
+          errorStr.contains('XMLHttpRequest') || 
+          errorStr.contains('Timeout') ||
+          errorStr.contains('ClientException') ||
+          errorStr.contains('SocketException')) {
+        print('SupabaseService: Error de red oculto detectado ($e). Activando fallback offline automático...');
+        return _offlineLogin(cleanEmail, digest, cleanPass);
+      }
+      
+      throw Exception(errorStr.replaceAll('Exception:', '').trim());
     }
+  }
+
+  Future<Map<String, dynamic>> _offlineLogin(String email, String currentPassHash, String rawPass) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('user_email');
+    final savedPassHash = prefs.getString('user_password_hash');
+    final oldSavedPass = prefs.getString('user_password'); // Para migración silenciosa
+    
+    if (savedEmail != null && savedEmail.toLowerCase() == email) {
+      bool valid = false;
+      if (savedPassHash == currentPassHash) {
+        valid = true;
+      } else if (oldSavedPass != null && oldSavedPass == rawPass) {
+        // Migración silenciosa de texto plano a Hash
+        valid = true;
+        await prefs.setString('user_password_hash', currentPassHash);
+        await prefs.remove('user_password');
+      }
+
+      if (valid) {
+        print('SupabaseService: Login offline exitoso mediante bóveda local.');
+        return {
+          'id': prefs.getString('user_id'),
+          'email': savedEmail,
+          'nombre': prefs.getString('user_nombre'),
+          'apellido': prefs.getString('user_apellido'),
+          'puesto': prefs.getString('user_puesto'),
+        };
+      }
+    }
+    throw Exception('Sin conexión a Internet: No hay credenciales guardadas en este dispositivo para trabajar offline, o la contraseña es incorrecta.');
   }
 
   Future<Map<String, dynamic>> _saveLocal(Map<String, dynamic> user) async {
@@ -93,6 +153,11 @@ class SupabaseService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_id', user['id']?.toString() ?? '');
       await prefs.setString('user_email', user['email'] ?? '');
+      // Guardamos la contraseña (Hash) para permitir el modo offline de forma segura
+      if (user.containsKey('contrasena_hash') && user['contrasena_hash'] != null) {
+        await prefs.setString('user_password_hash', user['contrasena_hash'].toString());
+        await prefs.remove('user_password'); // Limpiamos rastro viejo en texto plano
+      }
       await prefs.setString('user_nombre', user['nombre'] ?? '');
       await prefs.setString('user_apellido', user['apellido'] ?? '');
       await prefs.setString('user_puesto', user['puesto'] ?? '');
@@ -2558,10 +2623,14 @@ class SupabaseService {
 
   Future<bool> checkConnectivity() async {
     try {
-      final response = await http.head(Uri.parse('https://suwcqdlxnmfcvmlnzizl.supabase.co')).timeout(const Duration(seconds: 3));
-      return response.statusCode == 200 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403;
+      // Detector de red nativo e instantáneo (cero timeouts en Modo Avión)
+      final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult.contains(ConnectivityResult.none)) {
+        return false; // Modo Avión confirmado, latencia cero
+      }
+      return true; // Asumimos online, pero los catch de cada query protegen si hay microcortes
     } catch (_) {
-      return false;
+      return true; // Fallback seguro: intentar la conexión y dejar que Supabase arroje timeout si está desconectado
     }
   }
 

@@ -780,54 +780,107 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                       ],
                     ),
                   ),
-                  // Botón Expandir
-                  _buildGlassmorphicOverlay(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: const Text(
-                      'VER EN PANTALLA COMPLETA',
-                      style: TextStyle(
-                        fontFamily: 'Work Sans',
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
+                  // Botón Launchpad para GpsGate
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final url = Uri.parse('http://satelital.uninet.com.ar/GpsGateServer/VehicleTracker/VehicleTracker.html?appid=59');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: _buildGlassmorphicOverlay(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.satellite_alt_rounded, color: Colors.white, size: 12),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'ABRIR MONITOR EN VIVO',
+                              style: TextStyle(
+                                fontFamily: 'Work Sans',
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.open_in_new_rounded, color: Colors.white54, size: 10),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+            // Animación de barrido de radar (simulada) para invitar a la acción
+            Positioned.fill(
+              child: IgnorePointer(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(seconds: 4),
+                  builder: (context, value, child) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: SweepGradient(
+                          center: FractionalOffset.center,
+                          startAngle: 0.0,
+                          endAngle: 3.14 * 2,
+                          colors: [
+                            Colors.transparent,
+                            DesignTokens.secondary.withOpacity(0.0),
+                            DesignTokens.secondary.withOpacity(0.15),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.4, 0.5, 0.51],
+                          transform: GradientRotation(value * 3.14 * 2),
+                        ),
+                      ),
+                    );
+                  },
+                  onEnd: () {
+                    // Loop animation is handled by a state var if needed, but a simple tween runs once. 
+                    // Let's just keep the static radar aesthetic or a simple pulse.
+                  },
+                ),
+              ),
+            ),
             // Marcador de Camión Flotante AR-402 (Centro-Izquierda)
             Positioned(
               top: 180,
               left: 150,
-              child: Column(
-                children: [
-                  _buildGlassmorphicOverlay(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 16),
-                        ),
-                        const SizedBox(width: 10),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('UNIDAD AR-402', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
-                            Text('EN RUTA: 82 KM/H', style: TextStyle(color: DesignTokens.secondary, fontSize: 9, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ],
+              child: IgnorePointer(
+                child: Column(
+                  children: [
+                    _buildGlassmorphicOverlay(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                            child: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('UNIDAD AR-402', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                              Text('EN RUTA: 82 KM/H', style: TextStyle(color: DesignTokens.secondary, fontSize: 9, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    width: 2,
-                    height: 40,
+                    Container(
+                      width: 2,
+                      height: 40,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -843,6 +896,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                   ),
                 ],
               ),
+              ), // Close IgnorePointer
             ),
             // Marcador de Apiario COL-98 (Centro-Derecha)
             Positioned(

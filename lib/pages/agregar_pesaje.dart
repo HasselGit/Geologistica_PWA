@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -718,9 +719,15 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
       );
     } else {
       final drumsList = _tambores.where((t) => _isSameApicId(t['apicultor_id']?.toString(), _selectedApicultorId)).toList();
-      return SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 500),
+              child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!_isOnline) _buildOfflineBanner(),
@@ -761,7 +768,7 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
             const SizedBox(height: 100),
           ],
         ),
-      );
+      ))));
     }
   }
 
@@ -790,9 +797,22 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
               child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08)),
             ),
           ),
-          body: _loadingExisting
-              ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-              : Stack(
+          body: RawKeyboardListener(
+            focusNode: FocusNode(),
+            autofocus: true,
+            onKey: (event) {
+              if (event.isKeyPressed(LogicalKeyboardKey.escape)) {
+                _senasaController.clear();
+                _brutoController.clear();
+                _taraController.clear();
+                _senasaFocusNode.requestFocus();
+              } else if (event.isControlPressed && event.isKeyPressed(LogicalKeyboardKey.enter)) {
+                _agregarTambor();
+              }
+            },
+            child: _loadingExisting
+                ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                : Stack(
                   children: [
                     const Positioned.fill(
                       child: RepaintBoundary(
@@ -816,6 +836,7 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
                     ),
                   ],
                 ),
+          ),
           floatingActionButtonLocation: isDesktop ? FloatingActionButtonLocation.endFloat : FloatingActionButtonLocation.centerFloat,
           floatingActionButton: _buildVolverBtn(),
         );

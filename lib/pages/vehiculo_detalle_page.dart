@@ -25,7 +25,7 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
 
   Future<void> _fetchData() async {
     if (widget.vehiculoId == null) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
       return;
     }
     try {
@@ -54,8 +54,15 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
         backgroundColor: DesignTokens.surface,
         elevation: 0,
         title: Text(_vehiculo?['vehiculo_codigo'] ?? 'Detalle Vehículo', 
-          style: const TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.bold)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: DesignTokens.primary), onPressed: () => context.pop()),
+          style: const TextStyle(
+            fontFamily: 'Manrope',
+            color: DesignTokens.primary, 
+            fontWeight: FontWeight.bold
+          )),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: DesignTokens.primary), 
+          onPressed: () => context.pop()
+        ),
       ),
       body: _loading 
         ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
@@ -65,48 +72,45 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
               builder: (context, constraints) {
                 final isWeb = constraints.maxWidth >= 900;
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: isWeb ? _buildBentoLayout() : _buildMobileLayout(),
+                  padding: EdgeInsets.all(isWeb ? 32 : 24),
+                  child: isWeb ? _buildWebSplitLayout() : _buildMobileLayout(),
                 );
               },
             ),
     );
   }
 
-  Widget _buildBentoLayout() {
+  Widget _buildWebSplitLayout() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Columna 1: Hero
-        Expanded(
-          flex: 4,
-          child: _buildHeroCard(),
-        ),
-        const SizedBox(width: 24),
-        // Columna 2: Info Técnica
+        // Left Panel: Hero Card
         Expanded(
           flex: 3,
+          child: _buildHeroCard(),
+        ),
+        const SizedBox(width: 32),
+        // Right Panel: Bento Grid
+        Expanded(
+          flex: 7,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('INFORMACIÓN TÉCNICA', 
-                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
               const SizedBox(height: 16),
-              _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado'),
-              _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG'),
-              _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades'),
-            ],
-          ),
-        ),
-        const SizedBox(width: 24),
-        // Columna 3: Estado Operativo
-        Expanded(
-          flex: 5,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+              Row(
+                children: [
+                  Expanded(child: _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado')),
+                  const SizedBox(width: 16),
+                  Expanded(child: _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG')),
+                  const SizedBox(width: 16),
+                  Expanded(child: _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades')),
+                ],
+              ),
+              const SizedBox(height: 32),
               const Text('ESTADO OPERATIVO', 
-                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
               const SizedBox(height: 16),
               _buildEstadoCard(),
             ],
@@ -123,14 +127,14 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
         _buildHeroCard(),
         const SizedBox(height: 32),
         const Text('INFORMACIÓN TÉCNICA', 
-          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
         const SizedBox(height: 16),
         _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado'),
         _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG'),
         _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades'),
         const SizedBox(height: 32),
         const Text('ESTADO OPERATIVO', 
-          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black45, letterSpacing: 1.1)),
+          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
         const SizedBox(height: 16),
         _buildEstadoCard(),
       ],
@@ -140,20 +144,34 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
   Widget _buildHeroCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: DesignTokens.primary,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10))],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.primary.withOpacity(0.08), 
+            blurRadius: 15, 
+            offset: const Offset(0, 4)
+          )
+        ],
       ),
       child: Column(
         children: [
-          const Icon(Icons.local_shipping_rounded, size: 64, color: DesignTokens.secondary),
-          const SizedBox(height: 16),
+          const Icon(Icons.local_shipping_rounded, size: 72, color: DesignTokens.secondary),
+          const SizedBox(height: 24),
           Text(_vehiculo?['vehiculo_codigo'] ?? 'S/D', 
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-          Text(_vehiculo?['patente'] ?? 'SIN PATENTE', 
-            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            style: const TextStyle(fontFamily: 'Manrope', color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(_vehiculo?['patente'] ?? 'SIN PATENTE', 
+              style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 2)),
+          ),
         ],
       ),
     );
@@ -161,40 +179,46 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
 
   Widget _buildEstadoCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.primary.withOpacity(0.02), 
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                width: 12, height: 12,
+                width: 10, height: 10,
                 decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
               ),
               const SizedBox(width: 12),
-              const Text('DISPONIBLE PARA VIAJE', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13)),
+              const Text('DISPONIBLE PARA VIAJE', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, color: Colors.green, fontSize: 14)),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           _buildProgressBar(
             label: 'CARGA EN KG',
             current: (_vehiculo?['carga_actual_kg'] as num?)?.toDouble() ?? 0,
             total: (_vehiculo?['capacidad_kg'] as num?)?.toDouble() ?? 1,
             unit: 'KG',
-            color: Colors.blue,
+            color: const Color(0xFF3B82F6),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           _buildProgressBar(
             label: 'CARGA EN TAMBORES',
             current: (_vehiculo?['carga_actual_tambores'] as num?)?.toDouble() ?? 0,
             total: (_vehiculo?['capacidad_tambores'] as num?)?.toDouble() ?? 1,
             unit: 'UN',
-            color: const Color(0xFFC68E17),
+            color: DesignTokens.secondary,
           ),
         ],
       ),
@@ -209,26 +233,26 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+            Text(label, style: const TextStyle(fontFamily: 'Work Sans', fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.5, color: DesignTokens.onSurfaceVariant)),
             Text('${current.toStringAsFixed(0)} / ${total.toStringAsFixed(0)} $unit', 
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: FontWeight.w600, color: DesignTokens.onSurface)),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Stack(
           children: [
             Container(
-              height: 10,
+              height: 8,
               width: double.infinity,
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(5)),
+              decoration: BoxDecoration(color: DesignTokens.surfaceLow, borderRadius: BorderRadius.circular(4)),
             ),
             FractionallySizedBox(
               widthFactor: percent,
               child: Container(
-                height: 10,
+                height: 8,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [color, color.withOpacity(0.7)]),
-                  borderRadius: BorderRadius.circular(5),
+                  color: color,
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
             ),
@@ -241,23 +265,39 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
   Widget _infoTile(IconData icon, String label, String value) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.primary.withOpacity(0.02), 
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: DesignTokens.primary.withOpacity(0.4), size: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: DesignTokens.surfaceLow,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: DesignTokens.primary, size: 24),
+          ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 10, color: Colors.black45, fontWeight: FontWeight.bold)),
-              Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: DesignTokens.onSurfaceVariant, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(fontFamily: 'Manrope', fontSize: 16, fontWeight: FontWeight.w800, color: DesignTokens.onSurface)),
+              ],
+            ),
           ),
         ],
       ),

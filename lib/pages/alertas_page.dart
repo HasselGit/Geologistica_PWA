@@ -9,8 +9,15 @@ class AlertasPage extends StatefulWidget {
 }
 
 class _AlertasPageState extends State<AlertasPage> {
-  // Mock alerts to preserve the logic structure
+  // Mock alerts to preserve the logic structure, adding the requested critical notification
   final List<Map<String, dynamic>> alertas = [
+    {
+      'id': 'ST-501',
+      'title': 'Stock Crítico: Tambores Vacíos',
+      'description': 'Depósito Huinca reporta stock por debajo del mínimo (2 unidades restantes). Se requiere reabastecimiento urgente.',
+      'type': 'error',
+      'date': '25 Jun 2026',
+    },
     {
       'id': 'AR-402',
       'title': 'Alerta Térmica: AR-402',
@@ -39,14 +46,14 @@ class _AlertasPageState extends State<AlertasPage> {
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
       appBar: AppBar(
-        title: Text('Alertas', style: DesignTokens.headlineStyle(color: DesignTokens.primary)),
+        title: Text('Panel de Alertas', style: DesignTokens.headlineStyle(color: DesignTokens.primary)),
         backgroundColor: DesignTokens.surface,
         elevation: 0,
         iconTheme: const IconThemeData(color: DesignTokens.primary),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWeb = constraints.maxWidth > 800;
+          final isWeb = constraints.maxWidth >= 900;
           
           if (isWeb) {
             return _buildWebLayout();
@@ -60,12 +67,37 @@ class _AlertasPageState extends State<AlertasPage> {
 
   Widget _buildWebLayout() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Panel de Alertas', style: DesignTokens.headlineStyle(color: DesignTokens.primary)),
-          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Notificaciones Activas', 
+                style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 24)
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: DesignTokens.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.notifications_active_outlined, color: DesignTokens.error, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${alertas.where((a) => a['type'] == 'error').length} Críticas',
+                      style: DesignTokens.labelStyle(color: DesignTokens.error),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
           Wrap(
             spacing: 24,
             runSpacing: 24,
@@ -108,15 +140,15 @@ class _AlertasPageState extends State<AlertasPage> {
     }
 
     return Container(
-      width: isWeb ? 400 : double.infinity,
+      width: isWeb ? 380 : double.infinity,
       decoration: BoxDecoration(
-        color: DesignTokens.surface, // Clean light backgrounds constraint
+        color: const Color(0xFFFFFFFF), // Clean white background constraint
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.5)),
+        border: Border.all(color: DesignTokens.outline.withOpacity(0.15)),
         boxShadow: [
           BoxShadow(
-            color: DesignTokens.primary.withOpacity(0.05),
-            blurRadius: 10,
+            color: DesignTokens.primary.withOpacity(0.04),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           )
         ],
@@ -134,29 +166,44 @@ class _AlertasPageState extends State<AlertasPage> {
                 decoration: BoxDecoration(
                   color: badgeColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: badgeColor.withOpacity(0.3)),
+                  border: Border.all(color: badgeColor.withOpacity(0.2)),
                 ),
                 child: Text(
                   badgeText,
-                  style: DesignTokens.labelStyle(color: badgeColor).copyWith(fontSize: 10),
+                  style: DesignTokens.labelStyle(color: badgeColor).copyWith(fontSize: 10, fontWeight: FontWeight.w700),
                 ),
               ),
               Text(
                 alerta['date'],
-                style: DesignTokens.labelStyle(color: DesignTokens.onSurfaceVariant),
+                style: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant).copyWith(fontSize: 12),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(
             alerta['title'],
             style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 18),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             alerta['description'],
             style: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
           ),
+          if (alerta['type'] == 'error') ...[
+            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {},
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: DesignTokens.surfaceLow,
+                ),
+                child: Text('REVISAR', style: DesignTokens.labelStyle(color: DesignTokens.primary)),
+              ),
+            ),
+          ]
         ],
       ),
     );

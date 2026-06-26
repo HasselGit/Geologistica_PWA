@@ -33,10 +33,7 @@ class _LoginWidgetState extends State<LoginWidget> {
   }
 
   void _onFocusChange() {
-    if (_emailFocusNode.hasFocus || _passwordFocusNode.hasFocus) {
-      SystemChannels.textInput.invokeMethod('TextInput.show');
-    }
-    setState(() {}); // Redraw to update active states if needed
+    setState(() {}); // Redraw to update active states
   }
 
   Future<void> _checkSavedSession() async {
@@ -193,7 +190,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                               children: [
                                 // Username Label
                                 const Text(
-                                  'USERNAME / ID',
+                                  'USUARIO',
                                   style: TextStyle(
                                     fontFamily: 'Work Sans',
                                     fontSize: 10,
@@ -251,7 +248,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
-                                      'PASSWORD',
+                                      'CONTRASEÑA',
                                       style: TextStyle(
                                         fontFamily: 'Work Sans',
                                         fontSize: 10,

@@ -358,67 +358,94 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Columna Izquierda
+        // Sidebar Left Panel
         Expanded(
-          flex: 4,
+          flex: 3,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
               _buildProfileHeader(a),
               const SizedBox(height: 24),
               _buildInfoGrid(a),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
               _buildStatusOverview(),
             ],
           ),
         ),
         const SizedBox(width: 32),
-        // Columna Central
+        // Main Content Area
         Expanded(
-          flex: 5,
+          flex: 8,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              _buildSectionHeader('Solicitudes Activas', null),
-              const SizedBox(height: 16),
-              if (_pendientes.isEmpty)
-                _buildEmptyState('No hay solicitudes activas')
-              else
-                ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
-
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Solicitudes Activas', null),
+                        const SizedBox(height: 16),
+                        if (_pendientes.isEmpty)
+                          _buildEmptyState('No hay solicitudes activas')
+                        else
+                          ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Total Estimado Pendiente', null),
+                        const SizedBox(height: 16),
+                        if (_resumenPendiente.isEmpty)
+                          _buildEmptyState('No hay solicitudes pendientes o en proceso')
+                        else
+                          _buildProductSummaryPendiente(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 40),
-              _buildSectionHeader('Total Estimado Pendiente', null),
-              const SizedBox(height: 16),
-              if (_resumenPendiente.isEmpty)
-                _buildEmptyState('No hay solicitudes pendientes o en proceso')
-              else
-                _buildProductSummaryPendiente(),
-
-              const SizedBox(height: 40),
-              _buildSectionHeader('Resumen por Producto (Histórico)', null),
-              const SizedBox(height: 16),
-              if (_resumenDetallado.isEmpty)
-                _buildEmptyState('Sin operaciones registradas')
-              else
-                _buildProductSummary(),
-            ],
-          ),
-        ),
-        const SizedBox(width: 32),
-        // Columna Derecha
-        Expanded(
-          flex: 4,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              _buildSectionHeader('Operaciones Recientes', null, showIcons: true),
-              const SizedBox(height: 16),
-              if (_recientes.isEmpty)
-                _buildEmptyState('No hay operaciones terminadas recientemente')
-              else
-                ..._recientes.map((s) => _buildRecienteCard(s)).toList(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Resumen por Producto (Histórico)', null),
+                        const SizedBox(height: 16),
+                        if (_resumenDetallado.isEmpty)
+                          _buildEmptyState('Sin operaciones registradas')
+                        else
+                          _buildProductSummary(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Operaciones Recientes', null, showIcons: true),
+                        const SizedBox(height: 16),
+                        if (_recientes.isEmpty)
+                          _buildEmptyState('No hay operaciones terminadas recientemente')
+                        else
+                          ..._recientes.map((s) => _buildRecienteCard(s)).toList(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 80),
             ],
           ),
@@ -729,9 +756,9 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.2)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 10))],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
@@ -796,7 +823,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.secondary.withOpacity(0.1)),
+        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
@@ -852,7 +879,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
@@ -907,8 +935,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: DesignTokens.primary,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 8))],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
@@ -991,8 +1019,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFEF3C7).withOpacity(0.5)), // Soft amber border
-        boxShadow: [BoxShadow(color: const Color(0xFFD97706).withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 5))],
+        border: Border.all(color: const Color(0xFFFEF3C7).withOpacity(0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1076,7 +1104,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 5))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
