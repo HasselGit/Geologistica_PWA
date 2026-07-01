@@ -255,7 +255,11 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         width: sidebarWidth,
-        color: DesignTokens.primary,
+        margin: const EdgeInsets.only(left: 16, top: 16, bottom: 16, right: 0),
+        decoration: BoxDecoration(
+          color: DesignTokens.primary,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -378,7 +382,6 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 ],
               ),
             ),
-            _buildSyncMonitor(),
             const Divider(color: Colors.white10, height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
@@ -510,6 +513,70 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                       'Errores: $errorCount en cola',
                       style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Inter'),
                     ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSyncMonitorFloating() {
+    return ValueListenableBuilder<int>(
+      valueListenable: _queueLengthNotifier,
+      builder: (context, pendingCount, _) {
+        return ValueListenableBuilder<int>(
+          valueListenable: _errorsLengthNotifier,
+          builder: (context, errorCount, _) {
+            final bool isOnline = _isOnlineForSyncMonitor;
+            
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.green.withOpacity(0.05)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 30,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isOnline ? Colors.greenAccent.shade700 : Colors.orangeAccent,
+                      boxShadow: [
+                        if (isOnline)
+                          BoxShadow(color: Colors.greenAccent.withOpacity(0.5), blurRadius: 4),
+                      ],
+                    ),
+                  ),
+                  if (pendingCount > 0 || errorCount > 0) ...[
+                    const SizedBox(width: 12),
+                    Container(width: 1, height: 12, color: DesignTokens.outline.withOpacity(0.2)),
+                    const SizedBox(width: 12),
+                    if (pendingCount > 0)
+                      Text(
+                        '$pendingCount PENDIENTES',
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.onSurfaceVariant),
+                      ),
+                    if (errorCount > 0) ...[
+                      if (pendingCount > 0) const SizedBox(width: 8),
+                      Text(
+                        '$errorCount ERRORES',
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ],
                 ],
               ),
@@ -694,310 +761,67 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
 
   Widget _buildSatelliteMap() {
     return Container(
-      height: 600,
+      height: 300,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DesignTokens.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: DesignTokens.outline),
+        image: const DecorationImage(
+          image: NetworkImage('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/-64.2831,-34.8465,13.5,0/800x400?access_token=pk.eyJ1IjoiZ2VvbG9naXN0aWNhIiwiYSI6ImNsd3F1cDNsczAxbDMyanJ4anR5aWZ4ZmEifQ.xxx'),
+          fit: BoxFit.cover,
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            // Mapa base en escala de grises con contraste verdoso
-            Positioned.fill(
-              child: ColorFiltered(
-                colorFilter: const ColorFilter.matrix([
-                  0.15, 0.45, 0.1, 0, 0,
-                  0.1, 0.55, 0.15, 0, 0,
-                  0.05, 0.35, 0.1, 0, 0,
-                  0,   0,   0,   1, 0,
-                ]),
-                child: Image.network(
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCAzxfqauJaxsGfgvA24P_vpOzTrxFNXF9nhGT7f3zzaz_OMraIKNexJ6XAHm2-fOQDYNlSQsV9EKst3h0Nyo7nM2KbnjNJEL_SPZ0BTlLcjdUZNshituAPhsA-FrTyTeXZA5SkU7w66G0qg9nFFFgAMev1t9lq48JylO-s-wKtc9Th9v_c1-30VPemfIhr9SVHx3MM1LvII0bTuFOqkyZYNKm_Xp11nql-ybMra0d1MmOUpFjcbbkA2R9aLjfvaq9SkXjCvjRHYD8',
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, o, s) => Container(
-                    color: const Color(0xFF0D1B17),
-                    child: Center(
-                      child: Icon(Icons.map_rounded, size: 64, color: Colors.white.withOpacity(0.1)),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Capa de retícula de radar fina
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.05,
-                child: CustomPaint(
-                  painter: const HoneycombPainter(),
-                ),
-              ),
-            ),
-            // Cabecera del Mapa
-            Positioned(
-              top: 24,
-              left: 24,
-              right: 24,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Sincronización Satelital tag esmerilado
-                  _buildGlassmorphicOverlay(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            color: Colors.black.withOpacity(0.1),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 24,
+                  left: 24,
+                  child: _buildGlassmorphicOverlay(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                    child: const Row(
                       children: [
-                        const Text(
-                          'SINCRONIZACIÓN SATELITAL',
+                        Icon(Icons.location_on_rounded, color: Colors.redAccent, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'BASE OPERATIVA',
                           style: TextStyle(
                             fontFamily: 'Work Sans',
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: DesignTokens.secondary,
-                            letterSpacing: 0.5,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 1.5,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle)),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Región Pampeana Norte',
-                              style: TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ],
                         ),
                       ],
                     ),
                   ),
-                  // Botón Launchpad para GpsGate
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () async {
-                        final url = Uri.parse('http://satelital.uninet.com.ar/GpsGateServer/VehicleTracker/VehicleTracker.html?appid=59');
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
-                        }
-                      },
-                      child: _buildGlassmorphicOverlay(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.satellite_alt_rounded, color: Colors.white, size: 12),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'ABRIR MONITOR EN VIVO',
-                              style: TextStyle(
-                                fontFamily: 'Work Sans',
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.open_in_new_rounded, color: Colors.white54, size: 10),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Animación de barrido de radar (simulada) para invitar a la acción
-            Positioned.fill(
-              child: IgnorePointer(
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(seconds: 4),
-                  builder: (context, value, child) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        gradient: SweepGradient(
-                          center: FractionalOffset.center,
-                          startAngle: 0.0,
-                          endAngle: 3.14 * 2,
-                          colors: [
-                            Colors.transparent,
-                            DesignTokens.secondary.withOpacity(0.0),
-                            DesignTokens.secondary.withOpacity(0.15),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.4, 0.5, 0.51],
-                          transform: GradientRotation(value * 3.14 * 2),
-                        ),
-                      ),
-                    );
-                  },
-                  onEnd: () {
-                    // Loop animation is handled by a state var if needed, but a simple tween runs once. 
-                    // Let's just keep the static radar aesthetic or a simple pulse.
-                  },
                 ),
-              ),
+                Positioned(
+                  bottom: 24,
+                  right: 24,
+                  child: FloatingActionButton.extended(
+                    heroTag: 'map_btn',
+                    onPressed: () {},
+                    backgroundColor: DesignTokens.primary,
+                    icon: const Icon(Icons.map_rounded, color: Colors.white),
+                    label: const Text('VER MAPA COMPLETO', style: TextStyle(fontFamily: 'Manrope', color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
-            // Marcador de Camión Flotante AR-402 (Centro-Izquierda)
-            Positioned(
-              top: 180,
-              left: 150,
-              child: IgnorePointer(
-                child: Column(
-                  children: [
-                    _buildGlassmorphicOverlay(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 16),
-                          ),
-                          const SizedBox(width: 10),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('UNIDAD AR-402', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
-                              Text('EN RUTA: 82 KM/H', style: TextStyle(color: DesignTokens.secondary, fontSize: 9, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 2,
-                      height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.white.withOpacity(0.5), Colors.transparent],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(color: DesignTokens.secondary, shape: BoxShape.circle),
-                  ),
-                ],
-              ),
-              ), // Close IgnorePointer
-            ),
-            // Marcador de Apiario COL-98 (Centro-Derecha)
-            Positioned(
-              bottom: 160,
-              right: 180,
-              child: Column(
-                children: [
-                  _buildGlassmorphicOverlay(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.hive_rounded, color: Colors.white, size: 16),
-                        ),
-                        const SizedBox(width: 10),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('APIARIO COL-98', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
-                            Text('COSECHA ACTIVA', style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 2,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.white.withOpacity(0.5), Colors.transparent],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  ),
-                ],
-              ),
-            ),
-            // Telemetría inferior
-            Positioned(
-              bottom: 24,
-              left: 24,
-              child: Row(
-                children: [
-                  _buildGlassmorphicOverlay(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.gps_fixed_rounded, color: Colors.blueAccent, size: 12),
-                        SizedBox(width: 6),
-                        Text('GPS: 24 LAT', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, fontFamily: 'Work Sans')),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildGlassmorphicOverlay(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.thermostat_rounded, color: Colors.orangeAccent, size: 12),
-                        SizedBox(width: 6),
-                        Text('TEMP: 21°C', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, fontFamily: 'Work Sans')),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-
-  // Helper para construir capas Glassmorphic consistentes con BackdropFilter blur sigma 10
+  
   Widget _buildGlassmorphicOverlay({required Widget child, required EdgeInsetsGeometry padding}) {
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
-
-    if (!isDesktop) {
-      // Degradar en móviles para evitar el carísimo BackdropFilter
-      return Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          color: const Color(0xFF08201A).withOpacity(0.9), // Fondo oscuro sólido
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.0),
-        ),
-        child: child,
-      );
-    }
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
@@ -1421,68 +1245,43 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
 
   // ─── END OF DESKTOP LAYOUT ─────────────────────────────────────────────────
 
+
+
   Widget _buildMainContent(BuildContext context, bool isDesktop) {
     return RefreshIndicator(
       color: DesignTokens.secondary,
       onRefresh: _fetchData,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(20, isDesktop ? 40 : 24, 20, 24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Text('Operaciones en Curso', style: DesignTokens.headlineStyle().copyWith(fontSize: 18)),
+                Row(
                   children: [
-                    Text(
-                      'Bienvenido,',
-                      style: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
-                    ),
-                    Text(
-                      _displayName,
-                      style: DesignTokens.headlineStyle().copyWith(fontSize: 26, letterSpacing: -0.5),
-                    ),
+                    if (isDesktop) ...[
+                      IconButton(
+                        onPressed: _fetchData,
+                        icon: const Icon(Icons.refresh_rounded, color: DesignTokens.primary),
+                      ),
+                      IconButton(
+                        onPressed: () {}, // Notificaciones
+                        icon: const Icon(Icons.notifications_none_rounded, color: DesignTokens.primary),
+                      ),
+                    ],
                   ],
                 ),
-                if (isDesktop)
-                  IconButton(
-                    onPressed: () {},
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: DesignTokens.primary,
-                        border: Border.all(color: DesignTokens.secondary, width: 2),
-                      ),
-                      child: Text(
-                        _initials,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
-                    ),
-                  ),
               ],
             ),
-
             const SizedBox(height: 24),
-
-            if (!_isDeposito) ...[
-              Text('ESTADO DE VIAJES', style: DesignTokens.labelStyle().copyWith(letterSpacing: 1.1, fontSize: 11)),
-              const SizedBox(height: 14),
-              _buildBentoGrid(isDesktop),
-              const SizedBox(height: 28),
-            ],
-
-            const SizedBox(height: 14),
-
-            Text(
-              'MÓDULOS DE OPERACIÓN',
-              style: DesignTokens.labelStyle().copyWith(letterSpacing: 1.1, fontSize: 11),
-            ),
-            const SizedBox(height: 14),
-
+            _buildBentoGrid(isDesktop),
+            const SizedBox(height: 40),
+            Text('Módulos de Operación', style: DesignTokens.headlineStyle().copyWith(fontSize: 16)),
+            const SizedBox(height: 16),
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -1492,157 +1291,19 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
               childAspectRatio: isDesktop ? 1.35 : 1.05,
               children: [
                 if (_isChofer || _userRole == null)
-                  _moduleCard(
-                    icon: Icons.local_shipping_rounded,
-                    title: 'Mis Viajes',
-                    subtitle: 'Rutas asignadas\ny operaciones',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/choferHome'),
-                  ),
+                  _moduleCard(icon: Icons.local_shipping_rounded, title: 'Mis Viajes', subtitle: 'Rutas asignadas', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/choferHome')),
                 if ((_isDeposito || _isManagement || _isChofer) && !_isCeoOrGerente)
-                  _moduleCard(
-                    icon: Icons.warehouse_rounded,
-                    title: (_isDeposito || _isManagement) ? 'Cargas Depósito' : 'Depósito Huinca',
-                    subtitle: 'Cargas y depósito\ncirculante',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/depositoHome'),
-                  ),
+                  _moduleCard(icon: Icons.warehouse_rounded, title: 'Depósito', subtitle: 'Cargas y stock', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/depositoHome')),
                 if (_isAdmin || _isManagement)
-                  _moduleCard(
-                    icon: Icons.alt_route_rounded,
-                    title: 'Gestión de Viajes',
-                    subtitle: 'Lista completa\nde rutas y viajes',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/viajes'),
-                  ),
-                if (_isAdmin || _isManagement)
-                  _moduleCard(
-                    icon: Icons.dashboard_customize_rounded,
-                    title: 'Dashboard',
-                    subtitle: 'Estadísticas y\nKPIs de gestión',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/gerenteHome'),
-                  ),
+                  _moduleCard(icon: Icons.alt_route_rounded, title: 'Gestión de Viajes', subtitle: 'Todas las rutas', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/viajes')),
                 if (!_isDeposito && (_isManagement && !_isCeoOrGerente && !_isCompras))
-                  _moduleCard(
-                    icon: Icons.inventory_2_rounded,
-                    title: 'Gestión de Cargas',
-                    subtitle: 'Preparar cargas\npara viajes',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/cargas'),
-                  ),
-                if (!_isChofer && !_isDeposito) ...[
-                  _moduleCard(
-                    icon: Icons.assignment_ind_rounded,
-                    title: 'Planificador',
-                    subtitle: 'Crear rutas y\nasignar choferes',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/planificarViaje'),
-                  ),
-                  _moduleCard(
-                    icon: Icons.list_alt_rounded,
-                    title: 'Solicitudes',
-                    subtitle: 'Gestión de carga\ny recolecciones',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/necesidades'),
-                  ),
-                ],
-                if (!_isChofer && !_isCeoOrGerente && !_isDeposito) ...[
-                  _moduleCard(
-                    icon: Icons.scale_rounded,
-                    title: 'Control Pesajes',
-                    subtitle: 'Listado de pesajes\ny control de carga',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/pesajes'),
-                  ),
-                  if (!_isCompras) ...[
-                    _moduleCard(
-                      icon: Icons.inventory_2_rounded,
-                      title: 'Productos',
-                      subtitle: 'Gestión de stock\ne insumos',
-                      bgColor: DesignTokens.primary,
-                      accentColor: DesignTokens.secondary,
-                      onTap: () => context.push('/productos'),
-                    ),
-                    _moduleCard(
-                      icon: Icons.payments_rounded,
-                      title: 'Gastos',
-                      subtitle: 'Peajes, comida\ny combustible',
-                      bgColor: DesignTokens.primary,
-                      accentColor: DesignTokens.secondary,
-                      onTap: () => context.push('/gastos'),
-                    ),
-                  ],
-                ],
-                if (!_isDeposito && !_isChofer && !_isCeoOrGerente)
-                  _moduleCard(
-                    icon: Icons.alt_route_rounded,
-                    title: 'Control de Ruta',
-                    subtitle: 'Trayectos activos\nen tiempo real',
-                    bgColor: DesignTokens.primary,
-                    accentColor: DesignTokens.secondary,
-                    onTap: () => context.push('/rutas'),
-                  ),
+                  _moduleCard(icon: Icons.inventory_2_rounded, title: 'Gestión de Cargas', subtitle: 'Preparar viajes', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/cargas')),
+                if (!_isChofer && !_isDeposito)
+                  _moduleCard(icon: Icons.assignment_ind_rounded, title: 'Planificador', subtitle: 'Asignar choferes', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/planificarViaje')),
+                if (!_isChofer && !_isCeoOrGerente && !_isDeposito)
+                  _moduleCard(icon: Icons.scale_rounded, title: 'Control Pesajes', subtitle: 'Báscula', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/pesajes')),
               ],
             ),
-
-            const SizedBox(height: 28),
-
-            Text(
-              'ACCIONES RÁPIDAS',
-              style: DesignTokens.labelStyle().copyWith(letterSpacing: 1.1, fontSize: 11),
-            ),
-            const SizedBox(height: 12),
-
-            if (!_isDeposito) ...[                      
-              if (!_isCompras) ...[
-                _quickAction(Icons.inventory_2_rounded, 'Inventario de Productos', 'Gestión de stock e insumos', () => context.push('/productos')),
-                const SizedBox(height: 10),
-              ],
-              _quickAction(Icons.group_rounded, 'Apicultores', 'Directorio de productores', () => context.push('/apicultores')),
-              const SizedBox(height: 10),
-            ],
-            if (!_isCompras) ...[
-              _quickAction(Icons.payments_rounded, 'Gestión de Gastos', 'Registro de peajes y combustible', () => context.push('/gastos')),
-              const SizedBox(height: 10),
-            ],
-            if (!_isChofer) ...[
-              _quickAction(
-                Icons.map_rounded,
-                'Seguimiento Satelital',
-                'Monitoreo de camiones en tiempo real',
-                () async {
-                  final satelitalUrl = Uri.parse('http://satelital.uninet.com.ar/GpsGateServer/VehicleTracker/VehicleTracker.html?appid=59');
-                  try {
-                    bool launched = await launchUrl(satelitalUrl, mode: LaunchMode.externalApplication);
-                    if (!launched) {
-                      await launchUrl(satelitalUrl, mode: LaunchMode.platformDefault);
-                    }
-                  } catch (e) {
-                    try {
-                      await launchUrl(satelitalUrl, mode: LaunchMode.platformDefault);
-                    } catch (err) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error al abrir sitio satelital: $err')),
-                        );
-                      }
-                    }
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-            ],
-            _quickAction(Icons.receipt_long_rounded, 'Remitos Digitales', 'Documentos de cierre', () => context.push('/remitosLista')),
-            
             const SizedBox(height: 40),
           ],
         ),
@@ -1701,105 +1362,14 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     List<double>? sparklineData,
     VoidCallback? onTap,
   }) {
-    final bool isGold = accentColor == DesignTokens.secondary;
-    final bool isDark = accentColor == DesignTokens.primary;
-    
-    Color cardBg = Colors.white;
-    Color textColor = DesignTokens.primary;
-    Color subColor = DesignTokens.onSurfaceVariant.withOpacity(0.6);
-    Color valueColor = DesignTokens.primary;
-    
-    if (isGold) {
-      cardBg = DesignTokens.secondary;
-      textColor = DesignTokens.primary;
-      subColor = DesignTokens.primary.withOpacity(0.7);
-      valueColor = DesignTokens.primary;
-    } else if (isDark) {
-      cardBg = DesignTokens.primary;
-      textColor = Colors.white;
-      subColor = Colors.white60;
-      valueColor = DesignTokens.secondary;
-    }
-
-    return InkWell(
+    return _BentoCardWidget(
+      title: title,
+      value: value,
+      trend: trend,
+      iconWidget: iconWidget,
+      accentColor: accentColor,
+      sparklineData: sparklineData,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: (isGold || isDark) ? Colors.transparent : DesignTokens.primary.withOpacity(0.05),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'Work Sans',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 9,
-                    letterSpacing: 0.5,
-                    color: subColor,
-                  ),
-                ),
-                if (iconWidget != null) iconWidget,
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 28,
-                    color: valueColor,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                if (sparklineData != null)
-                  Expanded(
-                    child: Container(
-                      height: 24,
-                      padding: const EdgeInsets.only(left: 12, right: 4),
-                      child: CustomPaint(
-                        painter: SparklinePainter(sparklineData, DesignTokens.secondary),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              trend,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 10,
-                color: subColor.withOpacity(0.8),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1807,16 +1377,16 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 1024;
+        final bool isDesktop = constraints.maxWidth >= 900;
         final bool isGerenteAdminDesktop = isDesktop && (_isManagement || _isAdmin);
         
         return Scaffold(
-          backgroundColor: DesignTokens.surface,
+          backgroundColor: const Color(0xFFFBF9F8),
           drawer: isGerenteAdminDesktop ? null : (isDesktop ? null : _buildDrawer()),
           appBar: isDesktop
               ? null
               : AppBar(
-                  backgroundColor: DesignTokens.surface,
+                  backgroundColor: const Color(0xFFFBF9F8),
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   leading: Builder(
@@ -1878,14 +1448,17 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                   Expanded(
                     child: Center(
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
-                        child: isGerenteAdminDesktop
-                            ? _buildGerenteAdminDesktopContent(context)
-                            : _buildMainContent(context, isDesktop),
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: _buildMainContent(context, isDesktop),
                       ),
                     ),
                   ),
                 ],
+              ),
+              Positioned(
+                bottom: 24,
+                right: 24,
+                child: _buildSyncMonitorFloating(),
               ),
             ],
           ),
@@ -1903,54 +1476,13 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     required Color accentColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return _ModuleCardWidget(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      bgColor: bgColor,
+      accentColor: accentColor,
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: bgColor.withOpacity(0.3),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 24, color: accentColor),
-            ),
-            const Spacer(),
-            Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11,
-                color: Colors.white.withOpacity(0.55),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1961,10 +1493,10 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: DesignTokens.primary.withOpacity(0.06)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.green.withOpacity(0.05)),
           boxShadow: [
-            BoxShadow(color: DesignTokens.primary.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 3)),
+            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
           ],
         ),
         child: Row(
@@ -2161,7 +1693,7 @@ class CircularProgressLoader extends StatelessWidget {
                 Text(
                   valueText,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
+                    fontFamily: 'JetBrains Mono',
                     fontWeight: FontWeight.w800,
                     fontSize: 28,
                     color: DesignTokens.secondary,
@@ -2197,7 +1729,7 @@ class CircularProgressLoader extends StatelessWidget {
                   child: Text(
                     '${(progress * 100).toInt()}%',
                     style: const TextStyle(
-                      fontFamily: 'Manrope',
+                      fontFamily: 'JetBrains Mono',
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color: Colors.white,
@@ -2273,7 +1805,7 @@ class SparklineCard extends StatelessWidget {
                   Text(
                     valueText,
                     style: const TextStyle(
-                      fontFamily: 'Manrope',
+                      fontFamily: 'JetBrains Mono',
                       fontWeight: FontWeight.w800,
                       fontSize: 28,
                       color: DesignTokens.primary,
@@ -2300,6 +1832,228 @@ class SparklineCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BentoCardWidget extends StatefulWidget {
+  final String title;
+  final String value;
+  final String trend;
+  final Widget? iconWidget;
+  final Color? accentColor;
+  final List<double>? sparklineData;
+  final VoidCallback? onTap;
+
+  const _BentoCardWidget({
+    required this.title,
+    required this.value,
+    required this.trend,
+    this.iconWidget,
+    this.accentColor,
+    this.sparklineData,
+    this.onTap,
+  });
+
+  @override
+  State<_BentoCardWidget> createState() => _BentoCardWidgetState();
+}
+
+class _BentoCardWidgetState extends State<_BentoCardWidget> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    Color cardBg = const Color(0xFFFFFFFF);
+    Color subColor = DesignTokens.onSurfaceVariant.withOpacity(0.6);
+    Color valueColor = DesignTokens.primary;
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.translationValues(0, _isHovered ? -4 : 0, 0),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.green.withOpacity(0.05),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(_isHovered ? 0.12 : 0.06),
+                blurRadius: _isHovered ? 40 : 30,
+                offset: Offset(0, _isHovered ? 8 : 4),
+              )
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.title,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      letterSpacing: 0.5,
+                      color: subColor,
+                    ),
+                  ),
+                  if (widget.iconWidget != null) ...[
+                    const SizedBox(width: 8),
+                    widget.iconWidget!,
+                  ]
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Expanded(
+                    flex: widget.sparklineData != null ? 1 : 0,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        widget.value,
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 48,
+                          color: valueColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  if (widget.sparklineData != null)
+                    Expanded(
+                      child: Container(
+                        height: 24,
+                        padding: const EdgeInsets.only(left: 12, right: 4),
+                        child: CustomPaint(
+                          painter: SparklinePainter(widget.sparklineData!, widget.accentColor ?? DesignTokens.secondary),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  widget.trend,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 10,
+                    color: subColor.withOpacity(0.8),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModuleCardWidget extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color bgColor;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  const _ModuleCardWidget({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.bgColor,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  @override
+  State<_ModuleCardWidget> createState() => _ModuleCardWidgetState();
+}
+
+class _ModuleCardWidgetState extends State<_ModuleCardWidget> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.translationValues(0, _isHovered ? -4 : 0, 0),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.green.withOpacity(0.05),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(_isHovered ? 0.12 : 0.06),
+                blurRadius: _isHovered ? 40 : 30,
+                offset: Offset(0, _isHovered ? 8 : 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: widget.bgColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(widget.icon, size: 24, color: widget.bgColor),
+              ),
+              const Spacer(),
+              Text(
+                widget.title,
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  color: DesignTokens.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.subtitle,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  color: DesignTokens.onSurfaceVariant.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
