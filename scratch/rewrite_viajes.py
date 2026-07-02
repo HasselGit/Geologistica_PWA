@@ -1,4 +1,6 @@
-import 'dart:async';
+import os
+
+new_code = """import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -135,7 +137,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
           backgroundColor: DesignTokens.surfaceLow,
           body: Row(
             children: [
-              if (isDesktop) GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+              if (isDesktop) const GeoSidebar(),
               Expanded(
                 child: Column(
                   children: [
@@ -484,3 +486,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
     return 'Vacío';
   }
 }
+"""
+
+with open('lib/pages/viajes_page.dart', 'w', encoding='utf-8') as f:
+    f.write(new_code)

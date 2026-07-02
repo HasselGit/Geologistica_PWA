@@ -155,16 +155,7 @@ class _GeoSidebarState extends State<GeoSidebar> {
                               color: Colors.white,
                             ),
                           ),
-                          Text(
-                            'APIARY LOGISTICS',
-                            style: TextStyle(
-                              fontFamily: 'Work Sans',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 8,
-                              color: Colors.white.withOpacity(0.4),
-                              letterSpacing: 1.2,
-                            ),
-                          ),
+
                         ],
                       ),
                     ),

@@ -10,3 +10,5 @@
 - Si lo haces sin precaucion, Vercel creara un nuevo proyecto basado en el nombre de la carpeta (ej: web) en lugar de actualizar el proyecto existente (geologistica-pwa).
 - PARA EVITAR ESTE DESASTRE: SIEMPRE debes copiar la carpeta .vercel desde la raiz del proyecto hacia el directorio de compilacion ANTES de ejecutar el despliegue.
 - Comando obligatorio: Copy-Item -Path .vercel -Destination build/web -Recurse -Force; npx vercel deploy --prod --cwd build/web.
+
+- El 02/07/2026, se modificaron lib/pages/viajes_page.dart y lib/widgets/geo_sidebar.dart para reestructurar la vista de Control de Viajes y eliminar textos residuales.
