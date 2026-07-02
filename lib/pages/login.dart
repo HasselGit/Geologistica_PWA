@@ -44,7 +44,11 @@ class _LoginWidgetState extends State<LoginWidget> {
       _keepSession = keep;
     });
     if (keep && userId != null && userId.isNotEmpty) {
-      print('LoginWidget: Sesión activa detectada en caché. Redirigiendo a /home');
+      print('LoginWidget: Sesión activa detectada en caché. Redirigiendo...');
+      final role = prefs.getString('user_puesto') ?? '';
+      final roleL = role.toLowerCase();
+      final isGerente = roleL.contains('ceo') || roleL.contains('gerente') || roleL.contains('gerencia') || roleL.contains('compras') || roleL.contains('admin');
+      
       if (mounted) {
         context.go('/home');
       }
@@ -79,7 +83,13 @@ class _LoginWidgetState extends State<LoginWidget> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('keep_session', _keepSession);
       
-      if (mounted) context.go('/home');
+      final role = prefs.getString('user_puesto') ?? '';
+      final roleL = role.toLowerCase();
+      final isGerente = roleL.contains('ceo') || roleL.contains('gerente') || roleL.contains('gerencia') || roleL.contains('compras') || roleL.contains('admin');
+      
+      if (mounted) {
+        context.go('/home');
+      }
     } catch (error) {
       if (mounted) {
         String msg = error.toString().replaceAll('Exception:', '').trim();
@@ -94,28 +104,19 @@ class _LoginWidgetState extends State<LoginWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
-
     return Scaffold(
-      backgroundColor: DesignTokens.surface,
-      body: Stack(
-        children: [
-          // Aislamiento de Redibujado: TechnicalGridPainter interactivo envuelto en su propio RepaintBoundary
-          if (isDesktop)
-            const Positioned.fill(
-              child: RepaintBoundary(
-                child: InteractiveTechnicalGrid(),
-              ),
-            ),
-          // Contenido principal
-          SafeArea(
+      backgroundColor: DesignTokens.surfaceLow,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 900;
+          
+          final formContent = SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Aislamiento de Redibujado: La Card de Login en otro RepaintBoundary separado
                     RepaintBoundary(
                       child: Container(
                         width: double.infinity,
@@ -139,7 +140,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Logo hexagonal achicado a 80x80px
                             Container(
                               width: 80,
                               height: 80,
@@ -161,7 +161,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                                 ),
                               ),
                             ),
-                            // Identidad y cabecera en tipografía Manrope
                             const Text(
                               'GeoLogística',
                               style: TextStyle(
@@ -184,11 +183,9 @@ class _LoginWidgetState extends State<LoginWidget> {
                               ),
                             ),
                             const SizedBox(height: 32),
-                            // Formulario
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Username Label
                                 const Text(
                                   'USUARIO',
                                   style: TextStyle(
@@ -200,7 +197,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                // Username Field
                                 TextField(
                                   controller: _emailController,
                                   focusNode: _emailFocusNode,
@@ -229,7 +225,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                       ),
                                     ),
                                     enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.3), width: 1.5),
+                                      borderSide: BorderSide(color: DesignTokens.outline, width: 2.0),
                                       borderRadius: const BorderRadius.only(
                                         topLeft: Radius.circular(12.0),
                                         topRight: Radius.circular(12.0),
@@ -243,7 +239,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                // Password Label + Recover
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
@@ -278,7 +273,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                                   ],
                                 ),
                                 const SizedBox(height: 6),
-                                // Password Field
                                 TextField(
                                   controller: _passwordController,
                                   focusNode: _passwordFocusNode,
@@ -323,7 +317,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                       ),
                                     ),
                                     enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.3), width: 1.5),
+                                      borderSide: BorderSide(color: DesignTokens.outline, width: 2.0),
                                       borderRadius: const BorderRadius.only(
                                         topLeft: Radius.circular(12.0),
                                         topRight: Radius.circular(12.0),
@@ -339,7 +333,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            // Mantener sesión activa Checkbox
                             Row(
                               children: [
                                 SizedBox(
@@ -375,7 +368,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                               ],
                             ),
                             const SizedBox(height: 32),
-                            // Botón Ingresar
                             SizedBox(
                               width: double.infinity,
                               height: 54,
@@ -414,7 +406,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                               ),
                             ),
                             const SizedBox(height: 28),
-                            // Módulo Biométrico
                             GestureDetector(
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -467,181 +458,24 @@ class _LoginWidgetState extends State<LoginWidget> {
                 ),
               ),
             ),
-          ),
-          // Footer corporativo
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.transparent,
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '© 2024 GEOLOGÍSTICA APIARY OPERATIONS.',
-                    style: TextStyle(
-                      fontFamily: 'Work Sans',
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF859E96),
-                      letterSpacing: 0.5,
-                    ),
+          );
+
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: const HoneycombPainter(),
                   ),
-                  Row(
-                    children: [
-                      const _PulsingDot(),
-                      SizedBox(width: 6),
-                      Text(
-                        'SYSTEM ONLINE',
-                        style: TextStyle(
-                          fontFamily: 'Work Sans',
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF859E96),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ],
+              formContent,
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-// Widget Stateful para el fondo reticulado interactivo con brillo
-class InteractiveTechnicalGrid extends StatefulWidget {
-  const InteractiveTechnicalGrid({super.key});
 
-  @override
-  State<InteractiveTechnicalGrid> createState() => _InteractiveTechnicalGridState();
-}
-
-class _InteractiveTechnicalGridState extends State<InteractiveTechnicalGrid> {
-  Offset _mousePos = Offset.zero;
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (e) => setState(() {
-        _hovering = true;
-      }),
-      onExit: (e) => setState(() {
-        _hovering = false;
-      }),
-      onHover: (e) {
-        setState(() {
-          _mousePos = e.localPosition;
-        });
-      },
-      child: CustomPaint(
-        painter: TechnicalGridPainter(
-          mousePosition: _mousePos,
-          isHovering: _hovering,
-        ),
-      ),
-    );
-  }
-}
-
-// Painter para dibujar la cuadrícula técnica de puntos con degradado radial interactivo
-class TechnicalGridPainter extends CustomPainter {
-  final Offset mousePosition;
-  final bool isHovering;
-
-  TechnicalGridPainter({
-    required this.mousePosition,
-    required this.isHovering,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 1. Dibujar el brillo radial si está en hovering
-    if (isHovering) {
-      final radialPaint = Paint()
-        ..shader = RadialGradient(
-          center: Alignment(
-            (mousePosition.dx / size.width) * 2 - 1,
-            (mousePosition.dy / size.height) * 2 - 1,
-          ),
-          radius: 0.35,
-          colors: [
-            const Color(0xFFFDBE49).withOpacity(0.06), // Honey Gold muy sutil
-            Colors.transparent,
-          ],
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), radialPaint);
-    }
-
-    // 2. Dibujar la cuadrícula técnica de puntos
-    final gridPaint = Paint()
-      ..color = const Color(0xFF08201A).withOpacity(0.04)
-      ..style = PaintingStyle.fill;
-
-    const spacing = 32.0;
-    for (double y = 0; y < size.height; y += spacing) {
-      for (double x = 0; x < size.width; x += spacing) {
-        canvas.drawCircle(Offset(x, y), 1.0, gridPaint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant TechnicalGridPainter oldDelegate) {
-    return oldDelegate.mousePosition != mousePosition ||
-        oldDelegate.isHovering != isHovering;
-  }
-}
-
-// Widget Stateful para el punto verde pulsante
-class _PulsingDot extends StatefulWidget {
-  const _PulsingDot();
-
-  @override
-  State<_PulsingDot> createState() => _PulsingDotState();
-}
-
-class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(reverse: true);
-
-    _opacityAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _opacityAnimation,
-      child: Container(
-        width: 8,
-        height: 8,
-        decoration: const BoxDecoration(
-          color: Colors.greenAccent,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-}

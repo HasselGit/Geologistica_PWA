@@ -161,6 +161,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
           _loadingStats = false;
           _loadingEvents = false;
         });
+
       }
     } catch (e) {
       print('HomePage: Error en _fetchData: $e');
@@ -1248,106 +1249,186 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
 
 
   Widget _buildMainContent(BuildContext context, bool isDesktop) {
+    if (!isDesktop) {
+      return RefreshIndicator(
+        color: DesignTokens.secondary,
+        onRefresh: _fetchData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: _buildMosaicoBento(context, isDesktop),
+        ),
+      );
+    }
+    
     return RefreshIndicator(
       color: DesignTokens.secondary,
       onRefresh: _fetchData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Operaciones en Curso', style: DesignTokens.headlineStyle().copyWith(fontSize: 18)),
-                Row(
-                  children: [
-                    if (isDesktop) ...[
-                      IconButton(
-                        onPressed: _fetchData,
-                        icon: const Icon(Icons.refresh_rounded, color: DesignTokens.primary),
-                      ),
-                      IconButton(
-                        onPressed: () {}, // Notificaciones
-                        icon: const Icon(Icons.notifications_none_rounded, color: DesignTokens.primary),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: _buildMosaicoBento(context, isDesktop),
             ),
-            const SizedBox(height: 24),
-            _buildBentoGrid(isDesktop),
-            const SizedBox(height: 40),
-            Text('Módulos de Operación', style: DesignTokens.headlineStyle().copyWith(fontSize: 16)),
-            const SizedBox(height: 16),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: isDesktop ? 4 : 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: isDesktop ? 1.35 : 1.05,
-              children: [
-                if (_isChofer || _userRole == null)
-                  _moduleCard(icon: Icons.local_shipping_rounded, title: 'Mis Viajes', subtitle: 'Rutas asignadas', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/choferHome')),
-                if ((_isDeposito || _isManagement || _isChofer) && !_isCeoOrGerente)
-                  _moduleCard(icon: Icons.warehouse_rounded, title: 'Depósito', subtitle: 'Cargas y stock', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/depositoHome')),
-                if (_isAdmin || _isManagement)
-                  _moduleCard(icon: Icons.alt_route_rounded, title: 'Gestión de Viajes', subtitle: 'Todas las rutas', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/viajes')),
-                if (!_isDeposito && (_isManagement && !_isCeoOrGerente && !_isCompras))
-                  _moduleCard(icon: Icons.inventory_2_rounded, title: 'Gestión de Cargas', subtitle: 'Preparar viajes', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/cargas')),
-                if (!_isChofer && !_isDeposito)
-                  _moduleCard(icon: Icons.assignment_ind_rounded, title: 'Planificador', subtitle: 'Asignar choferes', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/planificarViaje')),
-                if (!_isChofer && !_isCeoOrGerente && !_isDeposito)
-                  _moduleCard(icon: Icons.scale_rounded, title: 'Control Pesajes', subtitle: 'Báscula', bgColor: DesignTokens.primary, accentColor: DesignTokens.secondary, onTap: () => context.push('/pesajes')),
-              ],
-            ),
-            const SizedBox(height: 40),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBentoGrid(bool isDesktop) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: isDesktop ? 4 : 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: isDesktop ? 1.45 : 1.1,
+  Widget _buildMosaicoBento(BuildContext context, bool isDesktop) {
+    // Definir tarjetas de módulo condicionales basadas en el rol
+    List<Widget> leftModules = [];
+    List<Widget> rightModules = [];
+    
+    // Rol Chofer o Genérico
+    if (_isChofer || _userRole == null) {
+      leftModules.add(_moduleCard(icon: Icons.local_shipping_rounded, title: 'Mis Viajes', subtitle: 'Rutas asignadas', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/choferHome')));
+    }
+    
+    // Management o Admin (Left column)
+    if (_isAdmin || _isManagement) {
+      leftModules.add(_moduleCard(icon: Icons.alt_route_rounded, title: 'Gestión de Viajes', subtitle: 'Todas las rutas', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/viajes')));
+    }
+    if (!_isChofer && !_isCeoOrGerente && !_isDeposito) {
+      leftModules.add(const SizedBox(height: 16));
+      leftModules.add(_moduleCard(icon: Icons.scale_rounded, title: 'Control Pesajes', subtitle: 'Báscula', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/pesajes')));
+    }
+    if (!_isDeposito && (_isManagement && !_isCeoOrGerente && !_isCompras)) {
+      leftModules.add(const SizedBox(height: 16));
+      leftModules.add(_moduleCard(icon: Icons.inventory_2_rounded, title: 'Gestión de Cargas', subtitle: 'Preparar viajes', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/cargas')));
+    }
+
+    // Management o Admin (Right column)
+    if ((_isDeposito || _isManagement || _isChofer) && !_isCeoOrGerente) {
+      rightModules.add(_moduleCard(icon: Icons.warehouse_rounded, title: 'Depósito', subtitle: 'Cargas y stock', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/depositoHome')));
+    }
+    if (!_isChofer && !_isDeposito) {
+      if (rightModules.isNotEmpty) rightModules.add(const SizedBox(height: 16));
+      rightModules.add(_moduleCard(icon: Icons.assignment_ind_rounded, title: 'Planificador', subtitle: 'Asignar choferes', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/planificarViaje')));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _bentoCard(
-          title: 'PENDIENTES',
-          value: _loadingStats ? '—' : '${_stats['planificados']}',
-          trend: 'Viajes planificados',
-          iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 24),
-          onTap: () => context.push('/viajes?estado=Pendiente'),
+        // Encabezado
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Operaciones en Curso', style: DesignTokens.headlineStyle().copyWith(fontSize: 18)),
+            Row(
+              children: [
+                if (isDesktop) ...[
+                  IconButton(
+                    onPressed: _fetchData,
+                    icon: const Icon(Icons.refresh_rounded, color: DesignTokens.primary),
+                  ),
+                ],
+                if (_isManagement || _isAdmin)
+                  IconButton(
+                    onPressed: () {
+                      if (context.canPop()) context.pop();
+                      else context.go('/gerenteHome');
+                    },
+                    icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                  ),
+              ],
+            ),
+          ],
         ),
-        _bentoCard(
-          title: 'EN CURSO',
-          value: _loadingStats ? '—' : '${_stats['en_curso']}',
-          trend: 'Viajes activos',
-          accentColor: DesignTokens.secondary,
-          sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0],
-          onTap: () => context.push('/viajes?estado=En%20Curso'),
+        const SizedBox(height: 24),
+        // KPIs
+        isDesktop ? Row(
+          children: [
+            Expanded(
+              child: _bentoCard(
+                title: 'PENDIENTES',
+                value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}',
+                trend: 'Viajes planificados',
+                iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 24),
+                onTap: () => context.push('/viajes?estado=Pendiente'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _bentoCard(
+                title: 'EN CURSO',
+                value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}',
+                trend: 'Viajes activos',
+                accentColor: DesignTokens.secondary,
+                sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0],
+                onTap: () => context.push('/viajes?estado=En%20Curso'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _bentoCard(
+                title: 'TERMINADOS',
+                value: _loadingStats ? '—' : '${_stats['terminados'] ?? 0}',
+                trend: 'Historial',
+                iconWidget: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 24),
+                onTap: () => context.push('/viajes?estado=Terminado'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _bentoCard(
+                title: 'CARGAS HOY',
+                value: _loadingStats ? '—' : '${(_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0)}',
+                trend: 'Cargas en depósito',
+                iconWidget: const Icon(Icons.warehouse_rounded, color: DesignTokens.primary, size: 24),
+                onTap: () => context.push('/depositoHome'),
+              ),
+            ),
+          ],
+        ) : Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _bentoCard(title: 'PENDIENTES', value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}', trend: 'Viajes planificados', onTap: () => context.push('/viajes?estado=Pendiente'))),
+                const SizedBox(width: 16),
+                Expanded(child: _bentoCard(title: 'EN CURSO', value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}', trend: 'Viajes activos', accentColor: DesignTokens.secondary, sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0], onTap: () => context.push('/viajes?estado=En%20Curso'))),
+              ]
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _bentoCard(title: 'TERMINADOS', value: _loadingStats ? '—' : '${_stats['terminados'] ?? 0}', trend: 'Historial', onTap: () => context.push('/viajes?estado=Terminado'))),
+                const SizedBox(width: 16),
+                Expanded(child: _bentoCard(title: 'CARGAS HOY', value: _loadingStats ? '—' : '${(_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0)}', trend: 'Cargas en depósito', onTap: () => context.push('/depositoHome'))),
+              ]
+            ),
+          ],
         ),
-        _bentoCard(
-          title: 'TERMINADOS',
-          value: _loadingStats ? '—' : '${_stats['terminados']}',
-          trend: 'Historial',
-          iconWidget: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 24),
-          onTap: () => context.push('/viajes?estado=Terminado'),
-        ),
-        _bentoCard(
-          title: 'CARGAS HOY',
-          value: _loadingStats ? '—' : '${_cargasStats['planificadas']! + _cargasStats['en_curso']! + _cargasStats['terminadas']!}',
-          trend: 'Cargas en depósito',
-          iconWidget: const Icon(Icons.warehouse_rounded, color: DesignTokens.primary, size: 24),
-          onTap: () => context.push('/depositoHome'),
+        const SizedBox(height: 40),
+        Text('Módulos de Operación', style: DesignTokens.headlineStyle().copyWith(fontSize: 16)),
+        const SizedBox(height: 16),
+        // Mosaico Asimétrico Real (Estructura de Bloques 70/30)
+        isDesktop ? Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 7,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: leftModules,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: rightModules,
+              ),
+            ),
+          ],
+        ) : Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [...leftModules, if (rightModules.isNotEmpty) const SizedBox(height: 16), ...rightModules],
         ),
       ],
     );
@@ -1867,8 +1948,9 @@ class _BentoCardWidgetState extends State<_BentoCardWidget> {
   @override
   Widget build(BuildContext context) {
     Color cardBg = const Color(0xFFFFFFFF);
-    Color subColor = DesignTokens.onSurfaceVariant.withOpacity(0.6);
-    Color valueColor = DesignTokens.primary;
+    Color subColor = DesignTokens.onSurfaceVariant.withOpacity(0.7);
+    Color valueColor = const Color(0xFF08201A);
+    Color accent = widget.accentColor ?? DesignTokens.secondary;
     
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -1876,92 +1958,105 @@ class _BentoCardWidgetState extends State<_BentoCardWidget> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: Matrix4.translationValues(0, _isHovered ? -4 : 0, 0),
-          padding: const EdgeInsets.all(18),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
           decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
+            color: cardBg.withOpacity(0.9), // Glassmorphism hint
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Colors.green.withOpacity(0.05),
-              width: 1.0,
+              color: accent.withOpacity(_isHovered ? 0.3 : 0.05),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(_isHovered ? 0.12 : 0.06),
-                blurRadius: _isHovered ? 40 : 30,
-                offset: Offset(0, _isHovered ? 8 : 4),
+                color: accent.withOpacity(_isHovered ? 0.15 : 0.04),
+                blurRadius: _isHovered ? 30 : 15,
+                offset: Offset(0, _isHovered ? 12 : 6),
               )
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    widget.title,
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                      letterSpacing: 0.5,
-                      color: subColor,
+              // Efecto de brillo de fondo
+              Positioned(
+                top: -50,
+                right: -50,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: accent.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              if (widget.sparklineData != null)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 80,
+                  child: Opacity(
+                    opacity: 0.25, // Mucho más visible
+                    child: CustomPaint(
+                      painter: SparklinePainter(widget.sparklineData!, accent),
                     ),
                   ),
-                  if (widget.iconWidget != null) ...[
-                    const SizedBox(width: 8),
-                    widget.iconWidget!,
-                  ]
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Expanded(
-                    flex: widget.sparklineData != null ? 1 : 0,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
+                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            letterSpacing: 1.2,
+                            color: subColor,
+                          ),
+                        ),
+                        if (widget.iconWidget != null) widget.iconWidget!,
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      widget.value,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 48,
+                        color: valueColor,
+                        height: 1.0,
+                        letterSpacing: -1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: accent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                       child: Text(
-                        widget.value,
+                        widget.trend,
                         style: TextStyle(
-                          fontFamily: 'Manrope',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 48,
-                          color: valueColor,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: accent.withOpacity(0.8),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  if (widget.sparklineData != null)
-                    Expanded(
-                      child: Container(
-                        height: 24,
-                        padding: const EdgeInsets.only(left: 12, right: 4),
-                        child: CustomPaint(
-                          painter: SparklinePainter(widget.sparklineData!, widget.accentColor ?? DesignTokens.secondary),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: Text(
-                  widget.trend,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 10,
-                    color: subColor.withOpacity(0.8),
-                  ),
-                  textAlign: TextAlign.center,
+                  ],
                 ),
               ),
             ],
@@ -1998,58 +2093,104 @@ class _ModuleCardWidgetState extends State<_ModuleCardWidget> {
 
   @override
   Widget build(BuildContext context) {
+    Color baseAccent = widget.accentColor;
+    
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: Matrix4.translationValues(0, _isHovered ? -4 : 0, 0),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutQuint,
+          transform: Matrix4.translationValues(0, _isHovered ? -8 : 0, 0),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFFFF),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(28), // Bordes más suaves
             border: Border.all(
-              color: Colors.green.withOpacity(0.05),
-              width: 1.0,
+              color: baseAccent.withOpacity(_isHovered ? 0.4 : 0.08),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(_isHovered ? 0.12 : 0.06),
-                blurRadius: _isHovered ? 40 : 30,
-                offset: Offset(0, _isHovered ? 8 : 4),
-              ),
+                color: baseAccent.withOpacity(_isHovered ? 0.2 : 0.05),
+                blurRadius: _isHovered ? 40 : 20,
+                offset: Offset(0, _isHovered ? 15 : 8),
+              )
             ],
           ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: widget.bgColor.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
+              // Capa 1: Fondo y Gradiente Premium
+              Positioned.fill(
+                child: Container(
+                  color: const Color(0xFFFFFFFF).withOpacity(0.8), // Efecto cristal
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFFFFFFFF),
+                          baseAccent.withOpacity(_isHovered ? 0.08 : 0.03),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                child: Icon(widget.icon, size: 24, color: widget.bgColor),
               ),
-              const Spacer(),
-              Text(
-                widget.title,
-                style: const TextStyle(
-                  fontFamily: 'Manrope',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  color: DesignTokens.primary,
+              // Capa 2: Textura (Icono gigante muy difuminado)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutQuint,
+                bottom: _isHovered ? -15 : -25,
+                right: _isHovered ? -15 : -25,
+                child: Transform.rotate(
+                  angle: _isHovered ? -0.1 : 0,
+                  child: Icon(
+                    widget.icon,
+                    size: 160,
+                    color: baseAccent.withOpacity(0.06), // Opacidad mayor para que se note
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                widget.subtitle,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  color: DesignTokens.onSurfaceVariant.withOpacity(0.6),
+              // Capa 3: Contenido Frontal
+              Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: baseAccent.withOpacity(_isHovered ? 0.15 : 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(widget.icon, size: 32, color: baseAccent),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w900, // Extrabold real
+                        fontSize: 26,
+                        color: Color(0xFF08201A), // Dark verde corporativo
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        color: const Color(0xFF08201A).withOpacity(0.6),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
