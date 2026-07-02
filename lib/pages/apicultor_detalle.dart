@@ -632,11 +632,11 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                     decoration: BoxDecoration(
                       color: DesignTokens.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
+                      border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.1)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.search_rounded, size: 20, color: DesignTokens.primary.withOpacity(0.5)),
+                        Icon(Icons.search_rounded, size: 20, color: DesignTokens.primary.withValues(alpha: 0.5)),
                         const SizedBox(width: 12),
                         Text(selectedProducto ?? 'Seleccionar producto...', 
                           style: TextStyle(color: selectedProducto != null ? DesignTokens.primary : Colors.black38)),
@@ -729,14 +729,14 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           decoration: BoxDecoration(
-            color: DesignTokens.primary.withOpacity(0.05),
+            color: DesignTokens.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
+            border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.1)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('CÓDIGO DE APICULTOR:', style: DesignTokens.labelStyle().copyWith(fontSize: 9, fontWeight: FontWeight.bold, color: DesignTokens.primary.withOpacity(0.5))),
+              Text('CÓDIGO DE APICULTOR:', style: DesignTokens.labelStyle().copyWith(fontSize: 9, fontWeight: FontWeight.bold, color: DesignTokens.primary.withValues(alpha: 0.5))),
               const SizedBox(width: 8),
               Text(
                 a['apicultor_codigo'] ?? a['id'] ?? 'S/C',
@@ -757,8 +757,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
@@ -770,7 +770,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             ],
           ),
           const SizedBox(height: 16),
-          Divider(color: DesignTokens.outline.withOpacity(0.05), height: 1),
+          Divider(color: DesignTokens.outline.withValues(alpha: 0.05), height: 1),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -780,7 +780,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             ],
           ),
           const SizedBox(height: 16),
-          Divider(color: DesignTokens.outline.withOpacity(0.05), height: 1),
+          Divider(color: DesignTokens.outline.withValues(alpha: 0.05), height: 1),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -798,7 +798,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: DesignTokens.labelStyle().copyWith(fontSize: 9, color: DesignTokens.onSurfaceVariant.withOpacity(0.5))),
+        Text(label, style: DesignTokens.labelStyle().copyWith(fontSize: 9, color: DesignTokens.onSurfaceVariant.withValues(alpha: 0.5))),
         const SizedBox(height: 4),
         Text(
           value,
@@ -823,15 +823,15 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isRecoleccion ? DesignTokens.success.withOpacity(0.1) : DesignTokens.accent.withOpacity(0.1),
+              color: isRecoleccion ? DesignTokens.success.withValues(alpha: 0.1) : DesignTokens.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -855,7 +855,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: _getStatusColor(s['estado']).withOpacity(0.1),
+              color: _getStatusColor(s['estado']).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(s['estado']?.toUpperCase() ?? 'PENDIENTE', 
@@ -879,15 +879,15 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.05),
+              color: Colors.grey.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -936,7 +936,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: DesignTokens.primary,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
@@ -1019,8 +1019,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFEF3C7).withOpacity(0.5)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: const Color(0xFFFEF3C7).withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1030,7 +1030,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, size: 22, color: iconColor),
               ),
               Row(
@@ -1103,8 +1103,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1114,7 +1114,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: iconColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, size: 22, color: iconColor),
               ),
               // Totales por tipo en chips compactos
@@ -1124,8 +1124,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: t.key.toLowerCase().contains('recolección') || t.key.toLowerCase().contains('entrega') 
-                        ? DesignTokens.success.withOpacity(0.1) 
-                        : DesignTokens.secondary.withOpacity(0.1),
+                        ? DesignTokens.success.withValues(alpha: 0.1) 
+                        : DesignTokens.secondary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -1231,11 +1231,11 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
+        border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
-          Icon(Icons.assignment_outlined, size: 48, color: DesignTokens.primary.withOpacity(0.1)),
+          Icon(Icons.assignment_outlined, size: 48, color: DesignTokens.primary.withValues(alpha: 0.1)),
           const SizedBox(height: 16),
           Text(message, 
             textAlign: TextAlign.center,

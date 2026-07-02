@@ -74,7 +74,7 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
 
   String? _titularIdOfParada;
   double _plannedTcmCount = 0.0;
-  bool _adding = false;
+  bool _isSaving = false;
   int _deletingIndex = -1;
 
   bool get _isTitularResponsable {
@@ -262,7 +262,7 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
     final apicId = _selectedApicultorId;
 
     setState(() {
-      _adding = true;
+      _isSaving = true;
     });
 
     try {
@@ -307,7 +307,7 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
     } finally {
       if (mounted) {
         setState(() {
-          _adding = false;
+          _isSaving = false;
         });
       }
     }
@@ -616,8 +616,8 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
         border: Border.all(color: DesignTokens.secondary.withOpacity(0.4), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: DesignTokens.accent.withOpacity(0.2),
-            blurRadius: 15,
+            color: DesignTokens.secondary.withOpacity(0.15),
+            blurRadius: 20,
             spreadRadius: 2,
           ),
         ],
@@ -724,59 +724,169 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
           constraints: const BoxConstraints(maxWidth: 1200),
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: AnimatedOpacity(
-              opacity: 1.0,
-              duration: const Duration(milliseconds: 500),
-              child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!_isOnline) _buildOfflineBanner(),
-            _buildContextCard(),
-            const SizedBox(height: 20),
-            if (_pesarTambores) ...[
-              _buildDigitalScaleDisplay(),
-              const SizedBox(height: 20),
-            ],
-            Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Columna Izquierda: Monitor de báscula oscuro y Formulario
                 Expanded(
-                  flex: 5,
-                  child: _buildFormCard(),
+                  flex: 4,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!_isOnline) _buildOfflineBanner(),
+                      _buildContextCard(),
+                      const SizedBox(height: 20),
+                      _buildDigitalScaleDisplay(),
+                      const SizedBox(height: 20),
+                      _buildFormCard(),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 24),
+                // Columna Derecha: Tabla analítica nativa y ecuación
                 Expanded(
-                  flex: 7,
+                  flex: 8,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildTamboresHeader(),
+                      const SizedBox(height: 8),
+                      // Ecuación explícita
+                      if (_pesarTambores)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: DesignTokens.surfaceLow,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
+                          ),
+                          child: const Text(
+                            '[Peso Bruto] - [Tara] = [Peso Neto]',
+                            style: TextStyle(
+                              fontFamily: 'JetBrains Mono',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: DesignTokens.primary,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 16),
                       if (drumsList.isEmpty)
                         _buildEmptyTambores()
-                      else ...[
-                        _buildTabla(),
-                        if (_pesarTambores) ...[
-                          const SizedBox(height: 16),
-                          _buildTotalesCard(),
-                        ],
+                      else
+                        _buildTablaAnalytics(),
+                      if (_pesarTambores && drumsList.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _buildTotalesCard(),
                       ],
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 100),
-          ],
+          ),
         ),
-      ))));
+      );
     }
+  }
+
+  Widget _buildTablaAnalytics() {
+    final filteredDrums = _tambores.where((t) => _isSameApicId(t['apicultor_id']?.toString(), _selectedApicultorId)).toList();
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)],
+      ),
+      child: Column(
+        children: [
+          // Header oscuro Tabla Analítica
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0A0F0D),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                _thAnalitico('N° Correlativo', 2),
+                _thAnalitico('SENASA', 3),
+                _thAnalitico('Lote', 2),
+                _thAnalitico('Temp', 2),
+                _thAnalitico('Hum', 2),
+                if (_pesarTambores) ...[
+                  _thAnalitico('Bruto', 2, right: true),
+                  _thAnalitico('Tara', 2, right: true),
+                  _thAnalitico('Neto', 2, right: true),
+                ],
+                const SizedBox(width: 40), // Acciones
+              ],
+            ),
+          ),
+          ...List.generate(filteredDrums.length, (i) {
+            final t = filteredDrums[i];
+            final originalIndex = _tambores.indexOf(t);
+            final isEven = i % 2 == 0;
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isEven ? const Color(0xFFFAFAFA) : Colors.white,
+                border: i < filteredDrums.length - 1
+                    ? const Border(bottom: BorderSide(color: Color(0xFFF5F5F5)))
+                    : null,
+                borderRadius: i == filteredDrums.length - 1
+                    ? const BorderRadius.vertical(bottom: Radius.circular(16))
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Expanded(flex: 2, child: Text('${i + 1}', style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                  Expanded(flex: 3, child: Text(t['senasa_codigo']?.toString() ?? '', style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+                  Expanded(flex: 2, child: const Text('-', style: TextStyle(color: Colors.black38))), // Lote
+                  Expanded(flex: 2, child: const Text('-', style: TextStyle(color: Colors.black38))), // Temp
+                  Expanded(flex: 2, child: const Text('-', style: TextStyle(color: Colors.black38))), // Hum
+                  if (_pesarTambores) ...[
+                    Expanded(flex: 2, child: Text('${(t['peso_bruto'] as double).toStringAsFixed(1)} kg', textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                    Expanded(flex: 2, child: Text('${(t['tara'] as double).toStringAsFixed(1)} kg', textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12, color: DesignTokens.onSurfaceVariant))),
+                    Expanded(flex: 2, child: Text('${(t['peso_neto'] as double).toStringAsFixed(1)} kg', textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: FontWeight.bold, color: DesignTokens.secondary))),
+                  ],
+                  _deletingIndex == originalIndex
+                      ? const SizedBox(width: 40, child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))))
+                      : SizedBox(
+                          width: 40,
+                          child: IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                            onPressed: () => _eliminarTambor(originalIndex),
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _thAnalitico(String text, int flex, {bool right = false}) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text.toUpperCase(),
+        textAlign: right ? TextAlign.right : TextAlign.left,
+        style: const TextStyle(fontFamily: 'Work Sans', color: DesignTokens.secondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 1024;
+        final bool isDesktop = constraints.maxWidth >= 900;
         
         return Scaffold(
           backgroundColor: const Color(0xFFFBFBFB),
@@ -785,7 +895,10 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
             backgroundColor: Colors.white,
             elevation: 0,
             leading: isDesktop
-                ? null
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary, size: 20),
+                    onPressed: () => context.go('/home'),
+                  )
                 : IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new_rounded, color: DesignTokens.primary, size: 20),
                     onPressed: () => _checkDiscrepancyAndPop(),
@@ -807,7 +920,9 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
                 _taraController.clear();
                 _senasaFocusNode.requestFocus();
               } else if (event.isControlPressed && event.isKeyPressed(LogicalKeyboardKey.enter)) {
-                _agregarTambor();
+                if (!_isSaving) {
+                  _agregarTambor();
+                }
               }
             },
             child: _loadingExisting
@@ -1136,11 +1251,11 @@ class _AgregarPesajeWidgetState extends State<AgregarPesajeWidget> {
                   child: SizedBox(
                     height: 50,
                     child: ElevatedButton.icon(
-                      onPressed: _adding ? null : _agregarTambor,
-                      icon: _adding 
+                      onPressed: _isSaving ? null : _agregarTambor,
+                      icon: _isSaving 
                           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.add_rounded, color: Colors.white),
-                      label: Text(_adding ? 'AGREGANDO...' : 'AGREGAR', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      label: Text(_isSaving ? 'AGREGANDO...' : 'AGREGAR', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: DesignTokens.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

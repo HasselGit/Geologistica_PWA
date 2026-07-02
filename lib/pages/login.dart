@@ -171,17 +171,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                 letterSpacing: -0.5,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'COMMAND CENTER',
-                              style: TextStyle(
-                                fontFamily: 'Work Sans',
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: DesignTokens.onSurfaceVariant,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
+
                             const SizedBox(height: 32),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,37 +395,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                       ),
                               ),
                             ),
-                            const SizedBox(height: 28),
-                            GestureDetector(
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('El acceso biométrico requiere configuración previa en el dispositivo.'),
-                                  ),
-                                );
-                              },
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.fingerprint_rounded,
-                                    size: 32,
-                                    color: DesignTokens.primary.withOpacity(0.6),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    'LOGIN BIOMÉTRICO',
-                                    style: TextStyle(
-                                      fontFamily: 'Work Sans',
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: DesignTokens.onSurfaceVariant,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+
                           ],
                         ),
                       ),

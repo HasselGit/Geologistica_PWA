@@ -169,7 +169,6 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Normalización de viajes (soporta Map, List o null)
     dynamic viajesRaw = _resolvedParada != null ? _resolvedParada!['viajes'] : null;
     Map<String, dynamic> viajeAsociado = {};
     if (viajesRaw is Map) {
@@ -206,9 +205,19 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: DesignTokens.primary),
+            onPressed: () => context.go('/home'),
+          ),
           if (!isReadOnly)
             IconButton(
               icon: Icon(_isEditingQuantities ? Icons.check_circle_rounded : Icons.edit_note_rounded, color: DesignTokens.primary),
@@ -221,71 +230,397 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder<Map<String, dynamic>?>(
-                future: _paradaFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                    return const Padding(
-                      padding: EdgeInsets.all(40),
-                      child: Center(child: CircularProgressIndicator(color: DesignTokens.secondary)),
-                    );
-                  }
-                  final p = snapshot.data;
-                  if (p == null) return const Center(child: Padding(padding: EdgeInsets.all(40), child: Text('No se encontró la parada')));
-                  
-                  final String pTipo = (p['tipo'] ?? '').toString().trim();
-                  final bool isRecoleccion = pTipo == 'Recolección' || pTipo == 'Recoleccion';
-                  final bool hasPesajes = (p['pesajes'] as List? ?? []).isNotEmpty;
-                  final bool hasTcmItem = (p['parada_items'] as List? ?? []).any((it) => it['producto_codigo'] == 'TCM');
+        child: FutureBuilder<Map<String, dynamic>?>(
+          future: _paradaFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+              return const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(child: CircularProgressIndicator(color: DesignTokens.secondary)),
+              );
+            }
+            final p = snapshot.data;
+            if (p == null) return const Center(child: Padding(padding: EdgeInsets.all(40), child: Text('No se encontró la parada')));
 
-                  return Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (isViajePendiente)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Consulta únicamente. El viaje aún no ha comenzado.',
-                                    style: TextStyle(color: Colors.orange[900], fontWeight: FontWeight.bold, fontSize: 12),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        _buildHeader(p),
-                        const SizedBox(height: 32),
-                        _buildItemsSection(isReadOnly),
-                        // Sección de pesaje — visible si es Recolección, hay pesajes, o hay algún item TCM
-                        if (isRecoleccion || hasPesajes || hasTcmItem) ...[
-                          const SizedBox(height: 32),
-                          _buildPesajeSection(p, isReadOnly),
-                        ],
-                        const SizedBox(height: 32),
-                        _buildDigitalRemitoForm(p, isReadOnly, canFinalizarParada: canFinalizarParada, isParadaTerminada: isParadaTerminada),
-                        const SizedBox(height: 100),
-                      ],
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 900) {
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: SingleChildScrollView(
+                        child: _buildWebView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente),
+                      ),
                     ),
                   );
-                },
+                } else {
+                  return _buildMobileView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente);
+                }
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebView(Map<String, dynamic> p, bool isReadOnly, bool canFinalizarParada, bool isParadaTerminada, bool isViajePendiente) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        children: [
+          if (isViajePendiente)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Consulta únicamente. El viaje aún no ha comenzado.',
+                      style: TextStyle(color: Colors.orange[900], fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: _buildWebLeftColumn(p)),
+              const SizedBox(width: 24),
+              Expanded(flex: 4, child: _buildWebCenterTimeline(p, isReadOnly)),
+              const SizedBox(width: 24),
+              Expanded(flex: 3, child: _buildWebRightColumn(p, isReadOnly, canFinalizarParada, isParadaTerminada)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebLeftColumn(Map<String, dynamic> p) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.08)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('FICHA DEL APICULTOR', style: DesignTokens.labelStyle()),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: DesignTokens.primary.withOpacity(0.1),
+                child: const Icon(Icons.person_rounded, color: DesignTokens.primary),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p['persona_nombre'] ?? p['ubicacion'] ?? 'Sin Nombre', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
+                    if (p['persona_dni'] != null) Text('DNI: ${p['persona_dni']}', style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
+                  ],
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 16),
+          _buildInfoRow(Icons.location_on_rounded, 'Ubicación', p['ubicacion'] ?? 'S/D'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.map_rounded, 'Localidad', p['localidad'] ?? 'S/D'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.info_outline_rounded, 'Tipo de Parada', p['tipo'] ?? 'S/D'),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.format_list_numbered_rounded, 'Secuencia', '#${p['orden_secuencia'] ?? '?'}'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: DesignTokens.secondary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 11, color: DesignTokens.onSurfaceVariant, fontFamily: 'Work Sans')),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: DesignTokens.onSurface)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebCenterTimeline(Map<String, dynamic> p, bool isReadOnly) {
+    final String pTipo = (p['tipo'] ?? '').toString().trim();
+    final bool isRecoleccion = pTipo == 'Recolección' || pTipo == 'Recoleccion';
+    final bool hasPesajes = (p['pesajes'] as List? ?? []).isNotEmpty;
+    final bool hasTcmItem = (p['parada_items'] as List? ?? []).any((it) => it['producto_codigo'] == 'TCM');
+    final bool showPesaje = isRecoleccion || hasPesajes || hasTcmItem;
+    
+    final remitos = p['remitos'] as List? ?? [];
+    final bool hasItems = (p['parada_items'] as List? ?? []).isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.08)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ITINERARIO DE PARADA', style: DesignTokens.labelStyle()),
+          const SizedBox(height: 24),
+          _buildTimelineNode(
+            'Resumen de Productos',
+            _buildItemsSection(isReadOnly),
+            isCompleted: hasItems,
+            isActive: !hasItems,
+            isLast: !showPesaje && remitos.isEmpty,
+          ),
+          if (showPesaje)
+            _buildTimelineNode(
+              'Pesaje de Tambores',
+              _buildPesajeSection(p, isReadOnly),
+              isCompleted: hasPesajes,
+              isActive: hasItems && !hasPesajes,
+              isLast: remitos.isEmpty,
+            ),
+          _buildTimelineNode(
+            'Remitos Digitales',
+            _buildDigitalRemitoForm(p, isReadOnly, isWebTimelineMode: true),
+            isCompleted: remitos.isNotEmpty,
+            isActive: (showPesaje ? hasPesajes : hasItems) && remitos.isEmpty,
+            isLast: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineNode(String title, Widget content, {bool isLast = false, bool isCompleted = false, bool isActive = false}) {
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _TimelinePainter(isLast: isLast, isCompleted: isCompleted, isActive: isActive),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 40.0, bottom: 32.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, fontSize: 16, color: DesignTokens.primary),
+              ),
+              const SizedBox(height: 16),
+              content,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebRightColumn(Map<String, dynamic> p, bool isReadOnly, bool canFinalizarParada, bool isParadaTerminada) {
+    double kilosAcumulados = 0;
+    int tamboresCount = 0;
+    if (p['pesajes'] is List) {
+      for (var pe in p['pesajes']) {
+        if (pe is Map) {
+          final double bruto = (pe['peso_bruto'] as num?)?.toDouble() ?? 0.0;
+          final double tara = (pe['tara'] as num?)?.toDouble() ?? 0.0;
+          kilosAcumulados += (bruto - tara);
+          tamboresCount++;
+        }
+      }
+    }
+    final remitos = p['remitos'] as List? ?? [];
+
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: DesignTokens.primary,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('KILOS ACUMULADOS', style: TextStyle(fontFamily: 'Work Sans', color: DesignTokens.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              const SizedBox(height: 8),
+              Text(
+                '${kilosAcumulados.toStringAsFixed(1)} kg',
+                style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text('En $tamboresCount tambores', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: DesignTokens.primary.withOpacity(0.08)),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('ACCIONES', style: DesignTokens.labelStyle()),
+              const SizedBox(height: 16),
+              if (!isReadOnly || canFinalizarParada) ...[
+                if (!isParadaTerminada)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: !isReadOnly ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RemitoRegistroPage(
+                              paradaId: widget.paradaId!,
+                              apicultorId: p['apicultor_id'],
+                              apicultorNombre: p['persona_nombre'] ?? p['ubicacion'],
+                              apicultorDni: p['persona_dni'],
+                              tipoOperacion: p['tipo'] ?? 'Recolección',
+                            ),
+                          ),
+                        ).then((success) {
+                          if (success == true) {
+                            setState(() {
+                              _quantityControllers.clear();
+                              _receptorNombreController.clear();
+                              _receptorDniController.clear();
+                              _paradaFuture = _fetchParadaData();
+                            });
+                          }
+                        });
+                      } : null,
+                      icon: const Icon(Icons.add_task_rounded, color: Colors.white, size: 20),
+                      label: const Text('GENERAR REMITO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: !isReadOnly ? const Color(0xFF1A6B43) : Colors.grey,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                if (remitos.isNotEmpty && canFinalizarParada) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        setState(() => _isFinishing = true);
+                        dynamic viajesRaw = p['viajes'];
+                        Map<String, dynamic> viajeAsociado = {};
+                        if (viajesRaw is Map) {
+                          viajeAsociado = Map<String, dynamic>.from(viajesRaw);
+                        } else if (viajesRaw is List && viajesRaw.isNotEmpty) {
+                          viajeAsociado = Map<String, dynamic>.from(viajesRaw.first);
+                        }
+                        final String vehiculoCodigo = viajeAsociado['vehiculo_codigo']?.toString() ?? 'CAMION-01';
+                        await SupabaseService().finalizarParada(widget.paradaId!, vehiculoCodigo);
+                        if (mounted) context.pop();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: DesignTokens.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('FINALIZAR PARADA', style: TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ] else ...[
+                const Text('No hay acciones disponibles para esta parada.', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileView(Map<String, dynamic> p, bool isReadOnly, bool canFinalizarParada, bool isParadaTerminada, bool isViajePendiente) {
+    final String pTipo = (p['tipo'] ?? '').toString().trim();
+    final bool isRecoleccion = pTipo == 'Recolección' || pTipo == 'Recoleccion';
+    final bool hasPesajes = (p['pesajes'] as List? ?? []).isNotEmpty;
+    final bool hasTcmItem = (p['parada_items'] as List? ?? []).any((it) => it['producto_codigo'] == 'TCM');
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isViajePendiente)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Consulta únicamente. El viaje aún no ha comenzado.',
+                        style: TextStyle(color: Colors.orange[900], fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            _buildHeader(p),
+            const SizedBox(height: 32),
+            _buildItemsSection(isReadOnly),
+            if (isRecoleccion || hasPesajes || hasTcmItem) ...[
+              const SizedBox(height: 32),
+              _buildPesajeSection(p, isReadOnly),
+            ],
+            const SizedBox(height: 32),
+            _buildDigitalRemitoForm(p, isReadOnly, canFinalizarParada: canFinalizarParada, isParadaTerminada: isParadaTerminada),
+            const SizedBox(height: 100),
+          ],
         ),
       ),
     );
@@ -758,7 +1093,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
     );
   }
 
-  Widget _buildDigitalRemitoForm(Map<String, dynamic> p, bool isReadOnly, {bool canFinalizarParada = false, bool isParadaTerminada = false}) {
+  Widget _buildDigitalRemitoForm(Map<String, dynamic> p, bool isReadOnly, {bool canFinalizarParada = false, bool isParadaTerminada = false, bool isWebTimelineMode = false}) {
     final remitos = p['remitos'] as List? ?? [];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -837,7 +1172,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
             ),
           )),
         // Botones de acción: si la parada no es solo lectura O si el chofer puede finalizar
-        if (!isReadOnly || canFinalizarParada) ...[
+        if (!isWebTimelineMode && (!isReadOnly || canFinalizarParada)) ...[
           const SizedBox(height: 24),
           if (!isParadaTerminada) // Botón GENERAR NUEVO REMITO solo si la parada no está terminada
           SizedBox(
@@ -1028,5 +1363,40 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         ),
       ),
     );
+  }
+}
+
+class _TimelinePainter extends CustomPainter {
+  final bool isLast;
+  final bool isCompleted;
+  final bool isActive;
+
+  _TimelinePainter({required this.isLast, required this.isCompleted, required this.isActive});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paintLine = Paint()
+      ..color = isCompleted ? DesignTokens.primary : Colors.grey.withOpacity(0.3)
+      ..strokeWidth = 2;
+    
+    if (!isLast) {
+      canvas.drawLine(const Offset(12, 24), Offset(12, size.height), paintLine);
+    }
+
+    final paintDot = Paint()
+      ..color = isCompleted ? DesignTokens.primary : (isActive ? DesignTokens.secondary : Colors.grey.withOpacity(0.3))
+      ..style = PaintingStyle.fill;
+      
+    canvas.drawCircle(const Offset(12, 12), 8, paintDot);
+    
+    if (isCompleted) {
+      final whitePaint = Paint()..color = Colors.white;
+      canvas.drawCircle(const Offset(12, 12), 3, whitePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TimelinePainter oldDelegate) {
+    return oldDelegate.isLast != isLast || oldDelegate.isCompleted != isCompleted || oldDelegate.isActive != isActive;
   }
 }

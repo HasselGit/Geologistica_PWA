@@ -6,7 +6,8 @@ import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import '../backend/app_states.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:math';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -39,7 +40,9 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
   String? _selectedMetodoWeb = 'Efectivo';
   DateTime _selectedFechaWeb = DateTime.now();
   String? _selectedViajeIdWeb;
-  XFile? _pickedFileWeb;
+  PlatformFile? _pickedFileWeb;
+  int _currentPageWeb = 0;
+  final int _rowsPerPageWeb = 15;
   bool _savingForm = false;
 
   List<Map<String, dynamic>> _gastos = [];
@@ -160,8 +163,8 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
         borderRadius: BorderRadius.circular(20),
         border: borderColor != null ? Border.all(color: borderColor, width: 1) : null,
         boxShadow: backgroundColor == Colors.white 
-            ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
-            : [BoxShadow(color: DesignTokens.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))]
+            : [BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,8 +225,6 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
       }
     }
 
-    final avgPriceL = combustibleLitros > 0 ? (combustibleMonto / combustibleLitros) : 0.0;
-
     return Container(
       height: 140,
       padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -248,19 +249,8 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
             backgroundColor: Colors.white,
             textColor: DesignTokens.primary,
             accentColor: DesignTokens.secondary,
-            borderColor: DesignTokens.primary.withOpacity(0.08),
+            borderColor: DesignTokens.primary.withValues(alpha: 0.08),
           ),
-          if (combustibleLitros > 0)
-            _buildKPICard(
-              title: 'PRECIO MEDIO L',
-              value: '\$${avgPriceL.toStringAsFixed(1)} / L',
-              subtitle: 'Consumo promedio',
-              icon: Icons.calculate_rounded,
-              backgroundColor: Colors.white,
-              textColor: DesignTokens.primary,
-              accentColor: const Color(0xFF1A6B43),
-              borderColor: DesignTokens.primary.withOpacity(0.08),
-            ),
           _buildKPICard(
             title: 'OTROS RUBROS',
             value: '\$${(totalGasto - combustibleMonto).toStringAsFixed(0)}',
@@ -268,8 +258,8 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
             icon: Icons.category_rounded,
             backgroundColor: Colors.white,
             textColor: DesignTokens.primary,
-            accentColor: DesignTokens.primary.withOpacity(0.5),
-            borderColor: DesignTokens.primary.withOpacity(0.08),
+            accentColor: DesignTokens.primary.withValues(alpha: 0.5),
+            borderColor: DesignTokens.primary.withValues(alpha: 0.08),
           ),
         ],
       ),
@@ -309,7 +299,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
               avatar: Icon(
                 icon, 
                 size: 14, 
-                color: isSelected ? Colors.white : DesignTokens.primary.withOpacity(0.7)
+                color: isSelected ? Colors.white : DesignTokens.primary.withValues(alpha: 0.7)
               ),
               label: Text(
                 '$label (\$${totalCat.toStringAsFixed(0)})',
@@ -331,7 +321,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: isSelected ? Colors.transparent : DesignTokens.primary.withOpacity(0.08),
+                  color: isSelected ? Colors.transparent : DesignTokens.primary.withValues(alpha: 0.08),
                   width: 1,
                 ),
               ),
@@ -355,7 +345,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withOpacity(0.05),
+                  color: DesignTokens.primary.withValues(alpha: 0.05),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -403,7 +393,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: DesignTokens.primary),
-              onPressed: () => context.pop(),
+              onPressed: () => context.go('/home'),
             ),
             title: const Text(
               'Gestión de Gastos',
@@ -434,11 +424,11 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Buscar por chofer, viaje, comprobante, observaciones...',
-              hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+              hintStyle: const TextStyle(fontSize: 13, color: Colors.grey, fontFamily: 'Inter'),
               prefixIcon: const Icon(Icons.search, color: DesignTokens.primary, size: 20),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.08))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: DesignTokens.secondary, width: 1.5)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.1))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.08))),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: DesignTokens.accent, width: 1.5)),
               filled: true,
               fillColor: Colors.white,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -458,11 +448,11 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
             children: [
               Text(
                 'REGISTROS MOSTRADOS (${_filteredGastos.length})', 
-                style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 0.5)
+                style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 0.5)
               ),
               Text(
                 'Total: \$${_filteredGastos.fold(0.0, (sum, g) => sum + (double.tryParse(g['importe']?.toString() ?? '0') ?? 0.0)).toStringAsFixed(2)}', 
-                style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 15, color: DesignTokens.primary)
+                style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w900, fontSize: 15, color: DesignTokens.primary)
               ),
             ],
           ),
@@ -487,17 +477,178 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 400,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(right: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
+        Expanded(
+          flex: 1,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(right: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.1))),
+            ),
+            child: _buildWebForm(),
           ),
-          child: _buildWebForm(),
         ),
         Expanded(
-          child: _buildMobileLayout(),
+          flex: 2,
+          child: _buildWebRightPanel(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebRightPanel() {
+    final startIndex = _currentPageWeb * _rowsPerPageWeb;
+    final endIndex = min(startIndex + _rowsPerPageWeb, _filteredGastos.length);
+    final currentItems = _filteredGastos.sublist(startIndex, endIndex);
+    final totalPages = (_filteredGastos.length / _rowsPerPageWeb).ceil();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+          child: _buildKPIPanel(),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildCategoryFilterRow(),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 40, offset: const Offset(0, 4))
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF08201A).withValues(alpha: 0.02),
+                              const Color(0xFFC68E17).withValues(alpha: 0.02),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: -20,
+                    bottom: -20,
+                    child: Icon(
+                      Icons.receipt_long_rounded,
+                      size: 120,
+                      color: const Color(0xFF08201A).withValues(alpha: 0.03),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        child: DataTable(
+                          headingRowColor: WidgetStateProperty.all(DesignTokens.surfaceLow.withValues(alpha: 0.5)),
+                          dataRowMinHeight: 60,
+                          dataRowMaxHeight: 60,
+                          columns: const [
+                            DataColumn(label: Text('FECHA', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                            DataColumn(label: Text('TIPO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                            DataColumn(label: Text('IMPORTE', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                            DataColumn(label: Text('CHOFER', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                            DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                          ],
+                          rows: currentItems.map((g) {
+                            final tipo = g['tipo_gasto'] ?? 'Gasto';
+                            final importe = g['importe']?.toString() ?? '0';
+                            final fecha = DateTime.tryParse(g['fecha']?.toString() ?? '') ?? DateTime.now();
+                            final fechaStr = DateFormat('dd/MM/yyyy').format(fecha);
+                            final chofer = g['profiles'] != null ? '${g['profiles']['nombre']} ${g['profiles']['apellido']}' : 'S/D';
+                            
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(fechaStr, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'JetBrains Mono'))),
+                                DataCell(Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(color: DesignTokens.secondary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+                                  child: Text(tipo.toUpperCase(), style: const TextStyle(color: Color(0xFF7D5700), fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.bold)),
+                                )),
+                                DataCell(Text('\$ $importe', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'JetBrains Mono', color: DesignTokens.primary, fontSize: 16))),
+                                DataCell(Text(chofer, style: const TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant))),
+                                DataCell(
+                                  TextButton.icon(
+                                    icon: const Icon(Icons.visibility_rounded, size: 18),
+                                    label: const Text('Ver Detalle', style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter')),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: DesignTokens.secondary,
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    onPressed: () => _showGastoDetailDialog(context, g),
+                                  )
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      if (totalPages > 1)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          decoration: BoxDecoration(
+                            border: Border(top: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.1))),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Mostrando ${startIndex + 1} - $endIndex de ${_filteredGastos.length}',
+                                style: const TextStyle(color: DesignTokens.onSurfaceVariant, fontSize: 13, fontFamily: 'Inter'),
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_left_rounded),
+                                    onPressed: _currentPageWeb > 0 ? () => setState(() => _currentPageWeb--) : null,
+                                    color: _currentPageWeb > 0 ? DesignTokens.primary : DesignTokens.outline,
+                                  ),
+                                  Text(
+                                    'Página ${_currentPageWeb + 1} de $totalPages',
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFamily: 'Inter'),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_right_rounded),
+                                    onPressed: _currentPageWeb < totalPages - 1 ? () => setState(() => _currentPageWeb++) : null,
+                                    color: _currentPageWeb < totalPages - 1 ? DesignTokens.primary : DesignTokens.outline,
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -514,17 +665,16 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
       }
     }
 
-    const honeyGold = Color(0xFFC68E17);
-    final inputBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.05)));
-    final focusBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: honeyGold, width: 2));
+    final inputBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.05)));
+    final focusBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: DesignTokens.accent, width: 2));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Registrar Nuevo Gasto', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+        const Text('Registrar Nuevo Gasto', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Manrope', color: DesignTokens.primary)),
         const SizedBox(height: 8),
-        const Text('Presione Ctrl+Enter para guardar, Esc para limpiar', style: TextStyle(fontSize: 12, color: Colors.grey)),
-        const SizedBox(height: 20),
+        const Text('Presione Ctrl+Enter para guardar, Esc para limpiar', style: TextStyle(fontSize: 12, fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant)),
+        const SizedBox(height: 24),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -545,13 +695,15 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                         child: InputDecorator(
                           decoration: InputDecoration(
                             labelText: 'Fecha',
+                            labelStyle: const TextStyle(fontFamily: 'Inter'),
                             prefixIcon: const Icon(Icons.calendar_today_rounded, color: DesignTokens.primary),
                             filled: true,
-                            fillColor: DesignTokens.surface,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                            fillColor: DesignTokens.surfaceLow,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                             enabledBorder: inputBorder,
+                            focusedBorder: focusBorder,
                           ),
-                          child: Text(DateFormat('dd/MM/yyyy').format(_selectedFechaWeb), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          child: Text(DateFormat('dd/MM/yyyy').format(_selectedFechaWeb), style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'JetBrains Mono')),
                         ),
                       ),
                     ),
@@ -562,12 +714,14 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                         focusNode: _comprobanteFocus,
                         textInputAction: TextInputAction.next,
                         onSubmitted: (_) => FocusScope.of(context).requestFocus(_amountFocus),
+                        style: const TextStyle(fontFamily: 'Inter'),
                         decoration: InputDecoration(
                           labelText: 'N° Comprobante',
+                          labelStyle: const TextStyle(fontFamily: 'Inter'),
                           prefixIcon: const Icon(Icons.receipt_rounded, color: DesignTokens.primary),
                           filled: true,
-                          fillColor: DesignTokens.surface,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          fillColor: DesignTokens.surfaceLow,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           enabledBorder: inputBorder,
                           focusedBorder: focusBorder,
                         ),
@@ -580,15 +734,16 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                   value: _selectedTipoWeb,
                   decoration: InputDecoration(
                     labelText: 'Tipo de Gasto',
+                    labelStyle: const TextStyle(fontFamily: 'Inter'),
                     prefixIcon: const Icon(Icons.category_rounded, color: DesignTokens.primary),
                     filled: true,
-                    fillColor: DesignTokens.surface,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    fillColor: DesignTokens.surfaceLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     enabledBorder: inputBorder,
                     focusedBorder: focusBorder,
                   ),
                   items: ['Combustible', 'Comida', 'Peaje', 'Reparación', 'Otros']
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(fontFamily: 'Inter'))))
                       .toList(),
                   onChanged: (v) => setState(() => _selectedTipoWeb = v),
                 ),
@@ -600,12 +755,14 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                     textInputAction: TextInputAction.next,
                     onSubmitted: (_) => FocusScope.of(context).requestFocus(_descFocus),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(fontFamily: 'Inter'),
                     decoration: InputDecoration(
                       labelText: 'Cantidad en Litros (L)',
+                      labelStyle: const TextStyle(fontFamily: 'Inter'),
                       prefixIcon: const Icon(Icons.local_gas_station_rounded, color: DesignTokens.primary),
                       filled: true,
-                      fillColor: DesignTokens.surface,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      fillColor: DesignTokens.surfaceLow,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       enabledBorder: inputBorder,
                       focusedBorder: focusBorder,
                     ),
@@ -616,17 +773,18 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                   value: _selectedViajeIdWeb,
                   decoration: InputDecoration(
                     labelText: 'Vincular a Viaje',
+                    labelStyle: const TextStyle(fontFamily: 'Inter'),
                     prefixIcon: const Icon(Icons.local_shipping_rounded, color: DesignTokens.primary),
                     filled: true,
-                    fillColor: DesignTokens.surface,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    fillColor: DesignTokens.surfaceLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     enabledBorder: inputBorder,
                     focusedBorder: focusBorder,
                   ),
-                  hint: const Text('Seleccione un viaje...'),
+                  hint: const Text('Seleccione un viaje...', style: TextStyle(fontFamily: 'Inter')),
                   items: _viajesParaGasto.map((v) => DropdownMenuItem<String>(
                     value: v['id']?.toString(),
-                    child: Text('${v['viaje_codigo'] ?? 'S/C'} (${v['estado'] ?? ''})'),
+                    child: Text('${v['viaje_codigo'] ?? 'S/C'} (${v['estado'] ?? ''})', style: const TextStyle(fontFamily: 'Inter')),
                   )).toList(),
                   onChanged: (v) => setState(() => _selectedViajeIdWeb = v),
                 ),
@@ -640,12 +798,14 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                         textInputAction: TextInputAction.next,
                         onSubmitted: (_) => FocusScope.of(context).requestFocus(_descFocus),
                         keyboardType: TextInputType.number,
+                        style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.bold),
                         decoration: InputDecoration(
                           labelText: 'Importe (\$)',
+                          labelStyle: const TextStyle(fontFamily: 'Inter'),
                           prefixIcon: const Icon(Icons.attach_money_rounded, color: DesignTokens.primary),
                           filled: true,
-                          fillColor: DesignTokens.surface,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          fillColor: DesignTokens.surfaceLow,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           enabledBorder: inputBorder,
                           focusedBorder: focusBorder,
                         ),
@@ -657,15 +817,16 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                         value: _selectedMetodoWeb,
                         decoration: InputDecoration(
                           labelText: 'Forma de Pago',
+                          labelStyle: const TextStyle(fontFamily: 'Inter'),
                           prefixIcon: const Icon(Icons.payment_rounded, color: DesignTokens.primary),
                           filled: true,
-                          fillColor: DesignTokens.surface,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          fillColor: DesignTokens.surfaceLow,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           enabledBorder: inputBorder,
                           focusedBorder: focusBorder,
                         ),
                         items: ['Efectivo', 'Tarjeta', 'Transferencia', 'Cuenta Corriente']
-                            .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                            .map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontFamily: 'Inter'))))
                             .toList(),
                         onChanged: (v) => setState(() => _selectedMetodoWeb = v),
                       ),
@@ -678,13 +839,15 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                   focusNode: _descFocus,
                   textInputAction: TextInputAction.done,
                   maxLines: 2,
+                  style: const TextStyle(fontFamily: 'Inter'),
                   decoration: InputDecoration(
                     labelText: 'Observaciones',
+                    labelStyle: const TextStyle(fontFamily: 'Inter'),
                     alignLabelWithHint: true,
                     prefixIcon: const Icon(Icons.notes_rounded, color: DesignTokens.primary),
                     filled: true,
-                    fillColor: DesignTokens.surface,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    fillColor: DesignTokens.surfaceLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     enabledBorder: inputBorder,
                     focusedBorder: focusBorder,
                   ),
@@ -692,34 +855,38 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: () async {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(
-                      source: ImageSource.gallery,
-                      imageQuality: 70,
+                    final result = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['jpg', 'png', 'jpeg', 'pdf'],
+                      withData: true,
                     );
-                    if (image != null) {
-                      setState(() => _pickedFileWeb = image);
+                    if (result != null && result.files.isNotEmpty) {
+                      setState(() => _pickedFileWeb = result.files.first);
                     }
                   },
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: DesignTokens.surface,
+                      color: DesignTokens.surfaceLow,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
+                      border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.1)),
                     ),
                     child: _pickedFileWeb != null 
                       ? Column(
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: kIsWeb
-                              ? Image.network(_pickedFileWeb!.path, height: 100, width: double.infinity, fit: BoxFit.cover)
-                              : Image.file(File(_pickedFileWeb!.path), height: 100, width: double.infinity, fit: BoxFit.cover),
+                              child: _pickedFileWeb!.extension == 'pdf'
+                                  ? const Icon(Icons.picture_as_pdf, size: 64, color: Colors.red)
+                                  : kIsWeb && _pickedFileWeb!.bytes != null
+                                      ? Image.memory(_pickedFileWeb!.bytes!, height: 100, width: double.infinity, fit: BoxFit.cover)
+                                      : _pickedFileWeb!.path != null 
+                                          ? Image.file(File(_pickedFileWeb!.path!), height: 100, width: double.infinity, fit: BoxFit.cover)
+                                          : const Icon(Icons.insert_drive_file, size: 64),
                             ),
                             const SizedBox(height: 8),
-                            const Text('FOTO ADJUNTADA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+                            const Text('FOTO ADJUNTADA', style: TextStyle(fontFamily: 'Work Sans', fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
                           ],
                         )
                       : const Column(
@@ -727,7 +894,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                          children: [
                            Icon(Icons.add_photo_alternate_rounded, size: 32, color: DesignTokens.primary),
                            SizedBox(height: 8),
-                           Text('ADJUNTAR TICKET (GALERÍA/PC)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
+                           Text('ADJUNTAR TICKET (GALERÍA/PC)', style: TextStyle(fontFamily: 'Work Sans', fontSize: 10, fontWeight: FontWeight.bold, color: DesignTokens.primary)),
                           ],
                         ),
                   ),
@@ -743,12 +910,12 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
           child: ElevatedButton(
             onPressed: _savingForm ? null : _saveGastoWeb,
             style: ElevatedButton.styleFrom(
-              backgroundColor: honeyGold,
+              backgroundColor: DesignTokens.accent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: _savingForm 
-              ? const CircularProgressIndicator(color: Colors.white)
-              : const Text('GUARDAR GASTO (Ctrl+Enter)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ? const CircularProgressIndicator(color: DesignTokens.primary)
+              : const Text('GUARDAR GASTO', style: TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.bold, fontFamily: 'Manrope')),
           ),
         ),
       ],
@@ -808,9 +975,8 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
     try {
       String? publicUrl;
       if (_pickedFileWeb != null) {
-        final bytes = await _pickedFileWeb!.readAsBytes();
-        String ext = p.extension(_pickedFileWeb!.path);
-        if (ext.isEmpty) ext = p.extension(_pickedFileWeb!.name);
+        final bytes = _pickedFileWeb!.bytes ?? await File(_pickedFileWeb!.path!).readAsBytes();
+        String ext = _pickedFileWeb!.extension != null ? '.' + _pickedFileWeb!.extension! : '';
         if (ext.isEmpty) ext = '.jpg';
         final fileName = 'gasto_${DateTime.now().millisecondsSinceEpoch}$ext';
         
@@ -876,11 +1042,11 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
     final viaje = g['viajes']?['viaje_codigo'] ?? 'Sin viaje';
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: DesignTokens.primary.withOpacity(0.05)),
+        side: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.08)),
       ),
       child: InkWell(
         onTap: () => _showGastoDetailDialog(context, g),
@@ -890,6 +1056,9 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 2)),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -899,10 +1068,10 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-                    child: Text(tipo.toUpperCase(), style: const TextStyle(color: Color(0xFF7D5700), fontSize: 10, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(color: DesignTokens.secondary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+                    child: Text(tipo.toUpperCase(), style: const TextStyle(color: Color(0xFF7D5700), fontFamily: 'Work Sans', fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                  Text('\$ $importe', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
+                  Text('\$ $importe', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -910,11 +1079,11 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                 children: [
                   const Icon(Icons.person_rounded, size: 14, color: DesignTokens.onSurfaceVariant),
                   const SizedBox(width: 6),
-                  Text(chofer, style: const TextStyle(fontSize: 12, color: DesignTokens.onSurfaceVariant)),
+                  Text(chofer, style: const TextStyle(fontSize: 12, fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant)),
                   const Spacer(),
                   const Icon(Icons.calendar_today_rounded, size: 14, color: DesignTokens.onSurfaceVariant),
                   const SizedBox(width: 6),
-                  Text(fechaStr, style: const TextStyle(fontSize: 12, color: DesignTokens.onSurfaceVariant)),
+                  Text(fechaStr, style: const TextStyle(fontSize: 12, fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant)),
                 ],
               ),
               const SizedBox(height: 4),
@@ -922,7 +1091,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                 children: [
                   const Icon(Icons.local_shipping_rounded, size: 14, color: DesignTokens.onSurfaceVariant),
                   const SizedBox(width: 6),
-                  Text('Viaje: $viaje', style: const TextStyle(fontSize: 12, color: DesignTokens.onSurfaceVariant)),
+                  Text('Viaje: $viaje', style: const TextStyle(fontSize: 12, fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant)),
                 ],
               ),
               if (g['descripcion'] != null && g['descripcion'].toString().trim().isNotEmpty) ...[
@@ -931,15 +1100,16 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9F9F9),
+                    color: DesignTokens.surfaceLow,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFEEEEEE)),
+                    border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.05)),
                   ),
                   child: Text(
                     g['descripcion'],
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.black54,
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      color: DesignTokens.onSurfaceVariant,
                       height: 1.4,
                     ),
                   ),

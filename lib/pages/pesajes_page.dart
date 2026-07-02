@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -220,7 +221,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3F3),
       body: SafeArea(
@@ -786,6 +787,217 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
         Expanded(flex: 2, child: Text('${tara.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontSize: 11, color: Color(0xFF424846)))),
         Expanded(flex: 2, child: Text('${neto.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'Manrope', fontSize: 12, fontWeight: FontWeight.w800, color: DesignTokens.secondary))),
       ]),
+    );
+  }
+
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 900;
+        return Scaffold(
+          backgroundColor: isDesktop ? const Color(0xFFFBF9F8) : const Color(0xFFF5F3F3),
+          body: isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(context),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Filtros Laterales (Fijos)
+                SizedBox(
+                  width: 280,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
+                            onPressed: () async {
+                              final prefs = await SharedPreferences.getInstance();
+                              final rol = prefs.getString('user_puesto') ?? '';
+                              if (rol == 'Gerente') {
+                                context.go('/gerenteHome');
+                              } else {
+                                if (context.canPop()) context.pop();
+                                else context.go('/home');
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Histórico de Pesajes',
+                              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF08201A)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('BÚSQUEDA', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 12, color: Colors.black54)),
+                            const SizedBox(height: 16),
+                            TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Viaje, Apicultor o SENASA...',
+                                prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                                filled: true,
+                                fillColor: const Color(0xFFFBF9F8),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                              ),
+                              onChanged: (val) { setState(() { _searchQuery = val; _applyFilters(); }); },
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFC68E17),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                icon: const Icon(Icons.filter_list_rounded, size: 16),
+                                label: const Text('Aplicar Filtros', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold)),
+                                onPressed: () {},
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 32),
+                // DataGrid Corporativo
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFF08201A).withOpacity(0.03), blurRadius: 40, offset: const Offset(0, 10)),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        children: [
+                          // Textura de Fondo Translucido (2%)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF08201A).withOpacity(0.02),
+                                    const Color(0xFFC68E17).withOpacity(0.02),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Icono Vectorizado Absoluto (3%)
+                          Positioned(
+                            bottom: -20,
+                            right: -20,
+                            child: Icon(Icons.scale_rounded, size: 120, color: const Color(0xFF08201A).withOpacity(0.03)),
+                          ),
+                          // Tabla de Datos Densa
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: const Color(0xFF08201A).withOpacity(0.05)))),
+                                child: const Text(
+                                  'REGISTROS AUDITADOS',
+                                  style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 1.2, color: Color(0xFF08201A)),
+                                ),
+                              ),
+                              Expanded(
+                                child: _loading 
+                                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFC68E17)))
+                                  : SingleChildScrollView(
+                                      child: DataTable(
+                                        headingRowColor: MaterialStateProperty.all(const Color(0xFFFBF9F8)),
+                                        dataRowMinHeight: 50,
+                                        dataRowMaxHeight: 50,
+                                        horizontalMargin: 20,
+                                        columnSpacing: 20,
+                                        columns: const [
+                                          DataColumn(label: Text('VIAJE', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('APICULTOR / LOC', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('TCM', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('BRUTO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('NETO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('ACCIÓN', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                        ],
+                                        rows: _filteredGrupos.map((g) {
+                                          final viajeCode = g['viaje_codigo'] as String;
+                                          final apicultor = g['apicultor'] as String;
+                                          final localidad = g['localidad'] as String;
+                                          final tcmCount = g['tcm_count'] as int;
+                                          final totalBruto = g['total_bruto'] as double;
+                                          final totalNeto = g['total_neto'] as double;
+                                          return DataRow(
+                                            cells: [
+                                              DataCell(Text(viajeCode, style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: Color(0xFF08201A)))),
+                                              DataCell(Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Text(apicultor, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF08201A))),
+                                                  Text(localidad, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: const Color(0xFF08201A).withOpacity(0.5))),
+                                                ],
+                                              )),
+                                              DataCell(Text('$tcmCount', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14))),
+                                              DataCell(Text(totalBruto.toStringAsFixed(1), style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.black54))),
+                                              DataCell(Text(totalNeto.toStringAsFixed(1), style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.bold, color: Color(0xFFC68E17)))),
+                                              DataCell(
+                                                TextButton(
+                                                  onPressed: () => _showDetalle(g),
+                                                  child: const Text('VER', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, color: Color(0xFF08201A))),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

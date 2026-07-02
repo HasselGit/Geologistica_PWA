@@ -150,20 +150,24 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Center(
                         child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: isDesktop ? 480 : double.infinity,
+                          constraints: const BoxConstraints(
+                            maxWidth: 420,
                           ),
                           child: isDesktop && !_isSplashActive
                               ? Container(
-                                  padding: const EdgeInsets.all(40),
+                                  padding: const EdgeInsets.all(32),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(24),
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: const Color(0xFF08201A).withOpacity(0.05),
+                                      width: 1.0,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: DesignTokens.primary.withOpacity(0.04),
-                                        blurRadius: 24,
-                                        offset: const Offset(0, 8),
+                                        color: const Color(0xFF08201A).withOpacity(0.08),
+                                        blurRadius: 40,
+                                        offset: const Offset(0, 10),
                                       ),
                                     ],
                                   ),
@@ -266,12 +270,12 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
                       style: theme.displayLarge.override(
                         fontFamily: 'Manrope',
                         color: theme.primary,
-                        fontSize: isDesktop ? 38 : 44,
+                        fontSize: isDesktop ? 48 : 44,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -1.0,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: isDesktop ? 12 : 8),
                     Text(
                       'TECNOLOGÍA Y LOGÍSTICA APÍCOLA',
                       textAlign: TextAlign.center,
@@ -279,8 +283,8 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
                         fontFamily: 'Work Sans',
                         color: theme.secondary,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 2.0,
-                        fontSize: isDesktop ? 9 : 10,
+                        letterSpacing: isDesktop ? 3.0 : 2.0,
+                        fontSize: isDesktop ? 12 : 10,
                       ),
                     ),
                   ],
@@ -288,45 +292,35 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
         ),
         
         if (!_isSplashActive) ...[
-          const SizedBox(height: 60),
+          SizedBox(height: isDesktop ? 80 : 60),
           // Premium Button
-          Container(
+          SizedBox(
             width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.primary.withOpacity(0.15),
-                  blurRadius: 25,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
+            height: 54,
             child: ElevatedButton(
               onPressed: _supabaseReady
                   ? () => GoRouter.of(context).pushNamed('Login')
                   : null,
-              style: DesignTokens.secondaryButtonStyle.copyWith(
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DesignTokens.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
               child: _supabaseReady
-                  ? Row(
+                  ? const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.login_rounded, size: 18),
-                        const SizedBox(width: 12),
-                        Text(
-                          'INICIAR',
-                          style: theme.titleSmall.override(
-                            fontFamily: 'Manrope',
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
+                        Text('INICIAR'),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_rounded, size: 18),
                       ],
                     )
                   : const SizedBox(

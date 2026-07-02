@@ -144,50 +144,55 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
           style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              style: const TextStyle(fontFamily: 'Inter'),
-              decoration: InputDecoration(
-                hintText: 'Buscar por código, patente o modelo...',
-                hintStyle: const TextStyle(color: Colors.black45),
-                prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12), 
-                  borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12), 
-                  borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12), 
-                  borderSide: const BorderSide(color: DesignTokens.primary, width: 2)
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  style: const TextStyle(fontFamily: 'Inter'),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por código, patente o modelo...',
+                    hintStyle: const TextStyle(color: Colors.black45),
+                    prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12), 
+                      borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12), 
+                      borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12), 
+                      borderSide: const BorderSide(color: DesignTokens.primary, width: 2)
+                    ),
+                  ),
                 ),
               ),
-            ),
+              Expanded(
+                child: _loading && _filtered.isEmpty
+                  ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth >= 900) {
+                          return _buildWebTable();
+                        } else {
+                          return _buildMobileList();
+                        }
+                      },
+                    ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _loading && _filtered.isEmpty
-              ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth >= 900) {
-                      return _buildWebTable();
-                    } else {
-                      return _buildMobileList();
-                    }
-                  },
-                ),
-          ),
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addVehiculo,
@@ -216,16 +221,44 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                 border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: DesignTokens.primary.withOpacity(0.02), 
+                    color: DesignTokens.primary.withValues(alpha: 0.02), 
                     blurRadius: 10,
                     offset: const Offset(0, 4)
                   )
                 ],
               ),
-              child: ClipRRect(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF08201A).withValues(alpha: 0.02),
+                              const Color(0xFFC68E17).withValues(alpha: 0.02),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: -20,
+                    bottom: -20,
+                    child: Icon(
+                      Icons.local_shipping_rounded,
+                      size: 120,
+                      color: const Color(0xFF08201A).withValues(alpha: 0.03),
+                    ),
+                  ),
+                  ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: DataTable(
-                  headingRowColor: WidgetStateProperty.all(DesignTokens.surfaceLow.withOpacity(0.5)),
+                  headingRowColor: WidgetStateProperty.all(DesignTokens.surfaceLow.withValues(alpha: 0.5)),
                   dataRowMinHeight: 64,
                   dataRowMaxHeight: 64,
                   columns: const [
@@ -247,7 +280,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                         DataCell(Text(modelo, style: const TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant))),
                         DataCell(Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(color: DesignTokens.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                           child: Text(patente, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: FontWeight.w600, color: DesignTokens.primary)),
                         )),
                         DataCell(Text('$capKg kg', style: const TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant))),
@@ -266,6 +299,8 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                     );
                   }).toList(),
                 ),
+              ),
+                ],
               ),
             ),
           ),
@@ -347,7 +382,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
           boxShadow: [
-            BoxShadow(color: DesignTokens.primary.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Row(
@@ -379,7 +414,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                          decoration: BoxDecoration(color: DesignTokens.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
                           child: Text(patente, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.w700, color: DesignTokens.primary)),
                         ),
                       ],
@@ -499,7 +534,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: DesignTokens.onSurfaceVariant),
-        prefixIcon: Icon(icon, size: 22, color: DesignTokens.primary.withOpacity(0.7)),
+        prefixIcon: Icon(icon, size: 22, color: DesignTokens.primary.withValues(alpha: 0.7)),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),

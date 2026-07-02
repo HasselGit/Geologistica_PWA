@@ -139,48 +139,53 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
           style: DesignTokens.headlineStyle(),
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Buscar por nombre o localidad...',
-                prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.2)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.1)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: DesignTokens.primary),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por nombre o localidad...',
+                    prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.2)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.1)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: DesignTokens.primary),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              Expanded(
+                child: _loading && _apicultores.isEmpty
+                    ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth >= 900) {
+                            return _buildWebTable();
+                          } else {
+                            return _buildMobileList();
+                          }
+                        },
+                      ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _loading && _apicultores.isEmpty
-                ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                : LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth >= 900) {
-                        return _buildWebTable();
-                      } else {
-                        return _buildMobileList();
-                      }
-                    },
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -204,16 +209,44 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
+          border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.05)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 40,
               offset: const Offset(0, 4),
             )
           ],
         ),
-        child: Column(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF08201A).withValues(alpha: 0.02),
+                        const Color(0xFFC68E17).withValues(alpha: 0.02),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: -20,
+              bottom: -20,
+              child: Icon(
+                Icons.group_rounded,
+                size: 120,
+                color: const Color(0xFF08201A).withValues(alpha: 0.03),
+              ),
+            ),
+            Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ClipRRect(
@@ -224,11 +257,11 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                 dataRowMaxHeight: 60,
                 horizontalMargin: 24,
                 columns: const [
-                  DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
-                  DataColumn(label: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
-                  DataColumn(label: Text('LOCALIDAD', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
-                  DataColumn(label: Text('TELÉFONO', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
-                  DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('LOCALIDAD', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('TELÉFONO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                 ],
                 rows: paginated.map((a) {
                   final nombre = a['nombre'] ?? 'Sin nombre';
@@ -240,13 +273,13 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                   return DataRow(
                     cells: [
                       DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'JetBrains Mono'))),
-                      DataCell(Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600))),
-                      DataCell(Text(localidad, style: const TextStyle(color: DesignTokens.onSurfaceVariant))),
+                      DataCell(Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter'))),
+                      DataCell(Text(localidad, style: const TextStyle(color: DesignTokens.onSurfaceVariant, fontFamily: 'Inter'))),
                       DataCell(Text(telefono, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
                       DataCell(
                         TextButton.icon(
                           icon: const Icon(Icons.visibility_rounded, size: 18),
-                          label: const Text('Ver Perfil', style: TextStyle(fontWeight: FontWeight.w600)),
+                          label: const Text('Ver Perfil', style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter')),
                           style: TextButton.styleFrom(
                             foregroundColor: DesignTokens.secondary,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -269,7 +302,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: DesignTokens.outline.withOpacity(0.1))),
+                  border: Border(top: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.1))),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -302,6 +335,8 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                 ),
               ),
           ],
+        ),
+        ],
         ),
       ),
     );
@@ -339,8 +374,8 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: DesignTokens.outline.withOpacity(0.1)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
+          border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Row(
           children: [

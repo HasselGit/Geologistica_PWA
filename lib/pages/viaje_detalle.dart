@@ -489,8 +489,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── LEFT COLUMN ──────────────────────────────────────────────────
-          SizedBox(
-            width: 360,
+          Expanded(
             child: Container(
               height: double.infinity,
               decoration: const BoxDecoration(
@@ -522,11 +521,11 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
 
           // ── RIGHT COLUMN ─────────────────────────────────────────────────
           Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -574,13 +573,11 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                       ],
                     ),
                   ),
-                ),
 
                 // Timeline
                 if (allParadas.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
                       child: Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
@@ -611,28 +608,19 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                           ],
                         ),
                       ),
-                    ),
                   )
                 else
-                  SliverPadding(
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final p = allParadas[index];
-                          final isLast = index == allParadas.length - 1;
-                          return _buildTimelineNode(p, index, isLast);
-                        },
-                        childCount: allParadas.length,
-                      ),
+                    child: Column(
+                      children: allParadas.asMap().entries.map((e) => _buildTimelineNode(e.value, e.key, e.key == allParadas.length - 1)).toList(),
                     ),
                   ),
 
                 // Bottom action strip for web
                 if (_canOperateViaje)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
                       child: Row(
                         children: [
                           if (esPendiente && tieneRuta)
@@ -741,9 +729,9 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                           ],
                         ],
                       ),
-                    ),
                   ),
               ],
+            ),
             ),
           ),
         ],
@@ -781,6 +769,31 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  final userRole = prefs.getString('user_puesto');
+                  if (userRole == 'Gerente') {
+                    context.go('/gerentehome');
+                  } else {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/home');
+                    }
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
+              const Text('VOLVER', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.primary, letterSpacing: 1.5)),
+            ],
+          ),
+        ),
         // ── Back + Viaje Code ─────────────────────────────────────────────
         Row(
           children: [
@@ -2284,6 +2297,31 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  final userRole = prefs.getString('user_puesto');
+                  if (userRole == 'Gerente') {
+                    context.go('/gerentehome');
+                  } else {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/home');
+                    }
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
+              const Text('VOLVER', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.primary, letterSpacing: 1.5)),
+            ],
+          ),
+        ),
         Container(
           margin: const EdgeInsets.symmetric(vertical: 12),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

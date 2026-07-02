@@ -284,88 +284,144 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
     );
   }
 
+  Future<void> _guardarPesaje() async {
+    final codigoSenasa = _model.textController?.text ?? '';
+    if (codigoSenasa.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingrese el Código SENASA')));
+      return;
+    }
+    try {
+      final bruto = double.tryParse(_model.brutoController?.text ?? '0') ?? 0.0;
+      final tara = double.tryParse(_model.taraController?.text ?? '0') ?? 0.0;
+      final neto = bruto - tara;
+
+      await SupabaseService().createParadaItem({
+        if (widget.paradaId != null) 'parada_id': widget.paradaId,
+        'producto_codigo': codigoSenasa,
+        'cantidad': neto,
+        'total_kg': bruto,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesaje guardado'), backgroundColor: Colors.green));
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/home');
+        }
+      }
+    } catch (e) {
+      print('PesajesItem: Error al guardar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
   Widget _buildDigitalScaleDisplay(double neto) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         color: const Color(0xFF0A0F0D),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.secondary.withOpacity(0.4), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: DesignTokens.accent.withOpacity(0.2),
-            blurRadius: 15,
-            spreadRadius: 2,
+            color: const Color(0xFFFDBE49).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'BÁSCULA DIGITAL - PESO NETO',
-                style: TextStyle(
-                  fontFamily: 'Work Sans',
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white54,
-                  letterSpacing: 1.0,
-                ),
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              height: 4,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFDBE49),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.wifi_rounded, size: 10, color: Colors.greenAccent),
-                    SizedBox(width: 4),
-                    Text(
-                      'CONECTADO',
-                      style: TextStyle(fontFamily: 'Work Sans', fontSize: 8, fontWeight: FontWeight.bold, color: Colors.greenAccent),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                'Bruto: ${_model.brutoController?.text.isEmpty == true ? "0" : _model.brutoController?.text} - Tara: ${_model.taraController?.text.isEmpty == true ? "0" : _model.taraController?.text} = Neto: ${neto.toStringAsFixed(1)}',
-                style: const TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: DesignTokens.secondary,
-                  shadows: [
-                    Shadow(
-                      color: Color(0x66FDBE49),
-                      blurRadius: 10,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'BÁSCULA DIGITAL - PESO NETO',
+                      style: TextStyle(
+                        fontFamily: 'Work Sans',
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white54,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.wifi_rounded, size: 10, color: Colors.greenAccent),
+                          SizedBox(width: 4),
+                          Text(
+                            'CONECTADO',
+                            style: TextStyle(fontFamily: 'Work Sans', fontSize: 8, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const Text(
-                'kg',
-                style: TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: DesignTokens.secondary,
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          neto.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 48,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFFFDBE49),
+                            shadows: [
+                              Shadow(
+                                color: Color(0x66FDBE49),
+                                blurRadius: 15,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'KG',
+                      style: TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFFDBE49),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -373,270 +429,243 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
   }
 
   Widget _buildMainContent(bool isDesktop, List<ParadaItemsRow> containerParadaItemsRowList, double neto) {
-    Widget capacidadCard = Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: DesignTokens.primary.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                'CAPACIDAD OPERATIVA',
-                style: DesignTokens.labelStyle().copyWith(fontSize: 10),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 8,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: 0.65,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: DesignTokens.secondary,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '6.500 kg / 10.000 kg (Libre: 3.500 kg)', 
-            style: TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-
-    Widget formCard = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Detalles del Pesaje',
-          style: DesignTokens.headlineStyle().copyWith(fontSize: 20),
-        ),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: _model.textController,
-          focusNode: _model.textFieldFocusNode,
-          decoration: InputDecoration(
-            labelText: 'CÓDIGO SENASA (11 DÍGITOS)',
-            labelStyle: DesignTokens.labelStyle().copyWith(fontSize: 10),
-            hintText: 'Ej: 12345678901',
-            filled: true,
-            fillColor: Colors.white,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFFFDBE49), width: 1.5),
-            ),
-            suffixIcon: kIsWeb
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.qr_code_scanner_rounded, color: DesignTokens.secondary),
-                    onPressed: () async {
-                      try {
-                        _model.scannedValue = await FlutterBarcodeScanner.scanBarcode(
-                          '#C68E17', 'Cancelar', true, ScanMode.BARCODE);
-                        if (_model.scannedValue != '-1' && _model.scannedValue != null) {
-                          _model.textController?.text = _model.scannedValue!;
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error al escanear: $e')),
-                        );
-                      }
-                    },
-                  ),
-          ),
-          keyboardType: TextInputType.number,
-          maxLength: 11,
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _model.brutoController,
-                decoration: InputDecoration(
-                  labelText: 'PESO BRUTO (KG)',
-                  labelStyle: DesignTokens.labelStyle().copyWith(fontSize: 10),
-                  filled: true,
-                  fillColor: Colors.white,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.1)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFFDBE49), width: 1.5),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (_) => safeSetState(() {}),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _model.taraController,
-                decoration: InputDecoration(
-                  labelText: 'TARA (KG)',
-                  labelStyle: DesignTokens.labelStyle().copyWith(fontSize: 10),
-                  filled: true,
-                  fillColor: Colors.white,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: DesignTokens.primary.withOpacity(0.1)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFFDBE49), width: 1.5),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (_) => safeSetState(() {}),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        _buildDigitalScaleDisplay(neto),
-      ],
-    );
-
-    Widget actionsCard = Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton(
-            onPressed: () async {
-              final codigoSenasa = _model.textController?.text ?? '';
-              if (codigoSenasa.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingrese el Código SENASA')));
-                return;
-              }
-              try {
-                final bruto = double.tryParse(_model.brutoController?.text ?? '0') ?? 0.0;
-                final tara = double.tryParse(_model.taraController?.text ?? '0') ?? 0.0;
-                final neto = bruto - tara;
-
-                await SupabaseService().createParadaItem({
-                  if (widget.paradaId != null) 'parada_id': widget.paradaId,
-                  'producto_codigo': codigoSenasa,
-                  'cantidad': neto,
-                  'total_kg': bruto,
-                });
-
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pesaje guardado'), backgroundColor: Colors.green));
-                  context.pop();
-                }
-              } catch (e) {
-                print('PesajesItem: Error al guardar: $e');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red));
-                }
-              }
-            },
-            style: DesignTokens.secondaryButtonStyle,
-            child: const Text('CONFIRMAR PESAJE'),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: OutlinedButton(
-            onPressed: () async {
-              try {
-                final codigoSenasa = _model.textController?.text ?? 'Bulto';
-                await SupabaseService().createParadaItem({
-                  if (widget.paradaId != null) 'parada_id': widget.paradaId,
-                  'producto_codigo': codigoSenasa,
-                  'cantidad': 1,
-                });
-                
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bulto registrado'), backgroundColor: Colors.green));
-                  context.pop();
-                }
-              } catch (e) {
-                print('PesajesItem: Error al registrar: $e');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al registrar: $e'), backgroundColor: Colors.red));
-                }
-              }
-            },
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: DesignTokens.primary, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: const Text(
-              'REGISTRAR SIN PESAR',
-              style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, color: DesignTokens.primary),
-            ),
-          ),
-        ),
-      ],
-    );
-
     if (!isDesktop) {
-      return SingleChildScrollView(
+      return Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            capacidadCard,
-            const SizedBox(height: 32),
-            formCard,
-            const SizedBox(height: 40),
-            actionsCard,
-          ],
-        ),
-      );
-    } else {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 6,
-              child: formCard,
-            ),
-            const SizedBox(width: 32),
-            Expanded(
-              flex: 5,
-              child: Column(
-                children: [
-                  capacidadCard,
-                  const SizedBox(height: 32),
-                  actionsCard,
-                ],
+            // Mobile layout keep it simple
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+              ),
+              child: Form(
+                
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _model.textController,
+                      focusNode: _model.textFieldFocusNode,
+                      decoration: const InputDecoration(labelText: 'Código SENASA', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _model.brutoController,
+                      decoration: const InputDecoration(labelText: 'Peso Bruto', border: OutlineInputBorder()),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => safeSetState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _model.taraController,
+                      decoration: const InputDecoration(labelText: 'Tara', border: OutlineInputBorder()),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => safeSetState(() {}),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => _guardarPesaje(),
+                      child: const Text('GUARDAR'),
+                    )
+                  ],
+                ),
               ),
             ),
           ],
         ),
       );
     }
+    
+    // OLA 3: Desktop Bento Layout (Terminal & Analytical)
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // LEFT COLUMN: Dark Terminal
+          Expanded(
+            flex: 4,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0A0F0D),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFDBE49).withOpacity(0.3), width: 1),
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFFFDBE49).withOpacity(0.05), blurRadius: 40),
+                ],
+              ),
+              child: Theme(
+                data: ThemeData.dark().copyWith(
+                  primaryColor: const Color(0xFFFDBE49),
+                  colorScheme: const ColorScheme.dark(primary: Color(0xFFFDBE49), secondary: Color(0xFFFDBE49)),
+                  inputDecorationTheme: InputDecorationTheme(
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.05),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFFDBE49))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
+                    labelStyle: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+                child: Form(
+                  
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('MODIFICAR TAMBOR', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, color: Color(0xFFFDBE49), letterSpacing: 1.5, fontSize: 14)),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _model.textController,
+                        focusNode: _model.textFieldFocusNode,
+                        decoration: const InputDecoration(labelText: 'Código SENASA'),
+                        style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.white),
+                        validator: (val) => (val == null || val.isEmpty) ? 'Requerido' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(child: TextFormField(
+                            controller: _model.brutoController,
+                            decoration: const InputDecoration(labelText: 'Peso Bruto (kg)'),
+                            style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.white, fontSize: 18),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (_) => safeSetState(() {}),
+                            validator: (val) => (val == null || val.isEmpty) ? 'Requerido' : null,
+                          )),
+                          const SizedBox(width: 16),
+                          Expanded(child: TextFormField(
+                            controller: _model.taraController,
+                            decoration: const InputDecoration(labelText: 'Tara (kg)'),
+                            style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.white, fontSize: 18),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (_) => safeSetState(() {}),
+                            validator: (val) => (val == null || val.isEmpty) ? 'Requerido' : null,
+                            onFieldSubmitted: (_) => _guardarPesaje(),
+                          )),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFDBE49),
+                            foregroundColor: const Color(0xFF0A0F0D),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () => _guardarPesaje(),
+                          child: const Text('ACTUALIZAR (Ctrl+Enter)', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 24),
+          // RIGHT COLUMN: Analytical Bento Card
+          Expanded(
+            flex: 6,
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+                boxShadow: [
+                  BoxShadow(color: DesignTokens.primary.withOpacity(0.05), blurRadius: 40),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF08201A).withOpacity(0.02),
+                            const Color(0xFFC68E17).withOpacity(0.02),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -20,
+                    right: -20,
+                    child: Icon(Icons.analytics_rounded, size: 120, color: DesignTokens.primary.withOpacity(0.03)),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('ANALÍTICA DE TAMBOR', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, color: DesignTokens.primary, letterSpacing: 1.2, fontSize: 16)),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildAnalyticalItem('ID Correlativo', widget.paradaItemId?.substring(0, 8) ?? 'N/A'),
+                          _buildAnalyticalItem('Temperatura', '22°C (Est)'),
+                          _buildAnalyticalItem('Humedad', '18% (Est)'),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDF7E7),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFDBE49).withOpacity(0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('ECUACIÓN DE MASA (Kg)', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, color: Color(0xFFC68E17), fontSize: 11)),
+                            const SizedBox(height: 12),
+                            Text(
+                              '[${_model.brutoController?.text.isEmpty ?? true ? "0" : _model.brutoController?.text}] Bruto - [${_model.taraController?.text.isEmpty ?? true ? "0" : _model.taraController?.text}] Tara = [$neto] Neto',
+                              style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.bold, fontSize: 18, color: DesignTokens.primary),
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticalItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontFamily: 'Work Sans', fontSize: 11, color: Colors.black54)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, fontSize: 15, color: DesignTokens.primary)),
+      ],
+    );
+  }
+
+  Widget _thAnalitico(String text, int flex, {bool right = false}) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text.toUpperCase(),
+        textAlign: right ? TextAlign.right : TextAlign.left,
+        style: const TextStyle(fontFamily: 'Work Sans', color: DesignTokens.secondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+      ),
+    );
   }
 
   @override
@@ -648,7 +677,7 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final bool isDesktop = constraints.maxWidth >= 1024;
+          final bool isDesktop = constraints.maxWidth >= 900;
           return Scaffold(
             key: scaffoldKey,
             backgroundColor: DesignTokens.surfaceLow,
@@ -659,12 +688,16 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
               scrolledUnderElevation: 0,
               surfaceTintColor: Colors.transparent,
               automaticallyImplyLeading: !isDesktop,
-              leading: isDesktop
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                      onPressed: () => context.go('/home'),
-                    ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/home');
+                  }
+                },
+              ),
               title: Text(
                 'Registro de Tambor',
                 style: DesignTokens.headlineStyle().copyWith(fontSize: 17),
@@ -678,59 +711,60 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
               focusNode: FocusNode(),
               autofocus: true,
               onKey: (event) {
-                if (event.isKeyPressed(LogicalKeyboardKey.escape)) {
-                  _model.textController?.clear();
-                  _model.brutoController?.clear();
-                  _model.taraController?.clear();
-                  _model.textFieldFocusNode?.requestFocus();
-                } else if (event.isControlPressed && event.isKeyPressed(LogicalKeyboardKey.enter)) {
-                  // The confirm action is in the onPressed of the 'CONFIRMAR PESAJE' button.
-                  // Since we are in the main body, we can't easily trigger the button, but we could abstract the logic.
-                  // For now, we will leave it as is or implement a separate method.
+                if (event is RawKeyDownEvent) {
+                  if (event.logicalKey == LogicalKeyboardKey.escape) {
+                    _model.textController?.clear();
+                    _model.brutoController?.clear();
+                    _model.taraController?.clear();
+                    _model.textFieldFocusNode?.requestFocus();
+                    safeSetState(() {});
+                  } else if (event.isControlPressed && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                    _guardarPesaje();
+                  }
                 }
               },
               child: SafeArea(
-              child: Stack(
-                children: [
-                  const Positioned.fill(
-                    child: RepaintBoundary(
-                      child: CustomPaint(
-                        painter: HoneycombPainter(),
+                child: Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter: HoneycombPainter(),
+                        ),
                       ),
                     ),
-                  ),
-                  FutureBuilder<List<ParadaItemsRow>>(
-                    future: _paradaItemsFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(color: DesignTokens.secondary),
-                        );
-                      }
-                      List<ParadaItemsRow> containerParadaItemsRowList = snapshot.data ?? [];
+                    FutureBuilder<List<ParadaItemsRow>>(
+                      future: _paradaItemsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(color: DesignTokens.secondary),
+                          );
+                        }
+                        List<ParadaItemsRow> containerParadaItemsRowList = snapshot.data ?? [];
 
-                      double bruto = double.tryParse(_model.brutoController!.text) ?? 0;
-                      double tara = double.tryParse(_model.taraController!.text) ?? 0;
-                      double neto = bruto > tara ? bruto - tara : 0;
+                        double bruto = double.tryParse(_model.brutoController?.text ?? '0') ?? 0;
+                        double tara = double.tryParse(_model.taraController?.text ?? '0') ?? 0;
+                        double neto = bruto > tara ? bruto - tara : 0;
 
-                      return Row(
-                        children: [
-                          if (isDesktop) _buildSidebar(context),
-                          Expanded(
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
-                                child: _buildMainContent(isDesktop, containerParadaItemsRowList, neto),
+                        return Row(
+                          children: [
+                            if (isDesktop) _buildSidebar(context),
+                            Expanded(
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
+                                  child: _buildMainContent(isDesktop, containerParadaItemsRowList, neto),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
             ),
           );
         },
@@ -738,3 +772,4 @@ class _PesajesItemWidgetState extends State<PesajesItemWidget> {
     );
   }
 }
+

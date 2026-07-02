@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:ui';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
+import '../widgets/geo_sidebar.dart';
 
 class HomePageWidget extends StatefulWidget {
   const HomePageWidget({super.key});
@@ -240,288 +241,16 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     return r.contains('compras');
   }
 
+  bool get _isAdministrativo {
+    final r = _normalizeRole(_userRole);
+    return r.contains('administrativo') || r.contains('administracion') || r.contains('gastos');
+  }
+
   String get _initials {
     final parts = _displayName.split(' ').where((s) => s.isNotEmpty).toList();
     if (parts.isEmpty) return 'U';
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-  }
-
-  Widget _buildSidebar(BuildContext context) {
-    final double sidebarWidth = _isSidebarHovered ? 260 : 80;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isSidebarHovered = true),
-      onExit: (_) => setState(() => _isSidebarHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        width: sidebarWidth,
-        margin: const EdgeInsets.only(left: 16, top: 16, bottom: 16, right: 0),
-        decoration: BoxDecoration(
-          color: DesignTokens.primary,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 40, 20, 30),
-              child: Row(
-                mainAxisAlignment: _isSidebarHovered ? MainAxisAlignment.start : MainAxisAlignment.center,
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/images/logo_Geologistica_Verde.png',
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  if (_isSidebarHovered) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'GeoLogística',
-                            style: TextStyle(
-                              fontFamily: 'Manrope',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            'APIARY LOGISTICS',
-                            style: TextStyle(
-                              fontFamily: 'Work Sans',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 8,
-                              color: Colors.white.withOpacity(0.4),
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Container(
-                padding: EdgeInsets.all(_isSidebarHovered ? 12 : 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: _isSidebarHovered ? MainAxisAlignment.start : MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: DesignTokens.secondary,
-                      ),
-                      child: Text(
-                        _initials,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
-                    ),
-                    if (_isSidebarHovered) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _displayName,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              _userRole ?? 'Operador',
-                              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  if (_isAdmin || _isManagement)
-                    _sidebarItem(Icons.dashboard_rounded, 'Dashboard', () => context.push('/gerenteHome'), active: true),
-                  if (_isAdmin || _isManagement)
-                    _sidebarItem(Icons.alt_route_rounded, 'Gestión de Viajes', () => context.push('/viajes')),
-                  _sidebarItem(Icons.local_shipping_rounded, 'Vehículos', () => context.push('/vehiculos')),
-                  if (!_isDeposito && !_isChofer && !_isCompras)
-                    _sidebarItem(Icons.inventory_2_rounded, 'Productos', () => context.push('/productos')),
-                  if (!_isChofer) ...[
-                    if (!_isCompras)
-                      _sidebarItem(Icons.payments_rounded, 'Gestión de Gastos', () => context.push('/gastos')),
-                    _sidebarItem(Icons.scale_rounded, 'Control de Pesajes', () => context.push('/pesajes')),
-                  ],
-                  if (_isDeposito || _isManagement || _isChofer)
-                    _sidebarItem(Icons.warehouse_rounded, (_isDeposito || _isManagement) ? 'Cargas Depósito' : 'Depósito Huinca', () => context.push('/depositoHome')),
-                  if ((_isAdmin || _isManagement) && !_isDeposito)
-                    _sidebarItem(Icons.inventory_2_rounded, 'Gestión de Cargas', () => context.push('/cargas')),
-                  const Divider(color: Colors.white10, height: 20),
-                  if (!_isDeposito)
-                    _sidebarItem(Icons.group_rounded, 'Apicultores', () => context.push('/apicultores')),
-                  _sidebarItem(Icons.receipt_long_rounded, 'Remitos Digitales', () => context.push('/remitosLista')),
-                ],
-              ),
-            ),
-            const Divider(color: Colors.white10, height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              child: Column(
-                children: [
-                  _sidebarItem(Icons.logout_rounded, 'Cerrar Sesión', () async {
-                    await Supabase.instance.client.auth.signOut();
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.remove('keep_session'); // Eliminar persistencia de sesión activa al hacer logout
-                    if (context.mounted) context.go('/');
-                  }),
-                  _sidebarItem(Icons.power_settings_new_rounded, 'Salir', () {
-                    SystemNavigator.pop();
-                  }, color: Colors.redAccent.shade100),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _sidebarItem(IconData icon, String title, VoidCallback onTap, {bool active = false, Color? color}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: active ? DesignTokens.secondary.withOpacity(0.15) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ListTile(
-        visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
-        leading: Icon(icon, color: active ? DesignTokens.secondary : (color ?? Colors.white70), size: 20),
-        title: _isSidebarHovered
-            ? Text(
-                title,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  fontSize: 12.5,
-                  color: active ? DesignTokens.secondary : (color ?? Colors.white70),
-                ),
-              )
-            : null,
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
-  Widget _buildSyncMonitor() {
-    return ValueListenableBuilder<int>(
-      valueListenable: _queueLengthNotifier,
-      builder: (context, pendingCount, _) {
-        return ValueListenableBuilder<int>(
-          valueListenable: _errorsLengthNotifier,
-          builder: (context, errorCount, _) {
-            final bool isOnline = _isOnlineForSyncMonitor;
-            
-            if (!_isSidebarHovered) {
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                alignment: Alignment.center,
-                child: Column(
-                  children: [
-                    Icon(
-                      isOnline ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
-                      color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
-                      size: 16,
-                    ),
-                    if (pendingCount > 0) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: DesignTokens.secondary, shape: BoxShape.circle),
-                        child: Text(
-                          '$pendingCount',
-                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            }
-            
-            return Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isOnline ? Colors.greenAccent : Colors.orangeAccent,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        isOnline ? 'ONLINE' : 'OFFLINE',
-                        style: const TextStyle(
-                          fontFamily: 'Work Sans',
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Cola: $pendingCount pendientes',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11, fontFamily: 'Inter'),
-                  ),
-                  if (errorCount > 0) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Errores: $errorCount en cola',
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Inter'),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   Widget _buildSyncMonitorFloating() {
@@ -1250,30 +979,18 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
 
   Widget _buildMainContent(BuildContext context, bool isDesktop) {
     if (!isDesktop) {
-      return RefreshIndicator(
-        color: DesignTokens.secondary,
-        onRefresh: _fetchData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: _buildMosaicoBento(context, isDesktop),
-        ),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: _buildMosaicoBento(context, isDesktop),
       );
     }
     
-    return RefreshIndicator(
-      color: DesignTokens.secondary,
-      onRefresh: _fetchData,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: _buildMosaicoBento(context, isDesktop),
-            ),
-          ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: _buildMosaicoBento(context, isDesktop),
         ),
       ),
     );
@@ -1287,56 +1004,101 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     // Rol Chofer o Genérico
     if (_isChofer || _userRole == null) {
       leftModules.add(_moduleCard(icon: Icons.local_shipping_rounded, title: 'Mis Viajes', subtitle: 'Rutas asignadas', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/choferHome')));
-    }
-    
-    // Management o Admin (Left column)
-    if (_isAdmin || _isManagement) {
-      leftModules.add(_moduleCard(icon: Icons.alt_route_rounded, title: 'Gestión de Viajes', subtitle: 'Todas las rutas', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/viajes')));
-    }
-    if (!_isChofer && !_isCeoOrGerente && !_isDeposito) {
-      leftModules.add(const SizedBox(height: 16));
-      leftModules.add(_moduleCard(icon: Icons.scale_rounded, title: 'Control Pesajes', subtitle: 'Báscula', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/pesajes')));
-    }
-    if (!_isDeposito && (_isManagement && !_isCeoOrGerente && !_isCompras)) {
-      leftModules.add(const SizedBox(height: 16));
-      leftModules.add(_moduleCard(icon: Icons.inventory_2_rounded, title: 'Gestión de Cargas', subtitle: 'Preparar viajes', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/cargas')));
-    }
-
-    // Management o Admin (Right column)
-    if ((_isDeposito || _isManagement || _isChofer) && !_isCeoOrGerente) {
       rightModules.add(_moduleCard(icon: Icons.warehouse_rounded, title: 'Depósito', subtitle: 'Cargas y stock', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/depositoHome')));
+    } 
+    // Rol Depósito Exclusivo (no management, no chofer)
+    else if (_isDeposito && !_isManagement && !_isAdmin) {
+      leftModules.add(_moduleCard(icon: Icons.warehouse_rounded, title: 'Depósito', subtitle: 'Cargas y stock', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/depositoHome')));
     }
-    if (!_isChofer && !_isDeposito) {
-      if (rightModules.isNotEmpty) rightModules.add(const SizedBox(height: 16));
-      rightModules.add(_moduleCard(icon: Icons.assignment_ind_rounded, title: 'Planificador', subtitle: 'Asignar choferes', bgColor: Colors.white, accentColor: DesignTokens.secondary, onTap: () => context.push('/planificarViaje')));
+    // Roles Management / Admin (Compras, Gerente, CEO, Admin)
+    else if (_isAdmin || _isManagement) {
+      leftModules.add(_moduleCard(
+        icon: Icons.alt_route_rounded, 
+        title: 'Gestión de Viajes', 
+        subtitle: 'Todas las rutas', 
+        bgColor: Colors.white, 
+        accentColor: DesignTokens.secondary, 
+        onTap: () => context.push('/viajes')
+      ));
+      leftModules.add(const SizedBox(height: 16));
+      leftModules.add(_moduleCard(
+        icon: Icons.list_alt_rounded,
+        title: 'Solicitudes', 
+        subtitle: 'Recolección y Distribución', 
+        bgColor: Colors.white, 
+        accentColor: DesignTokens.secondary, 
+        onTap: () => context.push('/necesidades')
+      ));
+
+      rightModules.add(_moduleCard(
+        icon: Icons.scale_rounded, 
+        title: 'Control Pesajes', 
+        subtitle: 'Báscula', 
+        bgColor: Colors.white, 
+        accentColor: DesignTokens.secondary, 
+        onTap: () => context.push('/pesajes')
+      ));
+      rightModules.add(const SizedBox(height: 16));
+      rightModules.add(_moduleCard(
+        icon: Icons.group_rounded, 
+        title: 'Apicultores', 
+        subtitle: 'Gestión de productores', 
+        bgColor: Colors.white, 
+        accentColor: DesignTokens.secondary, 
+        onTap: () => context.push('/apicultores')
+      ));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Encabezado
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Operaciones en Curso', style: DesignTokens.headlineStyle().copyWith(fontSize: 18)),
-            Row(
-              children: [
-                if (isDesktop) ...[
+        // Encabezado principal (Home)
+        if (isDesktop) ...[
+          Text('GEOLOGÍSTICA > INICIO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w600, fontSize: 10, color: DesignTokens.primary.withOpacity(0.5), letterSpacing: 2)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Home', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 28, color: DesignTokens.primary, letterSpacing: -0.5)),
+              Row(
+                children: [
                   IconButton(
                     onPressed: _fetchData,
                     icon: const Icon(Icons.refresh_rounded, color: DesignTokens.primary),
                   ),
+                  if (_isManagement || _isAdmin)
+                    IconButton(
+                      onPressed: () {
+                        if (context.canPop()) context.pop();
+                        else context.go('/gerenteHome');
+                      },
+                      icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                    ),
                 ],
-                if (_isManagement || _isAdmin)
-                  IconButton(
-                    onPressed: () {
-                      if (context.canPop()) context.pop();
-                      else context.go('/gerenteHome');
-                    },
-                    icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                  ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+        ],
+        // Encabezado
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('OPERACIONES EN CURSO', style: TextStyle(fontFamily: 'Work Sans', fontSize: 14, fontWeight: FontWeight.w800, color: DesignTokens.primary.withOpacity(0.5), letterSpacing: 2)),
+            if (!isDesktop) ...[
+              Row(
+                children: [
+                  if (_isManagement || _isAdmin)
+                    IconButton(
+                      onPressed: () {
+                        if (context.canPop()) context.pop();
+                        else context.go('/gerenteHome');
+                      },
+                      icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 24),
@@ -1359,6 +1121,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}',
                 trend: 'Viajes activos',
                 accentColor: DesignTokens.secondary,
+                iconWidget: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 24),
                 sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0],
                 onTap: () => context.push('/viajes?estado=En%20Curso'),
               ),
@@ -1388,47 +1151,64 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
           children: [
             Row(
               children: [
-                Expanded(child: _bentoCard(title: 'PENDIENTES', value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}', trend: 'Viajes planificados', onTap: () => context.push('/viajes?estado=Pendiente'))),
+                Expanded(child: _bentoCard(title: 'PENDIENTES', value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}', trend: 'Viajes planificados', iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 20), onTap: () => context.push('/viajes?estado=Pendiente'))),
                 const SizedBox(width: 16),
-                Expanded(child: _bentoCard(title: 'EN CURSO', value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}', trend: 'Viajes activos', accentColor: DesignTokens.secondary, sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0], onTap: () => context.push('/viajes?estado=En%20Curso'))),
+                Expanded(child: _bentoCard(title: 'EN CURSO', value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}', trend: 'Viajes activos', accentColor: DesignTokens.secondary, iconWidget: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 20), sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0], onTap: () => context.push('/viajes?estado=En%20Curso'))),
               ]
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _bentoCard(title: 'TERMINADOS', value: _loadingStats ? '—' : '${_stats['terminados'] ?? 0}', trend: 'Historial', onTap: () => context.push('/viajes?estado=Terminado'))),
+                Expanded(child: _bentoCard(title: 'TERMINADOS', value: _loadingStats ? '—' : '${_stats['terminados'] ?? 0}', trend: 'Historial', iconWidget: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 20), onTap: () => context.push('/viajes?estado=Terminado'))),
                 const SizedBox(width: 16),
-                Expanded(child: _bentoCard(title: 'CARGAS HOY', value: _loadingStats ? '—' : '${(_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0)}', trend: 'Cargas en depósito', onTap: () => context.push('/depositoHome'))),
+                Expanded(child: _bentoCard(title: 'CARGAS HOY', value: _loadingStats ? '—' : '${(_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0)}', trend: 'Cargas en depósito', iconWidget: const Icon(Icons.warehouse_rounded, color: DesignTokens.primary, size: 20), onTap: () => context.push('/depositoHome'))),
               ]
             ),
           ],
         ),
-        const SizedBox(height: 40),
-        Text('Módulos de Operación', style: DesignTokens.headlineStyle().copyWith(fontSize: 16)),
-        const SizedBox(height: 16),
-        // Mosaico Asimétrico Real (Estructura de Bloques 70/30)
-        isDesktop ? Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 7,
+        const SizedBox(height: 12),
+        const Divider(height: 24, color: Colors.black12),
+        
+        Expanded(
+          child: RefreshIndicator(
+            color: DesignTokens.secondary,
+            onRefresh: _fetchData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(top: 12, bottom: 40),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: leftModules,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('MÓDULOS DE OPERACIÓN', style: TextStyle(fontFamily: 'Work Sans', fontSize: 14, fontWeight: FontWeight.w800, color: DesignTokens.primary.withOpacity(0.5), letterSpacing: 2)),
+                  const SizedBox(height: 16),
+                  // Mosaico Asimétrico Real (Estructura de Bloques 70/30)
+                  isDesktop ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 7,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: leftModules,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: rightModules,
+                        ),
+                      ),
+                    ],
+                  ) : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [...leftModules, if (rightModules.isNotEmpty) const SizedBox(height: 16), ...rightModules],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: rightModules,
-              ),
-            ),
-          ],
-        ) : Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [...leftModules, if (rightModules.isNotEmpty) const SizedBox(height: 16), ...rightModules],
+          ),
         ),
       ],
     );
@@ -1525,7 +1305,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
               ),
               Row(
                 children: [
-                  if (isDesktop) _buildSidebar(context),
+                  if (isDesktop) GeoSidebar(userRole: _userRole ?? 'Operador', userEmail: _userEmail ?? '', displayName: _displayName),
                   Expanded(
                     child: Center(
                       child: ConstrainedBox(
@@ -1636,7 +1416,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                if (_isAdmin || _isManagement)
+                if ((_isAdmin || _isManagement) && !_isAdministrativo)
                   _drawerItem(Icons.dashboard_rounded, 'Dashboard', () => context.push('/gerenteHome')),
                 if (_isAdmin || _isManagement)
                   _drawerItem(Icons.alt_route_rounded, 'Gestión de Viajes', () => context.push('/viajes')),

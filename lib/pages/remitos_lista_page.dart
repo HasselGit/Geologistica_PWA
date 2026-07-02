@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -47,7 +48,7 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -432,4 +433,222 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
   }
 
 
+
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 900;
+        return Scaffold(
+          backgroundColor: isDesktop ? const Color(0xFFFBF9F8) : const Color(0xFFF5F3F3),
+          body: isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(context),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Filtros Laterales (Fijos)
+                SizedBox(
+                  width: 280,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
+                            onPressed: () async {
+                              final prefs = await SharedPreferences.getInstance();
+                              final rol = prefs.getString('user_puesto') ?? '';
+                              if (rol == 'Gerente') {
+                                context.go('/gerenteHome');
+                              } else {
+                                if (context.canPop()) context.pop();
+                                else context.go('/home');
+                              }
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Histórico Remitos',
+                              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF08201A)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('BÚSQUEDA', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 12, color: Colors.black54)),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                hintText: 'ID, Nombre...',
+                                prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                                filled: true,
+                                fillColor: const Color(0xFFFBF9F8),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                              ),
+                              onChanged: (_) => _applyFilters(),
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFC68E17),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                icon: const Icon(Icons.filter_list_rounded, size: 16),
+                                label: const Text('Aplicar Filtros', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold)),
+                                onPressed: () {},
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 32),
+                // DataGrid Corporativo
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFF08201A).withOpacity(0.03), blurRadius: 40, offset: const Offset(0, 10)),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        children: [
+                          // Textura de Fondo Translucido (2%)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF08201A).withOpacity(0.02),
+                                    const Color(0xFFC68E17).withOpacity(0.02),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Icono Vectorizado Absoluto (3%)
+                          Positioned(
+                            bottom: -20,
+                            right: -20,
+                            child: Icon(Icons.receipt_long_rounded, size: 120, color: const Color(0xFF08201A).withOpacity(0.03)),
+                          ),
+                          // Tabla de Datos Densa
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: const Color(0xFF08201A).withOpacity(0.05)))),
+                                child: const Text(
+                                  'REMITOS PDF GENERADOS',
+                                  style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 1.2, color: Color(0xFF08201A)),
+                                ),
+                              ),
+                              Expanded(
+                                child: _loading 
+                                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFC68E17)))
+                                  : SingleChildScrollView(
+                                      child: DataTable(
+                                        headingRowColor: MaterialStateProperty.all(const Color(0xFFFBF9F8)),
+                                        dataRowMinHeight: 50,
+                                        dataRowMaxHeight: 50,
+                                        horizontalMargin: 20,
+                                        columnSpacing: 20,
+                                        columns: const [
+                                          DataColumn(label: Text('ID REMITO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('APICULTOR / LOC', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('ESTADO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('ACCIÓN', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                        ],
+                                        rows: _filtered.map((r) {
+                                          final statusRaw = r['estado'] ?? 'FIRMADO';
+                                          final status = statusRaw == 'PENDIENTE' ? 'FIRMADO' : statusRaw;
+                                          final isSigned = status == 'FIRMADO' || status == 'Emitido' || status == 'FIRMADA';
+                                          
+                                          final apicultorNombre = r['apicultor_nombre'] ?? 'Apicultor S/D';
+                                          final apicultorLocalidad = r['apicultor_localidad'] ?? 'Sin localidad';
+
+                                          return DataRow(
+                                            cells: [
+                                              DataCell(Text(r['remito_codigo'] ?? '-', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: Color(0xFF08201A)))),
+                                              DataCell(Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Text(apicultorNombre, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF08201A))),
+                                                  Text(apicultorLocalidad, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: const Color(0xFF08201A).withOpacity(0.5))),
+                                                ],
+                                              )),
+                                              DataCell(
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: isSigned ? const Color(0xFF4CAF50).withOpacity(0.1) : const Color(0xFFFFC107).withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(status, style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, color: isSigned ? const Color(0xFF4CAF50) : const Color(0xFFC68E17))),
+                                                )
+                                              ),
+                                              DataCell(
+                                                TextButton(
+                                                  onPressed: () {},
+                                                  child: const Text('PDF', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, color: Color(0xFF08201A))),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

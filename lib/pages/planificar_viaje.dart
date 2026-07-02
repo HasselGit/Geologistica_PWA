@@ -400,7 +400,19 @@ class _PlanificarViajeWidgetState extends State<PlanificarViajeWidget> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
-          onPressed: () => context.pop(),
+          onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            final userRole = prefs.getString('user_puesto');
+            if (userRole == 'Gerente') {
+              context.go('/gerentehome');
+            } else {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/home');
+              }
+            }
+          },
         ),
         title: Text(
           widget.editId != null ? 'Editar Ruta' : 'Planificador de Ruta',
@@ -431,7 +443,7 @@ class _PlanificarViajeWidgetState extends State<PlanificarViajeWidget> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth >= 900) {
-            return _buildWebLayout(context);
+            return Container(color: const Color(0xFFFBF9F8), child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1200), child: ClipRRect(child: _buildWebLayout(context)))));
           }
           return _buildMobileLayout(context);
         },
@@ -663,7 +675,19 @@ class _PlanificarViajeWidgetState extends State<PlanificarViajeWidget> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            final userRole = prefs.getString('user_puesto');
+            if (userRole == 'Gerente') {
+              context.go('/gerentehome');
+            } else {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/home');
+              }
+            }
+          },
                       style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF08201A), side: const BorderSide(color: Color(0x3308201A)), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       child: const Text('CANCELAR', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12)),
                     ),

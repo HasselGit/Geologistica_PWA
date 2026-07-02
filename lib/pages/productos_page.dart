@@ -140,40 +140,45 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
           onPressed: () => context.pop()
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _filterProducts,
-              style: DesignTokens.bodyStyle(color: DesignTokens.onSurface),
-              decoration: InputDecoration(
-                hintText: 'Buscar producto o código...',
-                hintStyle: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
-                prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
-                filled: true,
-                fillColor: Colors.white,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.3))),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ),
-          Expanded(
-            child: _loading && _filteredProductos.isEmpty
-              ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth >= 900) {
-                      return RepaintBoundary(child: _buildWebTable());
-                    } else {
-                      return RepaintBoundary(child: _buildMobileList());
-                    }
-                  },
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterProducts,
+                  style: DesignTokens.bodyStyle(color: DesignTokens.onSurface),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar producto o código...',
+                    hintStyle: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
+                    prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.3))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
+              ),
+              Expanded(
+                child: _loading && _filteredProductos.isEmpty
+                  ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth >= 900) {
+                          return RepaintBoundary(child: _buildWebTable());
+                        } else {
+                          return RepaintBoundary(child: _buildMobileList());
+                        }
+                      },
+                    ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
       floatingActionButton: (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras') 
         ? FloatingActionButton.extended(
@@ -198,16 +203,44 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: DesignTokens.outline.withOpacity(0.15)),
+          border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
-              color: DesignTokens.primary.withOpacity(0.04),
+              color: DesignTokens.primary.withValues(alpha: 0.04),
               blurRadius: 16,
               offset: const Offset(0, 4),
             )
           ],
         ),
-        child: Column(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF08201A).withValues(alpha: 0.02),
+                        const Color(0xFFC68E17).withValues(alpha: 0.02),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: -20,
+              bottom: -20,
+              child: Icon(
+                Icons.inventory_2_rounded,
+                size: 120,
+                color: const Color(0xFF08201A).withValues(alpha: 0.03),
+              ),
+            ),
+            Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
@@ -226,7 +259,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
                 ],
               ),
             ),
-            Divider(height: 1, color: DesignTokens.outline.withOpacity(0.2)),
+            Divider(height: 1, color: DesignTokens.outline.withValues(alpha: 0.2)),
             DataTable(
               headingRowColor: WidgetStateProperty.all(DesignTokens.surfaceLow),
               dataRowMinHeight: 64,
@@ -234,11 +267,11 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
               horizontalMargin: 24,
               columnSpacing: 32,
               columns: [
-                DataColumn(label: Text('CÓDIGO', style: DesignTokens.labelStyle(color: DesignTokens.primary))),
-                DataColumn(label: Text('DESCRIPCIÓN', style: DesignTokens.labelStyle(color: DesignTokens.primary))),
-                DataColumn(label: Text('UNIDAD', style: DesignTokens.labelStyle(color: DesignTokens.primary))),
+                DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                DataColumn(label: Text('DESCRIPCIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                DataColumn(label: Text('UNIDAD', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                 if (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras')
-                  DataColumn(label: Text('ACCIÓN', style: DesignTokens.labelStyle(color: DesignTokens.primary))),
+                  DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
               ],
               rows: currentItems.map((p) {
                 return DataRow(
@@ -248,7 +281,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
                     DataCell(Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: DesignTokens.secondary.withOpacity(0.1),
+                        color: DesignTokens.secondary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(p['unidad'] ?? 'UN', style: DesignTokens.labelStyle(color: DesignTokens.primary)),
@@ -275,7 +308,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
                 );
               }).toList(),
             ),
-            Divider(height: 1, color: DesignTokens.outline.withOpacity(0.2)),
+            Divider(height: 1, color: DesignTokens.outline.withValues(alpha: 0.2)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
@@ -300,6 +333,8 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
             ),
           ],
         ),
+          ],
+        ),
       ),
     );
   }
@@ -319,9 +354,9 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.outline.withOpacity(0.15)),
+        border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.15)),
         boxShadow: [
-          BoxShadow(color: DesignTokens.primary.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: Row(
@@ -344,7 +379,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: DesignTokens.secondary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
             child: Text(p['unidad'] ?? 'UN', style: DesignTokens.labelStyle(color: DesignTokens.primary).copyWith(fontSize: 10)),
           ),
           if (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras') ...[
@@ -554,7 +589,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: DesignTokens.outline.withOpacity(0.2)),
+                      border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.2)),
                     ),
                     child: ListView.builder(
                       shrinkWrap: true,
@@ -567,7 +602,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
                           dense: true,
                           leading: Icon(
                             isAlreadyAdded ? Icons.check_circle_rounded : Icons.add_circle_outline_rounded,
-                            color: isAlreadyAdded ? DesignTokens.success : DesignTokens.primary.withOpacity(0.5),
+                            color: isAlreadyAdded ? DesignTokens.success : DesignTokens.primary.withValues(alpha: 0.5),
                           ),
                           title: Text(item['descripcion'] ?? '', style: DesignTokens.bodyStyle(color: isAlreadyAdded ? DesignTokens.onSurfaceVariant : DesignTokens.onSurface).copyWith(
                             fontWeight: isAlreadyAdded ? FontWeight.bold : FontWeight.normal,

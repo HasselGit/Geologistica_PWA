@@ -48,11 +48,40 @@ class GastosDetalleDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Flexible(
-              child: SingleChildScrollView(
-                child: Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF08201A).withValues(alpha: 0.02),
+                              const Color(0xFFC68E17).withValues(alpha: 0.02),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: -20,
+                    bottom: -20,
+                    child: Icon(
+                      Icons.receipt_long_rounded,
+                      size: 160,
+                      color: const Color(0xFF08201A).withValues(alpha: 0.03),
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
                     _buildBentoItem('Importe Total', '\$ $importe', Icons.attach_money_rounded, Colors.white, width: 380, isHighlight: true),
                     _buildBentoItem('Tipo de Gasto', tipo.toUpperCase(), Icons.category_rounded, const Color(0xFFFFF9E6), width: 340, textColor: const Color(0xFFC68E17), isHighlight: true),
                     _buildBentoItem('Fecha de Registro', fechaStr, Icons.calendar_today_rounded, Colors.white, width: 230),
@@ -67,7 +96,9 @@ class GastosDetalleDialog extends StatelessWidget {
                     if (ticketUrl != null && ticketUrl.toString().isNotEmpty)
                       _buildBentoImage('Ticket / Comprobante', ticketUrl, context),
                   ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -83,7 +114,7 @@ class GastosDetalleDialog extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.05)),
         boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: Column(
@@ -118,7 +149,7 @@ class GastosDetalleDialog extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.05)),
         boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: ClipRRect(
@@ -132,7 +163,7 @@ class GastosDetalleDialog extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
                 ),
               ),
             ),

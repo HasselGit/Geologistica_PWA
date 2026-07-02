@@ -34,7 +34,11 @@ class _LoggedWidgetState extends State<LoggedWidget> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFDBE49)),
+        ),
+      ),
     );
   }
 }

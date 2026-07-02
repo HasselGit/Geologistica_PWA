@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -63,6 +64,14 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
           icon: const Icon(Icons.arrow_back, color: DesignTokens.primary), 
           onPressed: () => context.pop()
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: DesignTokens.primary),
+            onPressed: () => context.go('/home'),
+            tooltip: 'Volver al Inicio',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _loading 
         ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
@@ -71,10 +80,20 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
           : LayoutBuilder(
               builder: (context, constraints) {
                 final isWeb = constraints.maxWidth >= 900;
-                return SingleChildScrollView(
+                final content = SingleChildScrollView(
                   padding: EdgeInsets.all(isWeb ? 32 : 24),
                   child: isWeb ? _buildWebSplitLayout() : _buildMobileLayout(),
                 );
+
+                if (isWeb) {
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: content,
+                    ),
+                  );
+                }
+                return content;
               },
             ),
     );
@@ -96,18 +115,7 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('INFORMACIÓN TÉCNICA', 
-                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado')),
-                  const SizedBox(width: 16),
-                  Expanded(child: _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG')),
-                  const SizedBox(width: 16),
-                  Expanded(child: _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades')),
-                ],
-              ),
+              _buildFichaTecnicaCard(true),
               const SizedBox(height: 32),
               const Text('ESTADO OPERATIVO', 
                 style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
@@ -126,12 +134,7 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
       children: [
         _buildHeroCard(),
         const SizedBox(height: 32),
-        const Text('INFORMACIÓN TÉCNICA', 
-          style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
-        const SizedBox(height: 16),
-        _infoTile(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado'),
-        _infoTile(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG'),
-        _infoTile(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades'),
+        _buildFichaTecnicaCard(false),
         const SizedBox(height: 32),
         const Text('ESTADO OPERATIVO', 
           style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
@@ -174,6 +177,86 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFichaTecnicaCard(bool isWeb) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.secondary.withOpacity(0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: DesignTokens.secondary.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.badge_rounded, color: DesignTokens.secondary, size: 20),
+              const SizedBox(width: 8),
+              const Text('FICHA TÉCNICA', 
+                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.secondary, letterSpacing: 1.5)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          if (isWeb)
+            Row(
+              children: [
+                Expanded(child: _infoItem(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado')),
+                const SizedBox(width: 16),
+                Expanded(child: _infoItem(Icons.scale_rounded, 'Cap. Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG')),
+                const SizedBox(width: 16),
+                Expanded(child: _infoItem(Icons.inventory_2_rounded, 'Cap. Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades')),
+              ],
+            )
+          else
+            Column(
+              children: [
+                _infoItem(Icons.branding_watermark_rounded, 'Modelo', _vehiculo?['modelo'] ?? 'No especificado'),
+                const SizedBox(height: 16),
+                _infoItem(Icons.scale_rounded, 'Capacidad Carga', '${_vehiculo?['capacidad_kg'] ?? 0} KG'),
+                const SizedBox(height: 16),
+                _infoItem(Icons.inventory_2_rounded, 'Capacidad Tambores', '${_vehiculo?['capacidad_tambores'] ?? 0} Unidades'),
+              ],
+            )
+        ],
+      ),
+    );
+  }
+
+  Widget _infoItem(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: DesignTokens.surfaceLow,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: DesignTokens.primary, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.onSurfaceVariant, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontFamily: 'Manrope', fontSize: 14, fontWeight: FontWeight.w800, color: DesignTokens.onSurface)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -226,7 +309,7 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
   }
 
   Widget _buildProgressBar({required String label, required double current, required double total, required String unit, required Color color}) {
-    final double percent = (current / total).clamp(0.0, 1.0);
+    final double percent = total > 0 ? (current / total).clamp(0.0, 1.0) : 0.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -242,65 +325,23 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
         Stack(
           children: [
             Container(
-              height: 8,
+              height: 6,
               width: double.infinity,
-              decoration: BoxDecoration(color: DesignTokens.surfaceLow, borderRadius: BorderRadius.circular(4)),
+              decoration: BoxDecoration(color: DesignTokens.surfaceLow, borderRadius: BorderRadius.circular(3)),
             ),
             FractionallySizedBox(
               widthFactor: percent,
               child: Container(
-                height: 8,
+                height: 6,
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _infoTile(IconData icon, String label, String value) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: DesignTokens.primary.withOpacity(0.02), 
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: DesignTokens.surfaceLow,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: DesignTokens.primary, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: DesignTokens.onSurfaceVariant, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontFamily: 'Manrope', fontSize: 16, fontWeight: FontWeight.w800, color: DesignTokens.onSurface)),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

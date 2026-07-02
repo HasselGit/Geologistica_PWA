@@ -18,6 +18,9 @@ class DepositohomeWidget extends StatefulWidget {
 }
 
 class _DepositohomeWidgetState extends State<DepositohomeWidget> with SingleTickerProviderStateMixin {
+  Set<String> _selectedItems = {};
+  final scaffoldKey = GlobalKey<ScaffoldState>();
+  final _unfocusNode = FocusNode();
   late TabController _tabController;
   List<Map<String, dynamic>> _viajesPlanificados = [];
   List<Map<String, dynamic>> _cargasTerminadas = [];
@@ -778,6 +781,136 @@ class _DepositohomeWidgetState extends State<DepositohomeWidget> with SingleTick
   }
 
 
+  // ─── Build Web DataTable ────────────────────────────────────────────────────
+  Widget _buildWebDataTable(int tabIndex) {
+    List<Map<String, dynamic>> tableItems = [];
+    if (tabIndex == 0) {
+      tableItems = _getActiveItems().where((item) {
+        if (item['type'] == 'viaje_sin_carga') return true;
+        final c = item['carga'];
+        return c != null && c['estado'] == AppStates.pendiente;
+      }).toList();
+    } else if (tabIndex == 1) {
+      tableItems = _getActiveItems().where((item) {
+        if (item['type'] == 'viaje_sin_carga') return false;
+        final c = item['carga'];
+        return c != null && c['estado'] == AppStates.enCurso;
+      }).toList();
+    } else {
+      tableItems = _filteredHistory.map((c) => {
+        'type': 'carga_terminada',
+        'viaje': c['viaje'] ?? {},
+        'carga': c,
+      }).toList();
+    }
+
+    if (tableItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.table_chart_outlined, size: 48, color: const Color(0xFF08201A).withOpacity(0.1)),
+            const SizedBox(height: 16),
+            const Text('No hay datos en esta sección.', style: TextStyle(color: Colors.grey, fontFamily: 'Inter')),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowColor: MaterialStateProperty.all(const Color(0xFF08201A).withOpacity(0.04)),
+          dataRowMinHeight: 60,
+          dataRowMaxHeight: 70,
+          columns: const [
+            DataColumn(label: Text('Viaje/Carga', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF08201A), fontFamily: 'Manrope'))),
+            DataColumn(label: Text('Chofer', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF08201A), fontFamily: 'Manrope'))),
+            DataColumn(label: Text('Vehículo', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF08201A), fontFamily: 'Manrope'))),
+            DataColumn(label: Text('Kg', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF08201A), fontFamily: 'Manrope'))),
+            DataColumn(label: Text('Tambores', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF08201A), fontFamily: 'Manrope'))),
+            DataColumn(label: Text('Acción', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF08201A), fontFamily: 'Manrope'))),
+          ],
+          rows: tableItems.map((item) {
+            final type = item['type'] as String;
+            final v = item['viaje'] ?? {};
+            final c = item['carga'];
+            final chofer = v['profiles'] ?? {};
+            
+            double totalKg = 0;
+            int totalTambores = 0;
+            if (type == 'carga_terminada') {
+               final items = c?['carga_items'] as List? ?? [];
+               for (var it in items) {
+                  final double cant = (it['cantidad'] ?? 0).toDouble();
+                  totalKg += cant * 300.0;
+                  final String prodCode = (it['producto_codigo'] ?? '').toString().toUpperCase();
+                  if (prodCode == 'TCM' || prodCode.contains('TAMBOR') || prodCode.startsWith('T')) {
+                     if (prodCode != 'TV' && prodCode != 'TE') totalTambores += cant.toInt();
+                  }
+               }
+            } else {
+               final metrics = _calcCardMetrics(item);
+               totalKg = metrics['totalKg'] as double;
+               totalTambores = metrics['totalTambores'] as int;
+            }
+
+            final itemKey = (v['viaje_codigo'] ?? 'SC') + '_' + (c?['carga_codigo'] ?? 'SC');
+            return DataRow(
+              selected: _selectedItems.contains(itemKey),
+              onSelectChanged: (selected) {
+                setState(() {
+                  if (selected == true) {
+                    _selectedItems.add(itemKey);
+                  } else {
+                    _selectedItems.remove(itemKey);
+                  }
+                });
+              },
+              cells: [
+                DataCell(
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(v['viaje_codigo'] ?? 'S/C', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF08201A), fontFamily: 'JetBrains Mono')),
+                      if (c != null) Text(c['carga_codigo'] ?? '', style: const TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'Inter')),
+                    ],
+                  ),
+                ),
+                DataCell(Text('${chofer['nombre'] ?? ''} ${chofer['apellido'] ?? ''}'.trim(), style: const TextStyle(fontSize: 13, fontFamily: 'Inter'))),
+                DataCell(Text(v['vehiculo_codigo'] ?? 'S/D', style: const TextStyle(fontSize: 13, fontFamily: 'Inter'))),
+                DataCell(Text('${totalKg.round()} kg', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF08201A), fontFamily: 'JetBrains Mono'))),
+                DataCell(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(value: totalTambores > 0, onChanged: (bool? val) {}, activeColor: const Color(0xFFC68E17)),
+                      Text('$totalTambores un.', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'JetBrains Mono')),
+                    ],
+                  ),
+                ),
+                DataCell(
+                  ElevatedButton(
+                    onPressed: () {
+                       if (c != null && type != 'carga_terminada') context.push('/cargaDetalle?id=${c['id']}');
+                       else if (type == 'carga_terminada') context.push('/remito_carga?cargaId=${c['id']}');
+                       else context.push('/viajedetalle?viajeId=${v['id']}');
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF08201A), foregroundColor: Colors.white, elevation: 0),
+                    child: const Text('VER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Manrope')),
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -785,240 +918,232 @@ class _DepositohomeWidgetState extends State<DepositohomeWidget> with SingleTick
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= 900) {
-          // WEB LAYOUT
-          return Scaffold(
-            backgroundColor: DesignTokens.surfaceLow,
-            body: Row(
-              children: [
-                // LEFT PANEL (280px)
-                Container(
-                  width: 280,
-                  color: const Color(0xFF08201A),
-                  child: SafeArea(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 32),
-                        const Center(
-                          child: Text(
-                            'GeoLogística',
-                            style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 32, color: Colors.white),
-                          ),
-                        ),
-                        const Center(
-                          child: Text(
-                            'DEPÓSITO',
-                            style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, color: Color(0xFFFDBE49), letterSpacing: 2),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        const Divider(color: Colors.white12),
-                        const SizedBox(height: 16),
-                        
-                        // Tabs List
-                        _buildSidebarTab(0, 'PENDIENTES', Icons.hourglass_empty_rounded),
-                        _buildSidebarTab(1, 'EN CURSO', Icons.local_shipping_rounded),
-                        _buildSidebarTab(2, 'TERMINADAS', Icons.check_circle_rounded),
+          // WEB LAYOUT (STITCH Design - Ola 1)
+          final bentoDecoration = BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 30,
+                offset: const Offset(0, 8),
+              )
+            ],
+          );
 
-                        const Spacer(),
-                        const Divider(color: Colors.white12),
-                        const SizedBox(height: 16),
-                        
-                        IconButton(
-                          onPressed: _fetchData,
-                          icon: const Icon(Icons.refresh_rounded, color: Colors.white54, size: 28),
-                        ),
-                        
-                        if (!_loading && !_isChofer) ...[
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: ElevatedButton.icon(
-                              onPressed: _showAddCargaDialog,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFDBE49),
-                                foregroundColor: const Color(0xFF08201A),
-                                minimumSize: const Size(double.infinity, 48),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              icon: const Icon(Icons.add_box_rounded),
-                              label: const Text('AGREGAR CARGA', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, letterSpacing: 1)),
-                            ),
+          return Scaffold(
+            backgroundColor: const Color(0xFFFBF9F8),
+            body: RepaintBoundary(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  child: Stack(
+                    children: [
+                  // Header
+                  Positioned(
+                    top: 0, left: 0, right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (context.canPop()) {
+                                context.pop();
+                              } else {
+                                context.go('/home');
+                              }
+                            },
+                            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
+                            tooltip: 'Volver',
+                          ),
+                          const SizedBox(width: 16),
+                          const Text(
+                            'GeoLogística Depósito',
+                            style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: Color(0xFF08201A)),
                           ),
                         ],
-                        const SizedBox(height: 24),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                
-                // RIGHT PANEL
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border(bottom: BorderSide(color: DesignTokens.primary.withOpacity(0.05))),
-                        ),
+                  // Asymmetrical 3 Bento Blocks
+                  Positioned.fill(
+                    top: 80,
+                    child: AnimatedOpacity(
+                      opacity: _loading ? 0.4 : 1.0,
+                      duration: const Duration(milliseconds: 400),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 16, 32, 32),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ElevatedButton.icon(
-                              onPressed: () => context.go('/home'),
-                              icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                              label: const Text('VOLVER AL HOME'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: DesignTokens.primary.withOpacity(0.05),
-                                foregroundColor: DesignTokens.primary,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            // 1. Left Panel: Quick actions & Tabs
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                decoration: bentoDecoration,
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('MENÚ Y ACCIONES', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF08201A))),
+                                    const SizedBox(height: 24),
+                                    _buildSidebarTab(0, 'PENDIENTES', Icons.hourglass_empty_rounded),
+                                    _buildSidebarTab(1, 'EN CURSO', Icons.local_shipping_rounded),
+                                    _buildSidebarTab(2, 'TERMINADAS', Icons.check_circle_rounded),
+                                    const Spacer(),
+                                    const Divider(color: Colors.black12),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: _fetchData,
+                                      icon: const Icon(Icons.sync_rounded),
+                                      label: const Text('ACTUALIZAR', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF08201A).withOpacity(0.05),
+                                        foregroundColor: const Color(0xFF08201A),
+                                        minimumSize: const Size(double.infinity, 48),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        elevation: 0,
+                                      ),
+                                    ),
+                                    if (!_isChofer) ...[
+                                      const SizedBox(height: 12),
+                                      ElevatedButton.icon(
+                                        onPressed: _showAddCargaDialog,
+                                        icon: const Icon(Icons.add_box_rounded),
+                                        label: const Text('NUEVA CARGA', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFC68E17),
+                                          foregroundColor: const Color(0xFFFFFFFF),
+                                          minimumSize: const Size(double.infinity, 48),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            const Text('|', style: TextStyle(color: Colors.black26)),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'DEPÓSITO',
-                              style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.primary, letterSpacing: 1.5),
+                            const SizedBox(width: 24),
+                            // 2. Expanded Center Panel: Wide DataTable
+                            Expanded(
+                              flex: 6,
+                              child: Container(
+                                decoration: bentoDecoration,
+                                clipBehavior: Clip.antiAlias,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(24),
+                                      decoration: BoxDecoration(
+                                        border: Border(bottom: BorderSide(color: Colors.black.withOpacity(0.05))),
+                                      ),
+                                      child: const Text('TABLERO DE CONTROL', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF08201A))),
+                                    ),
+                                    Expanded(
+                                      child: TabBarView(
+                                        controller: _tabController,
+                                        children: [
+                                          _buildWebDataTable(0),
+                                          _buildWebDataTable(1),
+                                          _buildWebDataTable(2),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            // 3. Right Panel: Stock alerts in white cards
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                decoration: bentoDecoration,
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('ALERTAS DE STOCK', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF08201A))),
+                                    const SizedBox(height: 24),
+                                    // Alerta de ejemplo con status badge
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF08201A).withOpacity(0.02),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.orange.withOpacity(0.15),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Text('BAJO', style: TextStyle(color: Colors.deepOrange, fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'Inter')),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          const Text('Tambores Vacíos', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF08201A))),
+                                          const SizedBox(height: 4),
+                                          const Text('Nivel por debajo del 20% en Parque Industrial.', style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.grey)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Expanded(
-                        child: _loading 
-                          ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                          : Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Bloque 1: Acciones Rápidas (Bento)
-                                  Expanded(
-                                    flex: 2,
-                                    child: AnimatedOpacity(
-                                      opacity: 1.0,
-                                      duration: const Duration(milliseconds: 400),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(16),
-                                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0,4))],
-                                        ),
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('ACCIONES RÁPIDAS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: DesignTokens.primary)),
-                                            const SizedBox(height: 16),
-                                            ElevatedButton.icon(
-                                              onPressed: _showAddCargaDialog,
-                                              icon: const Icon(Icons.add_box_rounded),
-                                              label: const Text('NUEVA CARGA'),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFFFDBE49),
-                                                foregroundColor: const Color(0xFF08201A),
-                                                minimumSize: const Size(double.infinity, 48),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  // Bloque 2: DataTable Principal (Bento)
-                                  Expanded(
-                                    flex: 7,
-                                    child: AnimatedOpacity(
-                                      opacity: 1.0,
-                                      duration: const Duration(milliseconds: 600),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(16),
-                                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0,4))],
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        child: TabBarView(
-                                          controller: _tabController,
-                                          children: [
-                                            _buildPendientesTab(),
-                                            _buildEnCursoTab(),
-                                            _buildTerminadasTab(),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  // Bloque 3: Alertas de Stock (Bento)
-                                  Expanded(
-                                    flex: 3,
-                                    child: AnimatedOpacity(
-                                      opacity: 1.0,
-                                      duration: const Duration(milliseconds: 800),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(16),
-                                          border: Border.all(color: Colors.red.withOpacity(0.2)),
-                                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0,4))],
-                                        ),
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Row(
-                                              children: [
-                                                Icon(Icons.warning_amber_rounded, color: Colors.red, size: 16),
-                                                SizedBox(width: 8),
-                                                Text('ALERTAS STOCK', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.red)),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 16),
-                                            const Text('No hay alertas críticas de stock para los próximos viajes.', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  if (_loading)
+                    const Positioned.fill(
+                      child: Center(
+                        child: CircularProgressIndicator(color: Color(0xFFC68E17)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            ),
             ),
           );
         }
 
         // MOBILE LAYOUT
         return Scaffold(
-          backgroundColor: DesignTokens.surfaceLow,
+          backgroundColor: const Color(0xFFFBF9F8),
           appBar: AppBar(
-            backgroundColor: DesignTokens.surface,
+            backgroundColor: const Color(0xFFFFFFFF),
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+              icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
               onPressed: () => context.go('/home'),
             ),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('GeoLogística Depósito', style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 18)),
-                Text('Gestión de Cargas y Salidas', style: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant).copyWith(fontSize: 12)),
+                const Text('GeoLogística Depósito', style: TextStyle(color: Color(0xFF08201A), fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18)),
+                const Text('Gestión de Cargas', style: TextStyle(color: Colors.grey, fontFamily: 'Inter', fontSize: 12)),
               ],
             ),
             bottom: TabBar(
               controller: _tabController,
-              labelColor: DesignTokens.primary,
-              unselectedLabelColor: DesignTokens.onSurfaceVariant,
-              indicatorColor: DesignTokens.secondary,
+              labelColor: const Color(0xFF08201A),
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: const Color(0xFFC68E17),
               indicatorWeight: 3,
+              labelStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold),
               tabs: const [
                 Tab(text: 'PENDIENTES'),
                 Tab(text: 'EN CURSO'),
@@ -1027,7 +1152,7 @@ class _DepositohomeWidgetState extends State<DepositohomeWidget> with SingleTick
             ),
           ),
           body: _loading 
-            ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFFC68E17)))
             : TabBarView(
                 controller: _tabController,
                 children: [
@@ -1040,9 +1165,9 @@ class _DepositohomeWidgetState extends State<DepositohomeWidget> with SingleTick
               ? null
               : FloatingActionButton.extended(
                   onPressed: _showAddCargaDialog,
-                  backgroundColor: DesignTokens.primary,
-                  icon: Icon(Icons.add_box_rounded, color: DesignTokens.accent),
-                  label: const Text('AGREGAR CARGA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  backgroundColor: const Color(0xFF08201A),
+                  icon: const Icon(Icons.add_box_rounded, color: Color(0xFFC68E17)),
+                  label: const Text('NUEVA CARGA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Manrope')),
                 ),
         );
       },
@@ -1057,23 +1182,23 @@ class _DepositohomeWidgetState extends State<DepositohomeWidget> with SingleTick
         return GestureDetector(
           onTap: () => _tabController.animateTo(index),
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            margin: const EdgeInsets.symmetric(vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFFFDBE49) : Colors.transparent,
+              color: isActive ? const Color(0xFF08201A) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                Icon(icon, size: 20, color: isActive ? const Color(0xFF08201A) : Colors.white70),
+                Icon(icon, size: 20, color: isActive ? const Color(0xFFFFFFFF) : const Color(0xFF08201A).withOpacity(0.5)),
                 const SizedBox(width: 12),
                 Text(
                   label,
                   style: TextStyle(
-                    fontFamily: 'Work Sans',
+                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
-                    color: isActive ? const Color(0xFF08201A) : Colors.white,
+                    color: isActive ? const Color(0xFFFFFFFF) : const Color(0xFF08201A).withOpacity(0.7),
                     letterSpacing: 1,
                   ),
                 ),
