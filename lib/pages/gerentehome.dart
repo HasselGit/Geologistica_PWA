@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import '../widgets/geo_sidebar.dart';
+import '../widgets/geo_bento_card.dart';
 
 class GerenteHomeWidget extends StatefulWidget {
   const GerenteHomeWidget({super.key});
@@ -275,13 +276,38 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
               ),
               const SizedBox(height: 32),
               // Top Row: High Impact KPIs
-              Row(
+                            Row(
                 children: [
-                  Expanded(flex: 5, child: _buildKPIHighEndWeight(_totalKg)),
-                  const SizedBox(width: 20),
-                  Expanded(flex: 3, child: _buildKPIHighEndTrips(_viajesEnCurso, pendCount, termCount)),
-                  const SizedBox(width: 20),
-                  Expanded(flex: 4, child: _buildKPIHighEndStock(_tamboresStock)),
+                  Expanded(
+                    child: GeoBentoCard(
+                      title: 'CARGA EN VIAJE',
+                      value: '${_totalKg.toStringAsFixed(0)} KG',
+                      trend: 'En vivo',
+                      iconWidget: const Icon(Icons.balance_rounded, color: DesignTokens.secondary, size: 24),
+                      accentColor: DesignTokens.secondary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GeoBentoCard(
+                      title: 'VIAJES ACTIVOS',
+                      value: '$cursCount',
+                      trend: '$pendCount en espera',
+                      iconWidget: const Icon(Icons.local_shipping_rounded, color: Colors.green, size: 24),
+                      accentColor: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GeoBentoCard(
+                      title: 'STOCK TAMBORES',
+                      value: '$_tamboresStock',
+                      trend: 'Unidades',
+                      iconWidget: const Icon(Icons.inventory_2_rounded, color: Colors.redAccent, size: 24),
+                      accentColor: Colors.redAccent,
+                      sparklineData: const [5,2,8,4,9,3,7,2,6,4,8],
+                    ),
+                  ),
                 ],
               ),
             ]
@@ -438,187 +464,11 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
     );
   }
 
-  Widget _buildKPIHighEndWeight(double kg) {
-    return _GlassCard(
-      accentColor: DesignTokens.secondary,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(width: 120, height: 120, decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.05), shape: BoxShape.circle)),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.balance_rounded, color: DesignTokens.primary, size: 20),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: DesignTokens.secondary.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: DesignTokens.secondary.withOpacity(0.2))),
-                    child: Row(
-                      children: [
-                        const _GerentePulsingDot(),
-                        const SizedBox(width: 6),
-                        const Text('EN VIVO', style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.w800, color: DesignTokens.primary, letterSpacing: 1)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(kg.toStringAsFixed(0), style: const TextStyle(fontFamily: 'Manrope', fontSize: 28, fontWeight: FontWeight.w800, color: DesignTokens.primary, letterSpacing: -1, fontFeatures: [FontFeature.tabularFigures()])),
-                  const SizedBox(width: 6),
-                  Text('KG', style: TextStyle(fontFamily: 'Manrope', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black38)),
-                ],
-              ),
-              const Text('CARGA TOTAL EN VIAJE', style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black38, letterSpacing: 1)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
-                    child: Row(
-                      children: [
-                        Icon(Icons.trending_up_rounded, color: Colors.green.shade600, size: 12),
-                        const SizedBox(width: 4),
-                        Text('ACTIVO', style: TextStyle(fontFamily: 'Inter', fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green.shade600)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(2)),
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: 0.65,
-                        child: Container(decoration: BoxDecoration(color: DesignTokens.secondary, borderRadius: BorderRadius.circular(2))),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  
 
-  Widget _buildKPIHighEndTrips(int enCurso, int pendientes, int terminados) {
-    return _GlassCard(
-      accentColor: Colors.green.shade600,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(color: DesignTokens.primary, borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 24),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: Colors.green.shade600.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                child: Row(
-                  children: [
-                    const _GerentePulsingDot(),
-                    const SizedBox(width: 6),
-                    Text('EN RUTA', style: TextStyle(fontFamily: 'Inter', fontSize: 9, fontWeight: FontWeight.bold, color: Colors.green.shade700)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(enCurso.toString(), style: const TextStyle(fontFamily: 'Manrope', fontSize: 48, fontWeight: FontWeight.w800, color: DesignTokens.primary, letterSpacing: -2, fontFeatures: [FontFeature.tabularFigures()])),
-              const SizedBox(width: 8),
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-            ],
-          ),
-          const Text('VIAJES ACTIVOS', style: TextStyle(fontFamily: 'Work Sans', fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black38, letterSpacing: 1)),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: DesignTokens.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: DesignTokens.outline.withOpacity(0.5))),
-            child: Text('$enCurso moviéndose • $pendientes en espera', style: const TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w500, color: Colors.black54)),
-          ),
-        ],
-      ),
-    );
-  }
+  
 
-  Widget _buildKPIHighEndStock(int stock) {
-    return _GlassCard(
-      accentColor: Colors.red.shade400,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.inventory_2_rounded, color: DesignTokens.primary, size: 20),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('ESTADO', style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.w800, color: Colors.red.shade400, letterSpacing: 1)),
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded, color: Colors.red.shade400, size: 12),
-                      const SizedBox(width: 4),
-                      Text('Tambores', style: TextStyle(fontFamily: 'Inter', fontSize: 9, fontWeight: FontWeight.bold, color: Colors.red.shade400)),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(stock.toString(), style: const TextStyle(fontFamily: 'Manrope', fontSize: 28, fontWeight: FontWeight.w800, color: DesignTokens.primary, letterSpacing: -1, fontFeatures: [FontFeature.tabularFigures()])),
-              const SizedBox(width: 6),
-              Text('UNI', style: TextStyle(fontFamily: 'Manrope', fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black38)),
-            ],
-          ),
-          const Text('STOCK TAMBORES', style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black38, letterSpacing: 1)),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 24,
-            child: CustomPaint(painter: _GerenteSparklinePainter([5,2,8,4,9,3,7,2,6,4,8], Colors.red.shade400)),
-          ),
-        ],
-      ),
-    );
-  }
+  
 
   Widget _buildMatrixRow(String title, String subtitle, IconData icon, Color iconColor, Color iconBg, List<int> stats, VoidCallback onTap) {
     return Padding(

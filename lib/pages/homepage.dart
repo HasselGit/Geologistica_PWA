@@ -10,6 +10,7 @@ import 'dart:ui';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import '../widgets/geo_sidebar.dart';
+import '../widgets/geo_bento_card.dart';
 
 class HomePageWidget extends StatefulWidget {
   const HomePageWidget({super.key});
@@ -1223,7 +1224,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     List<double>? sparklineData,
     VoidCallback? onTap,
   }) {
-    return _BentoCardWidget(
+    return GeoBentoCard(
       title: title,
       value: value,
       trend: trend,
@@ -1699,7 +1700,7 @@ class SparklineCard extends StatelessWidget {
   }
 }
 
-class _BentoCardWidget extends StatefulWidget {
+class GeoBentoCard extends StatefulWidget {
   final String title;
   final String value;
   final String trend;
@@ -1708,7 +1709,7 @@ class _BentoCardWidget extends StatefulWidget {
   final List<double>? sparklineData;
   final VoidCallback? onTap;
 
-  const _BentoCardWidget({
+  const GeoBentoCard({
     required this.title,
     required this.value,
     required this.trend,
@@ -1719,10 +1720,10 @@ class _BentoCardWidget extends StatefulWidget {
   });
 
   @override
-  State<_BentoCardWidget> createState() => _BentoCardWidgetState();
+  State<GeoBentoCard> createState() => GeoBentoCardState();
 }
 
-class _BentoCardWidgetState extends State<_BentoCardWidget> {
+class GeoBentoCardState extends State<GeoBentoCard> {
   bool _isHovered = false;
 
   @override
