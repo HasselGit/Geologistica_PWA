@@ -13,6 +13,7 @@ import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:share_plus/share_plus.dart';
+import '../widgets/geo_sidebar.dart';
 
 class ViajeDetalleWidget extends StatefulWidget {
   final String viajeId;
@@ -78,6 +79,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
 
   bool get _isChofer => _userRole == 'Chofer';
   bool get _isAdmin => _userEmail == 'hassel00@gmail.com' || _userRole == 'Administrador' || _userRole == 'Admin' || Supabase.instance.client.auth.currentUser?.email == 'hassel00@gmail.com';
+  String get _displayName => _userEmail ?? 'Usuario';
   bool get _canOperateViaje => _isChofer || _isAdmin;
   bool get _canEditRoute =>
       _isAdmin || _userRole == 'Gerente' || _userRole == 'CEO' || _userRole == 'Compras';
@@ -505,9 +507,23 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surface,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
+          const Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: HoneycombPainter(),
+              ),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GeoSidebar(
+                  userRole: _userRole ?? 'Operador',
+                  userEmail: _userEmail ?? '',
+                  displayName: _displayName),
+
           Expanded(
             flex: 8,
             child: Container(
@@ -826,33 +842,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
               ),
             ),
             const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'GEOLOGÍSTICA > DASHBOARD',
-                    style: TextStyle(
-                      fontFamily: 'Work Sans',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.5,
-                      color: DesignTokens.onSurfaceVariant,
-                    ),
-                  ),
-                  const Text(
-                    'Detalle de Viaje',
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: DesignTokens.primary,
-                      height: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const Spacer(),
             // Admin delete
             if (_isAdmin)
               GestureDetector(
@@ -902,47 +892,6 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                 ),
               ),
             if (_isAdmin) const SizedBox(width: 12),
-            if (!esPendiente)
-              SizedBox(
-                height: 36,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final viajeCode = _viaje!['viaje_codigo'] ?? '';
-                    final apicultor = _viaje!['apicultor'] ?? _viaje!['clientes']?['razon_social'] ?? '';
-                    final localidad = _viaje!['localidad'] ?? _viaje!['clientes']?['localidad'] ?? '';
-                    final profilesList = _viaje!['profiles'];
-                    Map<String, dynamic>? p;
-                    if (profilesList is List && profilesList.isNotEmpty) {
-                      p = profilesList.first as Map<String, dynamic>;
-                    } else if (profilesList is Map) {
-                      p = profilesList as Map<String, dynamic>;
-                    }
-                    if (p == null) p = {};
-                    context.pushNamed(
-                      'ModificarRegistros',
-                      queryParameters: {
-                        'viajeId': widget.viajeId,
-                        'viajeCode': viajeCode,
-                        'apicultorNombre': apicultor,
-                        'localidad': localidad,
-                        'apicultorId': p['apicultor_id']?.toString(),
-                      },
-                    ).then((_) => _loadData());
-                  },
-                  icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 16),
-                  label: const Text(
-                    'MODIFICAR REGISTROS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                  style: DesignTokens.primaryButtonStyle.copyWith(
-                    padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16)),
-                  ),
-                ),
-              ),
           ],
         ),
         const SizedBox(height: 32),
@@ -1040,7 +989,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                         'VEHÍCULO',
                         style: TextStyle(
                           fontFamily: 'Work Sans',
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.5,
                           color: DesignTokens.onSurfaceVariant,
@@ -1100,7 +1049,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                         'CHOFER',
                         style: TextStyle(
                           fontFamily: 'Work Sans',
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.5,
                           color: DesignTokens.onSurfaceVariant,
