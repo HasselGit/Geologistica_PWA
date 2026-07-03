@@ -795,8 +795,9 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Back + Viaje Code ─────────────────────────────────────────────
+        // ── Back + Header + Acciones ─────────────────────────────────────────────
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GestureDetector(
               onTap: () async {
@@ -819,9 +820,6 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.black.withOpacity(0.05)),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-                  ],
                 ),
                 child: const Icon(Icons.arrow_back_ios_new_rounded,
                     size: 16, color: DesignTokens.primary),
@@ -833,7 +831,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'VIAJE',
+                    'GEOLOGÍSTICA > DASHBOARD',
                     style: TextStyle(
                       fontFamily: 'Work Sans',
                       fontSize: 9,
@@ -842,9 +840,9 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                       color: DesignTokens.onSurfaceVariant,
                     ),
                   ),
-                  Text(
-                    _viaje!['viaje_codigo'] ?? '—',
-                    style: const TextStyle(
+                  const Text(
+                    'Detalle de Viaje',
+                    style: TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
@@ -947,11 +945,86 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
               ),
           ],
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 32),
 
-        // ── STATUS CARD ───────────────────────────────────────────────────
-        _buildWebStatusBadge(estadoViaje, estadoColor, estadoIcon),
-        const SizedBox(height: 20),
+        // ── ID & STATUS CARD (Stitch Bento) ─────────────────────────────────
+        _buildGlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ID DE VIAJE',
+                      style: TextStyle(
+                        fontFamily: 'Work Sans',
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                        color: DesignTokens.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _viaje!['viaje_codigo'] ?? '—',
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: DesignTokens.primary,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: estadoColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: estadoColor.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(estadoIcon, size: 14, color: estadoColor),
+                        const SizedBox(width: 6),
+                        Text(
+                          estadoViaje.toUpperCase(),
+                          style: TextStyle(
+                            fontFamily: 'Work Sans',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                            color: estadoColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_viaje!['fecha_inicio'] != null)
+                    Text(
+                      'Iniciado: ${_fmt(_viaje!['fecha_inicio'])}',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 11,
+                        color: DesignTokens.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
 
         // ── VEHICLE & DRIVER INFO ─────────────────────────────────────────
         IntrinsicHeight(
@@ -1248,37 +1321,62 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     // Estimación para progress bar, máximo de 30,000 kg si no está definido
     final double maxKg = 30000;
     final double progreso = (totalKg / maxKg).clamp(0.0, 1.0);
+    final int completadas = paradas.where((p) => p['estado'] == 'Finalizado').length;
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            flex: 4,
+            flex: 5,
             child: _buildGlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.flag_rounded, size: 24, color: DesignTokens.primary.withOpacity(0.7)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'PARADAS',
+                        style: TextStyle(
+                          fontFamily: 'Work Sans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          color: DesignTokens.onSurfaceVariant,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: DesignTokens.primary.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.flag_rounded, size: 14, color: DesignTokens.primary.withOpacity(0.7)),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     '${paradas.length}',
                     style: const TextStyle(
                       fontFamily: 'Manrope',
-                      fontSize: 24,
+                      fontSize: 32,
                       fontWeight: FontWeight.w800,
-                      color: DesignTokens.primary,
+                      color: DesignTokens.onSurface,
+                      height: 1,
                     ),
                   ),
-                  const Text(
-                    'PARADAS',
-                    style: TextStyle(
-                      fontFamily: 'Work Sans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                      color: DesignTokens.onSurfaceVariant,
+                  const SizedBox(height: 8),
+                  Text(
+                    '$completadas completadas',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: DesignTokens.primary,
                     ),
                   ),
                 ],
@@ -1287,21 +1385,35 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            flex: 8,
+            flex: 7,
             child: _buildGlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'CARGA NETA',
-                    style: TextStyle(
-                      fontFamily: 'Work Sans',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.5,
-                      color: DesignTokens.onSurfaceVariant,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'CARGA NETA',
+                        style: TextStyle(
+                          fontFamily: 'Work Sans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          color: DesignTokens.onSurfaceVariant,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: DesignTokens.secondary.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.hourglass_bottom_rounded, size: 14, color: DesignTokens.secondary),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -3150,23 +3262,52 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
 
   Widget _buildMetricTile(String title, String value, IconData icon, {Color? color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: const Color(0xFFF9F9FB),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.black.withOpacity(0.03)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black.withOpacity(0.04)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: color ?? Colors.black45),
-          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2))
+              ],
+            ),
+            child: Icon(icon, size: 18, color: color ?? Colors.black54),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 9, color: Colors.black38, fontWeight: FontWeight.w600, letterSpacing: 0.2)),
-                const SizedBox(height: 2),
-                Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color ?? Colors.black87, height: 1.2)),
+                Text(
+                  title.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'Work Sans',
+                    fontSize: 10,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: color ?? Colors.black87,
+                    height: 1.2,
+                  ),
+                ),
               ],
             ),
           ),
