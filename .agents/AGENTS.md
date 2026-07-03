@@ -14,3 +14,5 @@
 - El 02/07/2026, se modificaron lib/pages/viajes_page.dart y lib/widgets/geo_sidebar.dart para reestructurar la vista de Control de Viajes y eliminar textos residuales.
 
 - El 03/07/2026, se modificaron lib/pages/homepage.dart y lib/pages/gerentehome.dart para corregir simetría de módulos y unificar colores en matriz de operaciones eliminando gráfica residual en Tambores.
+
+- El 03/07/2026, se corrigieron los colores de fondo y texto de las tarjetas de Home y los contadores en la Matriz de Operaciones (escritorio y mvil).

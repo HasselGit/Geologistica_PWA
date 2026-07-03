@@ -1111,6 +1111,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 title: 'PENDIENTES',
                 value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}',
                 trend: 'Viajes planificados',
+                accentColor: Colors.blueAccent,
                 iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 24),
                 onTap: () => context.push('/viajes?estado=Pendiente'),
               ),
@@ -1133,6 +1134,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 title: 'TERMINADOS',
                 value: _loadingStats ? '—' : '${_stats['terminados'] ?? 0}',
                 trend: 'Historial',
+                accentColor: Colors.green,
                 iconWidget: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 24),
                 onTap: () => context.push('/viajes?estado=Terminado'),
               ),
@@ -1143,6 +1145,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 title: 'CARGAS HOY',
                 value: _loadingStats ? '—' : '${(_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0)}',
                 trend: 'Cargas en depósito',
+                accentColor: DesignTokens.primary,
                 iconWidget: const Icon(Icons.warehouse_rounded, color: DesignTokens.primary, size: 24),
                 onTap: () => context.push('/depositoHome'),
               ),
@@ -1152,7 +1155,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
           children: [
             Row(
               children: [
-                Expanded(child: _bentoCard(title: 'PENDIENTES', value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}', trend: 'Viajes planificados', iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 20), onTap: () => context.push('/viajes?estado=Pendiente'))),
+                Expanded(child: _bentoCard(title: 'PENDIENTES', value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}', trend: 'Viajes planificados', accentColor: Colors.blueAccent, iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 20), onTap: () => context.push('/viajes?estado=Pendiente'))),
                 const SizedBox(width: 16),
                 Expanded(child: _bentoCard(title: 'EN CURSO', value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}', trend: 'Viajes activos', accentColor: DesignTokens.secondary, iconWidget: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 20), sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0], onTap: () => context.push('/viajes?estado=En%20Curso'))),
               ]
@@ -1160,9 +1163,9 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _bentoCard(title: 'TERMINADOS', value: _loadingStats ? '—' : '${_stats['terminados'] ?? 0}', trend: 'Historial', iconWidget: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 20), onTap: () => context.push('/viajes?estado=Terminado'))),
+                Expanded(child: _bentoCard(title: 'TERMINADOS', value: _loadingStats ? '—' : '${_stats['terminados'] ?? 0}', trend: 'Historial', accentColor: Colors.green, iconWidget: const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 20), onTap: () => context.push('/viajes?estado=Terminado'))),
                 const SizedBox(width: 16),
-                Expanded(child: _bentoCard(title: 'CARGAS HOY', value: _loadingStats ? '—' : '${(_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0)}', trend: 'Cargas en depósito', iconWidget: const Icon(Icons.warehouse_rounded, color: DesignTokens.primary, size: 20), onTap: () => context.push('/depositoHome'))),
+                Expanded(child: _bentoCard(title: 'CARGAS HOY', value: _loadingStats ? '—' : '${(_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0)}', trend: 'Cargas en depósito', accentColor: DesignTokens.primary, iconWidget: const Icon(Icons.warehouse_rounded, color: DesignTokens.primary, size: 20), onTap: () => context.push('/depositoHome'))),
               ]
             ),
           ],

@@ -509,10 +509,10 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
                 ),
               ),
             ),
-            _buildMatrixCell('PENDIENTES', stats[0].toString(), Colors.black87),
-            _buildMatrixCell('ASIGNADAS', stats[1].toString(), Colors.black87),
-            _buildMatrixCell('EN CURSO', stats[2].toString(), DesignTokens.primary, isHighlight: true),
-            _buildMatrixCell('TERMINADAS', stats[3].toString(), Colors.green.shade600),
+            _buildMatrixCell('PENDIENTES', stats[0].toString(), DesignTokens.primary),
+            _buildMatrixCell('ASIGNADAS', stats[1].toString(), DesignTokens.primary),
+            _buildMatrixCell('EN CURSO', stats[2].toString(), DesignTokens.primary),
+            _buildMatrixCell('TERMINADAS', stats[3].toString(), DesignTokens.primary),
             Expanded(
               flex: 2,
               child: Container(
@@ -548,7 +548,6 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
       flex: 1,
       child: Container(
         decoration: BoxDecoration(
-          color: isHighlight ? DesignTokens.secondary.withOpacity(0.05) : null,
           border: Border(right: BorderSide(color: DesignTokens.primary.withOpacity(0.05))),
         ),
         padding: const EdgeInsets.all(24),
@@ -557,7 +556,7 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
           children: [
             Text(value, style: TextStyle(fontFamily: 'Manrope', fontSize: 24, fontWeight: FontWeight.w800, color: valueColor, fontFeatures: const [FontFeature.tabularFigures()])),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.bold, color: isHighlight ? DesignTokens.secondary : Colors.black38, letterSpacing: 0.5)),
+            Text(label, style: const TextStyle(fontFamily: 'Work Sans', fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 0.5)),
           ],
         ),
       ),
@@ -836,10 +835,10 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _subStateItem('Pendientes', states['Pendiente'] ?? 0, Colors.black54),
-                    _subStateItem('Asignadas', states['Asignada'] ?? 0, const Color(0xFF1565C0)),
-                    _subStateItem('En Curso', states['En Curso'] ?? 0, const Color(0xFF7D5700)),
-                    _subStateItem('Terminadas', states['Terminada'] ?? 0, const Color(0xFF1A6B43)),
+                    _subStateItem('Pendientes', states['Pendiente'] ?? 0),
+                    _subStateItem('Asignadas', states['Asignada'] ?? 0),
+                    _subStateItem('En Curso', states['En Curso'] ?? 0),
+                    _subStateItem('Terminadas', states['Terminada'] ?? 0),
                   ],
                 ),
               ],
@@ -850,12 +849,12 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
     );
   }
 
-  Widget _subStateItem(String label, int value, Color color) {
+  Widget _subStateItem(String label, int value) {
     return Column(
       children: [
-        Text(value.toString(), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: color, fontFamily: 'Manrope')),
+        Text(value.toString(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: DesignTokens.primary, fontFamily: 'Manrope')),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.black45, fontFamily: 'Work Sans')),
+        Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.black54, fontFamily: 'Work Sans')),
       ],
     );
   }
