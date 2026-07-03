@@ -39,18 +39,18 @@ jobs:
         env:
           VERCEL_ORG_ID: team_elzJTKVd1OK4l8GlZDbJys46
           VERCEL_PROJECT_ID: prj_WJq2LtZRijgYiS1CAr8fkpg18Ypr
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --token=${{ secrets.Vercel_Token_PWA }}
 
       - name: Build Project Artifacts
         working-directory: build/web
         env:
           VERCEL_ORG_ID: team_elzJTKVd1OK4l8GlZDbJys46
           VERCEL_PROJECT_ID: prj_WJq2LtZRijgYiS1CAr8fkpg18Ypr
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --token=${{ secrets.Vercel_Token_PWA }}
 
       - name: Deploy Project Artifacts to Vercel
         working-directory: build/web
         env:
           VERCEL_ORG_ID: team_elzJTKVd1OK4l8GlZDbJys46
           VERCEL_PROJECT_ID: prj_WJq2LtZRijgYiS1CAr8fkpg18Ypr
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.Vercel_Token_PWA }}
