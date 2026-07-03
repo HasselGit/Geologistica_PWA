@@ -950,115 +950,118 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         const SizedBox(height: 20),
 
         // ── VEHICLE & DRIVER INFO ─────────────────────────────────────────
-        Row(
-          children: [
-            Expanded(
-              child: _buildGlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'VEHÍCULO',
-                      style: TextStyle(
-                        fontFamily: 'Work Sans',
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                        color: DesignTokens.onSurfaceVariant,
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildGlassCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'VEHÍCULO',
+                        style: TextStyle(
+                          fontFamily: 'Work Sans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          color: DesignTokens.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: DesignTokens.primary.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(10),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: DesignTokens.primary.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.local_shipping_rounded,
+                                size: 20, color: DesignTokens.primary),
                           ),
-                          child: const Icon(Icons.local_shipping_rounded,
-                              size: 20, color: DesignTokens.primary),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _viaje!['vehiculo_codigo'] ?? 'Sin asignar',
-                                style: const TextStyle(
-                                  fontFamily: 'Manrope',
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                  color: DesignTokens.primary,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _viaje!['vehiculo_codigo'] ?? 'Sin asignar',
+                                  style: const TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                    color: DesignTokens.primary,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                _viaje!['vehiculo_patente'] ?? '',
-                                style: const TextStyle(
-                                  fontFamily: 'JetBrains Mono',
-                                  fontSize: 11,
-                                  color: DesignTokens.onSurfaceVariant,
+                                Text(
+                                  _viaje!['vehiculo_patente'] ?? '',
+                                  style: const TextStyle(
+                                    fontFamily: 'JetBrains Mono',
+                                    fontSize: 11,
+                                    color: DesignTokens.onSurfaceVariant,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildGlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'CHOFER',
-                      style: TextStyle(
-                        fontFamily: 'Work Sans',
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                        color: DesignTokens.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: DesignTokens.secondary.withOpacity(0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.person_rounded,
-                              size: 20, color: DesignTokens.secondary),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            choferNombre,
-                            style: const TextStyle(
-                              fontFamily: 'Manrope',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              color: DesignTokens.onSurface,
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildGlassCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'CHOFER',
+                        style: TextStyle(
+                          fontFamily: 'Work Sans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          color: DesignTokens.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: DesignTokens.secondary.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.person_rounded,
+                                size: 20, color: DesignTokens.secondary),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              choferNombre,
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: DesignTokens.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -1242,102 +1245,105 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     final double maxKg = 30000;
     final double progreso = (totalKg / maxKg).clamp(0.0, 1.0);
 
-    return Row(
-      children: [
-        Expanded(
-          flex: 4,
-          child: _buildGlassCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.flag_rounded, size: 24, color: DesignTokens.primary.withOpacity(0.7)),
-                const SizedBox(height: 12),
-                Text(
-                  '${paradas.length}',
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: DesignTokens.primary,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 4,
+            child: _buildGlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.flag_rounded, size: 24, color: DesignTokens.primary.withOpacity(0.7)),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${paradas.length}',
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: DesignTokens.primary,
+                    ),
                   ),
-                ),
-                const Text(
-                  'PARADAS',
-                  style: TextStyle(
-                    fontFamily: 'Work Sans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                    color: DesignTokens.onSurfaceVariant,
+                  const Text(
+                    'PARADAS',
+                    style: TextStyle(
+                      fontFamily: 'Work Sans',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                      color: DesignTokens.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 8,
-          child: _buildGlassCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'CARGA NETA',
-                  style: TextStyle(
-                    fontFamily: 'Work Sans',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.5,
-                    color: DesignTokens.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      totalKg.toStringAsFixed(0),
-                      style: const TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: DesignTokens.secondary,
-                        height: 1,
-                      ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 8,
+            child: _buildGlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'CARGA NETA',
+                    style: TextStyle(
+                      fontFamily: 'Work Sans',
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      color: DesignTokens.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 4),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 2),
-                      child: Text(
-                        'kg',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: DesignTokens.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        totalKg.toStringAsFixed(0),
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: DesignTokens.secondary,
+                          height: 1,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progreso,
-                    backgroundColor: DesignTokens.secondary.withOpacity(0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.secondary),
-                    minHeight: 6,
+                      const SizedBox(width: 4),
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 2),
+                        child: Text(
+                          'kg',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: DesignTokens.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progreso,
+                      backgroundColor: DesignTokens.secondary.withOpacity(0.1),
+                      valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.secondary),
+                      minHeight: 6,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
