@@ -36,6 +36,26 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     _loadRoleAndData();
   }
 
+  Widget _buildGlassCard({required Widget child, EdgeInsetsGeometry? padding}) {
+    return Container(
+      width: double.infinity,
+      padding: padding ?? const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: child,
+    );
+  }
+
   Future<void> _loadRoleAndData() async {
     final prefs = await SharedPreferences.getInstance();
     _userRole = prefs.getString('user_puesto');
@@ -769,43 +789,33 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          margin: const EdgeInsets.only(bottom: 24),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  final userRole = prefs.getString('user_puesto');
-                  if (userRole == 'Gerente') {
-                    context.go('/gerentehome');
-                  } else {
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go('/home');
-                    }
-                  }
-                },
-              ),
-              const SizedBox(width: 8),
-              const Text('VOLVER', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.primary, letterSpacing: 1.5)),
-            ],
-          ),
-        ),
         // ── Back + Viaje Code ─────────────────────────────────────────────
         Row(
           children: [
             GestureDetector(
-              onTap: () => context.pop(),
+              onTap: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final userRole = prefs.getString('user_puesto');
+                if (userRole == 'Gerente') {
+                  context.go('/gerentehome');
+                } else {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/home');
+                  }
+                }
+              },
               child: Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: DesignTokens.surfaceLow,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: DesignTokens.outline),
+                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+                  ],
                 ),
                 child: const Icon(Icons.arrow_back_ios_new_rounded,
                     size: 16, color: DesignTokens.primary),
@@ -896,14 +906,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         const SizedBox(height: 20),
 
         // ── VEHICLE INFO CARD ─────────────────────────────────────────────
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: DesignTokens.surfaceLow,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: DesignTokens.outline),
-          ),
+        _buildGlassCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -963,14 +966,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         const SizedBox(height: 12),
 
         // ── DRIVER INFO CARD ──────────────────────────────────────────────
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: DesignTokens.surfaceLow,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: DesignTokens.outline),
-          ),
+        _buildGlassCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1017,14 +1013,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         const SizedBox(height: 12),
 
         // ── DATES CARD ────────────────────────────────────────────────────
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: DesignTokens.surfaceLow,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: DesignTokens.outline),
-          ),
+        _buildGlassCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1417,9 +1406,16 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                             ? DesignTokens.success.withOpacity(0.25)
                             : isActive
                                 ? DesignTokens.secondary.withOpacity(0.35)
-                                : DesignTokens.outline,
+                                : Colors.black.withOpacity(0.05),
                         width: isActive ? 1.5 : 1,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2276,6 +2272,13 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: isTerminada ? Colors.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: ListTile(
         leading: Icon(Icons.inventory_2_outlined, color: isTerminada ? Colors.green : Colors.orange),

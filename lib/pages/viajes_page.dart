@@ -131,37 +131,59 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 900;
         
-        return Scaffold(
-          backgroundColor: DesignTokens.surfaceLow,
-          body: Row(
+        final scaffold = Scaffold(
+          backgroundColor: Colors.white,
+          body: Column(
             children: [
-              if (isDesktop) GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+              _buildHeader(isDesktop),
               Expanded(
-                child: Column(
-                  children: [
-                    _buildHeader(isDesktop),
-                    Expanded(
-                      child: _loading
-                          ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                          : TabBarView(
-                              controller: _tabController,
-                              children: _tabs.map((estado) => _buildViajesList(estado)).toList(),
-                            ),
-                    ),
-                  ],
-                ),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                    : TabBarView(
+                        controller: _tabController,
+                        children: _tabs.map((estado) => _buildViajesList(estado)).toList(),
+                      ),
               ),
             ],
           ),
           floatingActionButton: _canCreate && !isDesktop
               ? FloatingActionButton.extended(
                   onPressed: () => context.push('/planificarViaje').then((_) => _fetchViajes()),
-                  backgroundColor: DesignTokens.secondary,
-                  icon: const Icon(Icons.add_rounded, color: DesignTokens.primary),
-                  label: const Text('NUEVO VIAJE', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, color: DesignTokens.primary)),
+                  backgroundColor: DesignTokens.success,
+                  icon: const Icon(Icons.add_rounded, color: Colors.white),
+                  label: const Text('NUEVO VIAJE', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, color: Colors.white)),
                 )
               : null,
         );
+
+        if (isDesktop) {
+          return Scaffold(
+            backgroundColor: DesignTokens.surfaceLow,
+            body: Row(
+              children: [
+                GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 40),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), bottomLeft: Radius.circular(30)),
+                            child: scaffold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return scaffold;
       },
     );
   }
@@ -221,14 +243,17 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                   ElevatedButton.icon(
                     onPressed: () => context.push('/planificarViaje').then((_) => _fetchViajes()),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: DesignTokens.secondary,
-                      foregroundColor: DesignTokens.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: DesignTokens.success,
+                      foregroundColor: Colors.white,
                       elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                     ),
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('NUEVO VIAJE', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    icon: const Icon(Icons.add_rounded, size: 20),
+                    label: const Text(
+                      'NUEVO VIAJE',
+                      style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5),
+                    ),
                   ),
                 ],
               ],
@@ -333,7 +358,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
             final estado = AppStates.normalize(v['estado']);
 
             return DataRow(
-              onSelectChanged: (_) => context.push('/viajes/$id').then((_) => _fetchViajes()),
+              onSelectChanged: (_) => context.push('/viajedetalle?viajeId=$id').then((_) => _fetchViajes()),
               cells: [
                 DataCell(Text(codigo, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13))),
                 DataCell(Text(choferStr, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87))),
@@ -360,7 +385,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => context.push('/viajes/$id').then((_) => _fetchViajes()),
+        onTap: () => context.push('/viajedetalle?viajeId=$id').then((_) => _fetchViajes()),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           width: 320,
@@ -479,8 +504,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
         }
       }
     }
-    if (tambores > 0) return '$tambores Tambores / $kilos KG';
-    if (kilos > 0) return '$kilos KG';
-    return 'Vacío';
+    if (kilos > 0 || tambores > 0) return '${tambores}T | ${kilos}KG';
+    return 'Sin registrar';
   }
 }
