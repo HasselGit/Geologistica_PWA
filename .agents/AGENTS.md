@@ -12,3 +12,5 @@
 - Comando obligatorio: Copy-Item -Path .vercel -Destination build/web -Recurse -Force; npx vercel deploy --prod --cwd build/web.
 
 - El 02/07/2026, se modificaron lib/pages/viajes_page.dart y lib/widgets/geo_sidebar.dart para reestructurar la vista de Control de Viajes y eliminar textos residuales.
+
+- El 03/07/2026, se modificaron lib/pages/homepage.dart y lib/pages/gerentehome.dart para corregir simetría de módulos y unificar colores en matriz de operaciones eliminando gráfica residual en Tambores.

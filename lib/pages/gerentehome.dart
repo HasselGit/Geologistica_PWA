@@ -302,10 +302,9 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
                     child: GeoBentoCard(
                       title: 'STOCK TAMBORES',
                       value: '$_tamboresStock',
-                      trend: 'Unidades',
-                      iconWidget: const Icon(Icons.inventory_2_rounded, color: Colors.redAccent, size: 24),
-                      accentColor: Colors.redAccent,
-                      sparklineData: const [5,2,8,4,9,3,7,2,6,4,8],
+                      trend: 'Unidades en inventario',
+                      iconWidget: const Icon(Icons.inventory_2_rounded, color: DesignTokens.primary, size: 24),
+                      accentColor: DesignTokens.primary,
                     ),
                   ),
                 ],
@@ -706,33 +705,34 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
 
     return Row(
       children: [
-        Expanded(child: _stateCountCard('PENDIENTES', pCount, const Color(0xFF1565C0), const Color(0xFFE3F2FD))),
+        Expanded(child: _stateCountCard('PENDIENTES', pCount)),
         const SizedBox(width: 10),
-        Expanded(child: _stateCountCard('EN CURSO', cCount, const Color(0xFF7D5700), const Color(0xFFFDEFCC))),
+        Expanded(child: _stateCountCard('EN CURSO', cCount)),
         const SizedBox(width: 10),
-        Expanded(child: _stateCountCard('TERMINADOS', tCount, const Color(0xFF1A6B43), const Color(0xFFD4F0E1))),
+        Expanded(child: _stateCountCard('TERMINADOS', tCount)),
       ],
     );
   }
 
-  Widget _stateCountCard(String title, int count, Color color, Color bg) {
+  Widget _stateCountCard(String title, int count) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: bg,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.1)),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
           Text(
             count.toString(),
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: color, fontFamily: 'Manrope'),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: DesignTokens.primary, fontFamily: 'Manrope'),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: color, letterSpacing: 0.5, fontFamily: 'Work Sans'),
+            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.black54, letterSpacing: 0.5, fontFamily: 'Work Sans'),
           ),
         ],
       ),

@@ -1187,7 +1187,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        flex: 7,
+                        flex: 1,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: leftModules,
@@ -1195,7 +1195,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        flex: 3,
+                        flex: 1,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: rightModules,
