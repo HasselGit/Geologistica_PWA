@@ -39,16 +39,16 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
   Widget _buildGlassCard({required Widget child, EdgeInsetsGeometry? padding}) {
     return Container(
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(20),
+      padding: padding ?? const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           )
         ],
       ),
@@ -2103,13 +2103,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                           fontSize: 14,
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.secondary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
+                      style: DesignTokens.primaryButtonStyle,
                     ),
                   ),
                 ),
@@ -3031,15 +3025,11 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              height: 40,
+              height: 52,
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.map_rounded, size: 18, color: Colors.white),
-                label: const Text('SEGUIMIENTO SATELITAL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1565C0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 0,
-                ),
+                icon: const Icon(Icons.map_rounded, size: 18),
+                label: const Text('SEGUIMIENTO SATELITAL'),
+                style: DesignTokens.primaryButtonStyle,
                 onPressed: () async {
                   final satelitalUrl = Uri.parse('http://satelital.uninet.com.ar/GpsGateServer/VehicleTracker/VehicleTracker.html?appid=59');
                   try {

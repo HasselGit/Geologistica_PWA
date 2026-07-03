@@ -131,8 +131,42 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 900;
         
-        final scaffold = Scaffold(
-          backgroundColor: Colors.white,
+        if (isDesktop) {
+          return Scaffold(
+            backgroundColor: DesignTokens.surfaceLow,
+            body: Stack(
+              children: [
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: HoneycombPainter(),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildHeader(isDesktop),
+                          Expanded(
+                            child: _loading
+                                ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                                : _buildKanbanView(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: DesignTokens.surfaceLow,
           body: Column(
             children: [
               _buildHeader(isDesktop),
@@ -149,52 +183,23 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
           floatingActionButton: _canCreate && !isDesktop
               ? FloatingActionButton.extended(
                   onPressed: () => context.push('/planificarViaje').then((_) => _fetchViajes()),
-                  backgroundColor: DesignTokens.success,
+                  backgroundColor: DesignTokens.primary,
                   icon: const Icon(Icons.add_rounded, color: Colors.white),
                   label: const Text('NUEVO VIAJE', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, color: Colors.white)),
                 )
               : null,
         );
-
-        if (isDesktop) {
-          return Scaffold(
-            backgroundColor: DesignTokens.surfaceLow,
-            body: Row(
-              children: [
-                GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
-                Expanded(
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 40),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 40),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), bottomLeft: Radius.circular(30)),
-                            child: scaffold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return scaffold;
       },
     );
   }
 
   Widget _buildHeader(bool isDesktop) {
     return Container(
-      color: Colors.white,
+      color: Colors.transparent,
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(isDesktop ? 32 : 16, isDesktop ? 24 : 16, isDesktop ? 32 : 16, 16),
+            padding: EdgeInsets.fromLTRB(isDesktop ? 40 : 16, isDesktop ? 40 : 16, isDesktop ? 40 : 16, 16),
             child: Row(
               children: [
                 if (!isDesktop) ...[
@@ -215,7 +220,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                 const SizedBox(width: 16),
                 // Toggle View
                 Container(
-                  decoration: BoxDecoration(color: DesignTokens.surfaceLow, borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withOpacity(0.05))),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -233,22 +238,19 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                   ),
                 ),
                 const SizedBox(width: 16),
-                IconButton(
-                  onPressed: _fetchViajes,
-                  icon: const Icon(Icons.refresh_rounded, color: Colors.black45),
-                  tooltip: 'Actualizar',
+                Container(
+                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.black.withOpacity(0.05))),
+                  child: IconButton(
+                    onPressed: _fetchViajes,
+                    icon: const Icon(Icons.refresh_rounded, color: Colors.black45),
+                    tooltip: 'Actualizar',
+                  ),
                 ),
                 if (isDesktop && _canCreate) ...[
                   const SizedBox(width: 16),
                   ElevatedButton.icon(
                     onPressed: () => context.push('/planificarViaje').then((_) => _fetchViajes()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DesignTokens.success,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                    ),
+                    style: DesignTokens.primaryButtonStyle,
                     icon: const Icon(Icons.add_rounded, size: 20),
                     label: const Text(
                       'NUEVO VIAJE',
@@ -260,16 +262,17 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
             ),
           ),
           if (!isDesktop) Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: _buildSearchBar()),
-          TabBar(
-            controller: _tabController,
-            indicatorColor: DesignTokens.secondary,
-            indicatorWeight: 3,
-            labelColor: DesignTokens.primary,
-            unselectedLabelColor: Colors.black38,
-            labelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
-            unselectedLabelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w600, fontSize: 11, letterSpacing: 0.5),
-            tabs: _tabLabels.map((l) => Tab(text: l)).toList(),
-          ),
+          if (!isDesktop)
+            TabBar(
+              controller: _tabController,
+              indicatorColor: DesignTokens.secondary,
+              indicatorWeight: 3,
+              labelColor: DesignTokens.primary,
+              unselectedLabelColor: Colors.black38,
+              labelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
+              unselectedLabelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w600, fontSize: 11, letterSpacing: 0.5),
+              tabs: _tabLabels.map((l) => Tab(text: l)).toList(),
+            ),
         ],
       ),
     );
@@ -279,7 +282,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
     return Container(
       width: 250,
       height: 40,
-      decoration: BoxDecoration(color: DesignTokens.surfaceLow, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withOpacity(0.05))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withOpacity(0.05))),
       child: TextField(
         onChanged: _onSearchChanged,
         decoration: InputDecoration(
@@ -290,6 +293,76 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87),
+      ),
+    );
+  }
+
+  Widget _buildKanbanView() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(40, 0, 40, 40),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _buildKanbanColumn('PENDIENTE', AppStates.pendiente)),
+          const SizedBox(width: 24),
+          Expanded(child: _buildKanbanColumn('EN CURSO', AppStates.enCurso)),
+          const SizedBox(width: 24),
+          Expanded(child: _buildKanbanColumn('TERMINADO', AppStates.terminado)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKanbanColumn(String title, String estado) {
+    final filtered = _viajesPorEstado(estado);
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 13, color: DesignTokens.primary, letterSpacing: 1.5)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                  child: Text('${filtered.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.primary)),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Colors.black12),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.local_shipping_outlined, size: 48, color: Colors.black12),
+                        SizedBox(height: 16),
+                        Text('No hay viajes', style: TextStyle(fontFamily: 'Inter', color: Colors.black45, fontSize: 12)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildTripCard(filtered[i]),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }
