@@ -508,33 +508,37 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── LEFT COLUMN ──────────────────────────────────────────────────
           Expanded(
             flex: 8,
             child: Container(
               height: double.infinity,
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: Colors.transparent,
                 border: Border(right: BorderSide(color: Color(0xFFEEECEB), width: 1)),
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-                child: _buildWebLeftPanel(
-                  theme: theme,
-                  choferNombre: choferNombre,
-                  estadoViaje: estadoViaje,
-                  estadoColor: estadoColor,
-                  estadoIcon: estadoIcon,
-                  esPendiente: esPendiente,
-                  esEnCurso: esEnCurso,
-                  tieneRuta: tieneRuta,
-                  todasTerminadas: todasTerminadas,
-                  tieneCargaPendiente: tieneCargaPendiente,
-                  puedeIniciar: puedeIniciar,
-                  paradas: paradas,
-                  cargas: cargas,
-                  distancia: distancia,
-                  totalKg: totalKg,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: _buildWebLeftPanel(
+                      theme: theme,
+                      choferNombre: choferNombre,
+                      estadoViaje: estadoViaje,
+                      estadoColor: estadoColor,
+                      estadoIcon: estadoIcon,
+                      esPendiente: esPendiente,
+                      esEnCurso: esEnCurso,
+                      tieneRuta: tieneRuta,
+                      todasTerminadas: todasTerminadas,
+                      tieneCargaPendiente: tieneCargaPendiente,
+                      puedeIniciar: puedeIniciar,
+                      paradas: paradas,
+                      cargas: cargas,
+                      distancia: distancia,
+                      totalKg: totalKg,
+                    ),
+                  ),
                 ),
               ),
             ),
