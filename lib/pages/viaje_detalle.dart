@@ -510,6 +510,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         children: [
           // ── LEFT COLUMN ──────────────────────────────────────────────────
           Expanded(
+            flex: 8,
             child: Container(
               height: double.infinity,
               decoration: const BoxDecoration(
@@ -541,6 +542,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
 
           // ── RIGHT COLUMN ─────────────────────────────────────────────────
           Expanded(
+            flex: 4,
             child: SingleChildScrollView(
               child: Column(
                 children: [
@@ -897,6 +899,48 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                       size: 17, color: Colors.redAccent),
                 ),
               ),
+            if (_isAdmin) const SizedBox(width: 12),
+            if (!esPendiente)
+              SizedBox(
+                height: 36,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final viajeCode = _viaje!['viaje_codigo'] ?? '';
+                    final apicultor = _viaje!['apicultor'] ?? _viaje!['clientes']?['razon_social'] ?? '';
+                    final localidad = _viaje!['localidad'] ?? _viaje!['clientes']?['localidad'] ?? '';
+                    final profilesList = _viaje!['profiles'];
+                    Map<String, dynamic>? p;
+                    if (profilesList is List && profilesList.isNotEmpty) {
+                      p = profilesList.first as Map<String, dynamic>;
+                    } else if (profilesList is Map) {
+                      p = profilesList as Map<String, dynamic>;
+                    }
+                    if (p == null) p = {};
+                    context.pushNamed(
+                      'ModificarRegistros',
+                      queryParameters: {
+                        'viajeId': widget.viajeId,
+                        'viajeCode': viajeCode,
+                        'apicultorNombre': apicultor,
+                        'localidad': localidad,
+                        'apicultorId': p['apicultor_id']?.toString(),
+                      },
+                    ).then((_) => _loadData());
+                  },
+                  icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 16),
+                  label: const Text(
+                    'MODIFICAR REGISTROS',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  style: DesignTokens.primaryButtonStyle.copyWith(
+                    padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16)),
+                  ),
+                ),
+              ),
           ],
         ),
         const SizedBox(height: 28),
@@ -905,110 +949,116 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         _buildWebStatusBadge(estadoViaje, estadoColor, estadoIcon),
         const SizedBox(height: 20),
 
-        // ── VEHICLE INFO CARD ─────────────────────────────────────────────
-        _buildGlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'VEHÍCULO',
-                style: TextStyle(
-                  fontFamily: 'Work Sans',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                  color: DesignTokens.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: DesignTokens.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
+        // ── VEHICLE & DRIVER INFO ─────────────────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: _buildGlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'VEHÍCULO',
+                      style: TextStyle(
+                        fontFamily: 'Work Sans',
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                        color: DesignTokens.onSurfaceVariant,
+                      ),
                     ),
-                    child: const Icon(Icons.local_shipping_rounded,
-                        size: 20, color: DesignTokens.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 10),
+                    Row(
                       children: [
-                        Text(
-                          _viaje!['vehiculo_codigo'] ?? 'Sin asignar',
-                          style: const TextStyle(
-                            fontFamily: 'Manrope',
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: DesignTokens.primary,
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: DesignTokens.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
                           ),
+                          child: const Icon(Icons.local_shipping_rounded,
+                              size: 20, color: DesignTokens.primary),
                         ),
-                        Text(
-                          _viaje!['vehiculo_patente'] ?? '',
-                          style: const TextStyle(
-                            fontFamily: 'JetBrains Mono',
-                            fontSize: 11,
-                            color: DesignTokens.onSurfaceVariant,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _viaje!['vehiculo_codigo'] ?? 'Sin asignar',
+                                style: const TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  color: DesignTokens.primary,
+                                ),
+                              ),
+                              Text(
+                                _viaje!['vehiculo_patente'] ?? '',
+                                style: const TextStyle(
+                                  fontFamily: 'JetBrains Mono',
+                                  fontSize: 11,
+                                  color: DesignTokens.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // ── DRIVER INFO CARD ──────────────────────────────────────────────
-        _buildGlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'CHOFER',
-                style: TextStyle(
-                  fontFamily: 'Work Sans',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                  color: DesignTokens.onSurfaceVariant,
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: DesignTokens.secondary.withOpacity(0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.person_rounded,
-                        size: 20, color: DesignTokens.secondary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      choferNombre,
-                      style: const TextStyle(
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: DesignTokens.onSurface,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildGlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'CHOFER',
+                      style: TextStyle(
+                        fontFamily: 'Work Sans',
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                        color: DesignTokens.onSurfaceVariant,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: DesignTokens.secondary.withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.person_rounded,
+                              size: 20, color: DesignTokens.secondary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            choferNombre,
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: DesignTokens.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
 
@@ -1188,59 +1238,35 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     required double? distancia,
     required double totalKg,
   }) {
-    final items = [
-      (
-        icon: Icons.flag_rounded,
-        label: 'PARADAS',
-        value: '${paradas.length}',
-        color: DesignTokens.primary,
-      ),
-      if (distancia != null)
-        (
-          icon: Icons.straighten_rounded,
-          label: 'KM',
-          value: distancia.toStringAsFixed(0),
-          color: const Color(0xFF1565C0),
-        ),
-      if (totalKg > 0)
-        (
-          icon: Icons.scale_rounded,
-          label: 'KG NETO',
-          value: totalKg.toStringAsFixed(0),
-          color: DesignTokens.secondary,
-        ),
-    ];
+    // Estimación para progress bar, máximo de 30,000 kg si no está definido
+    final double maxKg = 30000;
+    final double progreso = (totalKg / maxKg).clamp(0.0, 1.0);
 
     return Row(
-      children: items.map((item) {
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: item == items.last ? 0 : 8),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-            decoration: BoxDecoration(
-              color: item.color.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: item.color.withOpacity(0.15)),
-            ),
+      children: [
+        Expanded(
+          flex: 4,
+          child: _buildGlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(item.icon, size: 14, color: item.color.withOpacity(0.7)),
-                const SizedBox(height: 4),
+                Icon(Icons.flag_rounded, size: 24, color: DesignTokens.primary.withOpacity(0.7)),
+                const SizedBox(height: 12),
                 Text(
-                  item.value,
-                  style: TextStyle(
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: 18,
+                  '${paradas.length}',
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: item.color,
+                    color: DesignTokens.primary,
                   ),
                 ),
-                Text(
-                  item.label,
-                  style: const TextStyle(
+                const Text(
+                  'PARADAS',
+                  style: TextStyle(
                     fontFamily: 'Work Sans',
-                    fontSize: 8,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
                     color: DesignTokens.onSurfaceVariant,
@@ -1249,8 +1275,69 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
               ],
             ),
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 8,
+          child: _buildGlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'CARGA NETA',
+                  style: TextStyle(
+                    fontFamily: 'Work Sans',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                    color: DesignTokens.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      totalKg.toStringAsFixed(0),
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: DesignTokens.secondary,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 2),
+                      child: Text(
+                        'kg',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: DesignTokens.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progreso,
+                    backgroundColor: DesignTokens.secondary.withOpacity(0.1),
+                    valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.secondary),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2901,14 +2988,8 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.1), width: 1),
-      ),
+    return _buildGlassCard(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
