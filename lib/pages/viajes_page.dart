@@ -280,7 +280,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
 
   Widget _buildSearchBar() {
     return Container(
-      width: 250,
+      width: 350,
       height: 40,
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withOpacity(0.05))),
       child: TextField(

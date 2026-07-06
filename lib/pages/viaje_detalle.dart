@@ -572,17 +572,20 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Section header
-                        Row(
-                          children: [
-                            const Text(
-                              'ITINERARIO',
-                              style: TextStyle(
-                                fontFamily: 'Work Sans',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.5,
-                                color: DesignTokens.onSurfaceVariant,
-                              ),
+                        SizedBox(
+                          height: 36,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'ITINERARIO',
+                                style: TextStyle(
+                                  fontFamily: 'Work Sans',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.5,
+                                  color: DesignTokens.onSurfaceVariant,
+                                ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -783,7 +786,359 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     );
   }
 
-  Widget _buildWebLeftPanel({
+  
+  Widget _buildWebCardHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontFamily: 'Work Sans',
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.5,
+        color: DesignTokens.primary,
+      ),
+    );
+  }
+
+  Widget _buildWebCardIdViaje(Color estadoColor, IconData estadoIcon, String estadoViaje) {
+    return _buildGlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWebCardHeader('ID DE VIAJE'),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: estadoColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: estadoColor.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(estadoIcon, size: 12, color: estadoColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      estadoViaje.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: 'Work Sans',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                        color: estadoColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            _viaje!['viaje_codigo'] ?? '—',
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: DesignTokens.primary,
+              height: 1.2,
+            ),
+          ),
+          if (_viaje!['fecha_inicio'] != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Iniciado: ${_fmt(_viaje!['fecha_inicio'])}',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                color: DesignTokens.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebCardVehiculo() {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildWebCardHeader('VEHÍCULO'),
+          const Spacer(),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: DesignTokens.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.local_shipping_rounded, size: 20, color: DesignTokens.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _viaje!['vehiculo_codigo'] ?? 'Sin asignar',
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: DesignTokens.primary,
+                      ),
+                    ),
+                    Text(
+                      _viaje!['vehiculo_patente'] ?? '',
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 11,
+                        color: DesignTokens.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebCardChofer(String choferNombre) {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildWebCardHeader('CHOFER'),
+          const Spacer(),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: DesignTokens.secondary.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_rounded, size: 20, color: DesignTokens.secondary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  choferNombre,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: DesignTokens.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebCardFechas() {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildWebCardHeader('FECHAS'),
+          const SizedBox(height: 10),
+          _buildWebDateRowCompact(Icons.calendar_today_outlined, 'Planificado', _fmt(_viaje!['fecha_planificada'] ?? _viaje!['fecha']), Colors.blueAccent),
+          const SizedBox(height: 6),
+          _buildWebDateRowCompact(Icons.play_arrow_rounded, 'Inicio real', _fmt(_viaje!['fecha_inicio']), DesignTokens.success),
+          if (_viaje!['fecha_terminado'] != null) ...[
+            const SizedBox(height: 6),
+            _buildWebDateRowCompact(Icons.check_circle_rounded, 'Terminado', _fmt(_viaje!['fecha_terminado']), DesignTokens.primary),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildWebDateRowCompact(IconData icon, String label, String value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: color.withOpacity(0.7)),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.onSurfaceVariant),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.w700, color: color),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebCardParadas(List<dynamic> paradas) {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildWebCardHeader('PARADAS'),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: DesignTokens.primary.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.flag_rounded, size: 14, color: DesignTokens.primary.withOpacity(0.7)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${paradas.length}',
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: DesignTokens.primary,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: 1.0, // Replace with actual progress if needed
+              backgroundColor: DesignTokens.primary.withOpacity(0.1),
+              valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.primary),
+              minHeight: 6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebCardCargaNeta(double totalKg) {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildWebCardHeader('CARGA NETA'),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: DesignTokens.secondary.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.hourglass_bottom_rounded, size: 14, color: DesignTokens.secondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                totalKg.toStringAsFixed(0),
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: DesignTokens.secondary,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Text(
+                  'kg',
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: DesignTokens.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: totalKg > 0 ? 0.7 : 0, // Placeholder ratio
+              backgroundColor: DesignTokens.secondary.withOpacity(0.1),
+              valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.secondary),
+              minHeight: 6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebCardCargas(List<dynamic> cargas, ThemeData theme) {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildWebCardHeader('CARGAS ASOCIADAS'),
+          const SizedBox(height: 16),
+          if (cargas.isEmpty)
+            Expanded(
+              child: Center(
+                child: Text('No hay cargas registradas', style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant.withOpacity(0.6))),
+              ),
+            )
+          else
+            ...cargas.map((c) => _buildCargaItem(c, theme)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebCardGastos(List<dynamic> gastos, ThemeData theme) {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildWebCardHeader('GASTOS DE VIAJE'),
+          const SizedBox(height: 16),
+          if (gastos.isEmpty)
+            Expanded(
+              child: Center(
+                child: Text('No hay gastos registrados', style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant.withOpacity(0.6))),
+              ),
+            )
+          else
+            ...gastos.map((g) => _buildGastoItem(g, theme)).toList(),
+        ],
+      ),
+    );
+  }
+
+Widget _buildWebLeftPanel({
     required FlutterFlowTheme theme,
     required String choferNombre,
     required String estadoViaje,
@@ -909,265 +1264,50 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
         ),
         const SizedBox(height: 32),
 
-        // ── ID & STATUS CARD (Stitch Bento) ─────────────────────────────────
-        _buildGlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'ID DE VIAJE',
-                      style: TextStyle(
-                        fontFamily: 'Work Sans',
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                        color: DesignTokens.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _viaje!['viaje_codigo'] ?? '—',
-                      style: const TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: DesignTokens.primary,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: estadoColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: estadoColor.withOpacity(0.2)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(estadoIcon, size: 14, color: estadoColor),
-                        const SizedBox(width: 6),
-                        Text(
-                          estadoViaje.toUpperCase(),
-                          style: TextStyle(
-                            fontFamily: 'Work Sans',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
-                            color: estadoColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_viaje!['fecha_inicio'] != null)
-                    Text(
-                      'Iniciado: ${_fmt(_viaje!['fecha_inicio'])}',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        color: DesignTokens.onSurfaceVariant,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // ── VEHICLE & DRIVER INFO ─────────────────────────────────────────
+        // ── 3x2 BENTO GRID ─────────────────────────────────────────────────
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _buildGlassCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'VEHÍCULO',
-                        style: TextStyle(
-                          fontFamily: 'Work Sans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                          color: DesignTokens.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: DesignTokens.primary.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.local_shipping_rounded,
-                                size: 20, color: DesignTokens.primary),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _viaje!['vehiculo_codigo'] ?? 'Sin asignar',
-                                  style: const TextStyle(
-                                    fontFamily: 'Manrope',
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16,
-                                    color: DesignTokens.primary,
-                                  ),
-                                ),
-                                Text(
-                                  _viaje!['vehiculo_patente'] ?? '',
-                                  style: const TextStyle(
-                                    fontFamily: 'JetBrains Mono',
-                                    fontSize: 11,
-                                    color: DesignTokens.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              Expanded(child: _buildWebCardIdViaje(estadoColor, estadoIcon, estadoViaje)),
               const SizedBox(width: 16),
-              Expanded(
-                child: _buildGlassCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'CHOFER',
-                        style: TextStyle(
-                          fontFamily: 'Work Sans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                          color: DesignTokens.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: DesignTokens.secondary.withOpacity(0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.person_rounded,
-                                size: 20, color: DesignTokens.secondary),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              choferNombre,
-                              style: const TextStyle(
-                                fontFamily: 'Manrope',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                                color: DesignTokens.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              Expanded(child: _buildWebCardVehiculo()),
+              const SizedBox(width: 16),
+              Expanded(child: _buildWebCardChofer(choferNombre)),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-
-        // ── DATES CARD ────────────────────────────────────────────────────
-        _buildGlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 16),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'FECHAS',
-                style: TextStyle(
-                  fontFamily: 'Work Sans',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                  color: DesignTokens.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 10),
-              _buildWebDateRow(
-                  Icons.calendar_today_outlined,
-                  'Planificado',
-                  _fmt(_viaje!['fecha_planificada'] ?? _viaje!['fecha']),
-                  Colors.blueAccent),
-              const SizedBox(height: 6),
-              _buildWebDateRow(
-                  Icons.play_arrow_rounded,
-                  'Inicio real',
-                  _fmt(_viaje!['fecha_inicio']),
-                  DesignTokens.success),
-              if (_viaje!['fecha_terminado'] != null) ...[
-                const SizedBox(height: 6),
-                _buildWebDateRow(
-                    Icons.check_circle_rounded,
-                    'Terminado',
-                    _fmt(_viaje!['fecha_terminado']),
-                    DesignTokens.primary),
-              ],
+              Expanded(child: _buildWebCardFechas()),
+              const SizedBox(width: 16),
+              Expanded(child: _buildWebCardParadas(paradas)),
+              const SizedBox(width: 16),
+              Expanded(child: _buildWebCardCargaNeta(totalKg)),
             ],
           ),
         ),
-        const SizedBox(height: 20),
-
-        // ── STATS ROW ─────────────────────────────────────────────────────
-        _buildWebStatRow(paradas: paradas, distancia: distancia, totalKg: totalKg),
         const SizedBox(height: 20),
 
         // ── ODOMETER COMPACT ──────────────────────────────────────────────
         _buildOdometerSection(theme, esPendiente, esEnCurso),
         const SizedBox(height: 20),
 
-        // ── CARGAS SECTION ────────────────────────────────────────────────
-        if (cargas.isNotEmpty) ...[
-          const Text(
-            'CARGAS ASOCIADAS',
-            style: TextStyle(
-              fontFamily: 'Work Sans',
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.5,
-              color: DesignTokens.onSurfaceVariant,
-            ),
+        // ── CARGAS & GASTOS (2 Columns) ───────────────────────────────────
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _buildWebCardCargas(cargas, theme)),
+              const SizedBox(width: 16),
+              Expanded(child: _buildWebCardGastos(gastos, theme)),
+            ],
           ),
-          const SizedBox(height: 10),
-          ...cargas.map((c) => _buildCargaItem(c, theme)).toList(),
-          const SizedBox(height: 20),
-        ],
+        ),
+        const SizedBox(height: 20),
 
         // ── ADD ROUTE BUTTON ──────────────────────────────────────────────
         if (_canEditRoute && esPendiente && !tieneRuta) ...[
