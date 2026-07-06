@@ -43,7 +43,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
       padding: padding ?? const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
@@ -533,7 +533,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                 border: Border(right: BorderSide(color: Color(0xFFEEECEB), width: 1)),
               ),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                padding: const EdgeInsets.fromLTRB(40, 40, 20, 40),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 900),
@@ -567,7 +567,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
               child: Column(
                 children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 40, 40, 40),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -778,6 +778,8 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
           ),
         ],
       ),
+      ],
+      ),
     );
   }
 
@@ -842,7 +844,18 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
               ),
             ),
             const SizedBox(width: 14),
-            const Spacer(),
+            const Expanded(
+              child: Text(
+                'Detalle de Viaje',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 24,
+                  color: DesignTokens.primary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
             // Admin delete
             if (_isAdmin)
               GestureDetector(
