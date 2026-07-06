@@ -1,6 +1,6 @@
 import os
 
-build_dir = r"build\web"
+build_dir = os.path.join("build", "web")
 urls_to_cache = ['/']
 
 for root, dirs, files in os.walk(build_dir):
