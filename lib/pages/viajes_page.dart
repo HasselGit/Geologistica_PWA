@@ -316,29 +316,25 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
   Widget _buildKanbanColumn(String title, String estado) {
     final filtered = _viajesPorEstado(estado);
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.only(left: 4, right: 4, top: 12, bottom: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 13, color: DesignTokens.primary, letterSpacing: 1.5)),
+                Text(title, style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
-                  child: Text('${filtered.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: DesignTokens.primary)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white, border: Border.all(color: const Color(0xFFE2E8F0)), borderRadius: BorderRadius.circular(12)),
+                  child: Text('${filtered.length}', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant)),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: Colors.black12),
           Expanded(
             child: filtered.isEmpty
                 ? Center(
@@ -455,81 +451,83 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
     final cantidadStr = _getCantidad(v);
     final vehiculo = v['vehiculo_codigo']?.toString() ?? 'N/A';
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.push('/viajedetalle?viajeId=$id').then((_) => _fetchViajes()),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 320,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.05)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/viajedetalle?viajeId=$id').then((_) => _fetchViajes()),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              codigo,
+                              style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 16, color: DesignTokens.onSurface, letterSpacing: -0.5),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(fechaStr, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600, fontSize: 12, color: DesignTokens.onSurfaceVariant)),
+                          ],
+                        ),
+                      ),
+                      _buildStatusBadge(estado),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            codigo,
-                            style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary, letterSpacing: -0.5),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(fechaStr, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: Colors.black45)),
+                          const Icon(Icons.person_rounded, size: 16, color: DesignTokens.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(choferStr, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600, fontSize: 13, color: DesignTokens.onSurface), overflow: TextOverflow.ellipsis)),
                         ],
                       ),
-                    ),
-                    _buildStatusBadge(estado),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: Colors.black12),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.person_rounded, size: 16, color: Colors.black38),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(choferStr, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87), overflow: TextOverflow.ellipsis)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(Icons.local_shipping_rounded, size: 16, color: Colors.black38),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(vehiculo, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87), overflow: TextOverflow.ellipsis)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(color: const Color(0xFFF9F9F9), borderRadius: BorderRadius.circular(8)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          const Text('PRODUCTO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 10, color: Colors.black45, letterSpacing: 0.5)),
-                          Text(cantidadStr, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 12, color: DesignTokens.primary)),
+                          const Icon(Icons.local_shipping_rounded, size: 16, color: DesignTokens.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(vehiculo, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600, fontSize: 13, color: DesignTokens.onSurface), overflow: TextOverflow.ellipsis)),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(color: DesignTokens.surfaceLow, borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFE2E8F0))),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('CARGA NETA', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, color: DesignTokens.onSurfaceVariant, letterSpacing: 0.5)),
+                            Text(cantidadStr, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13, color: DesignTokens.primary)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -537,15 +535,15 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
   }
 
   Widget _buildStatusBadge(String estado) {
-    Color bg = Colors.grey.withOpacity(0.1);
-    Color fg = Colors.grey;
-    if (estado == AppStates.pendiente) { bg = Colors.orange.withOpacity(0.1); fg = Colors.orange; }
+    Color bg = DesignTokens.surfaceLow;
+    Color fg = DesignTokens.onSurfaceVariant;
+    if (estado == AppStates.pendiente) { bg = const Color(0xFFFFF7ED); fg = const Color(0xFFC2410C); }
     else if (estado == AppStates.enCurso) { bg = DesignTokens.secondary.withOpacity(0.15); fg = DesignTokens.primary; }
-    else if (estado == AppStates.terminado) { bg = Colors.green.withOpacity(0.1); fg = Colors.green; }
+    else if (estado == AppStates.terminado) { bg = const Color(0xFFF0FDF4); fg = const Color(0xFF15803D); }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
       child: Text(estado.toUpperCase(), style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, color: fg, letterSpacing: 1)),
     );
   }
