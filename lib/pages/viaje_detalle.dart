@@ -551,6 +551,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                       puedeIniciar: puedeIniciar,
                       paradas: paradas,
                       cargas: cargas,
+                      gastos: gastos,
                       distancia: distancia,
                       totalKg: totalKg,
                     ),
@@ -614,8 +615,9 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                     ),
                   ),
 
@@ -787,6 +789,17 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
   }
 
   
+
+  String _fmt(dynamic d) {
+    if (d == null || d.toString().trim().isEmpty) return '—';
+    try {
+      final DateTime dt = DateTime.parse(d).toLocal();
+      return DateFormat('dd/MM HH:mm').format(dt);
+    } catch (_) {
+      return d.toString();
+    }
+  }
+
   Widget _buildWebCardHeader(String title) {
     return Text(
       title,
@@ -1098,7 +1111,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     );
   }
 
-  Widget _buildWebCardCargas(List<dynamic> cargas, ThemeData theme) {
+  Widget _buildWebCardCargas(List<dynamic> cargas, FlutterFlowTheme theme) {
     return _buildGlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1118,7 +1131,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
     );
   }
 
-  Widget _buildWebCardGastos(List<dynamic> gastos, ThemeData theme) {
+  Widget _buildWebCardGastos(List<dynamic> gastos, FlutterFlowTheme theme) {
     return _buildGlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1152,6 +1165,7 @@ Widget _buildWebLeftPanel({
     required bool puedeIniciar,
     required List<Map<String, dynamic>> paradas,
     required List<Map<String, dynamic>> cargas,
+    required List<Map<String, dynamic>> gastos,
     required double? distancia,
     required double totalKg,
   }) {
