@@ -986,14 +986,9 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       );
     }
     
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: _buildMosaicoBento(context, isDesktop),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
+      child: _buildMosaicoBento(context, isDesktop),
     );
   }
 
@@ -1311,9 +1306,11 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 children: [
                   if (isDesktop) GeoSidebar(userRole: _userRole ?? 'Operador', userEmail: _userEmail ?? '', displayName: _displayName),
                   Expanded(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                        constraints: const BoxConstraints(maxWidth: 1400),
                         child: _buildMainContent(context, isDesktop),
                       ),
                     ),

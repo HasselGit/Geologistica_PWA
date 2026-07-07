@@ -525,106 +525,108 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                   displayName: _displayName),
 
           Expanded(
-            flex: 8,
-            child: Container(
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.transparent,
-                border: Border(right: BorderSide(color: Color(0xFFEEECEB), width: 1)),
-              ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(40, 40, 20, 40),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 900),
-                    child: _buildWebLeftPanel(
-                      theme: theme,
-                      choferNombre: choferNombre,
-                      estadoViaje: estadoViaje,
-                      estadoColor: estadoColor,
-                      estadoIcon: estadoIcon,
-                      esPendiente: esPendiente,
-                      esEnCurso: esEnCurso,
-                      tieneRuta: tieneRuta,
-                      todasTerminadas: todasTerminadas,
-                      tieneCargaPendiente: tieneCargaPendiente,
-                      puedeIniciar: puedeIniciar,
-                      paradas: paradas,
-                      cargas: cargas,
-                      gastos: gastos,
-                      distancia: distancia,
-                      totalKg: totalKg,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ── RIGHT COLUMN ─────────────────────────────────────────────────
-          Expanded(
-            flex: 4,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 40, 40, 40),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Section header
-                        SizedBox(
-                          height: 36,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'ITINERARIO',
-                                style: TextStyle(
-                                  fontFamily: 'Work Sans',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.5,
-                                  color: DesignTokens.onSurfaceVariant,
-                                ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: DesignTokens.outline,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: DesignTokens.primary.withOpacity(0.07),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${allParadas.length} PARADAS',
-                                style: const TextStyle(
-                                  fontFamily: 'Work Sans',
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1,
-                                  color: DesignTokens.primary,
-                                ),
-                              ),
-                            ),
-                          ],
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                constraints: const BoxConstraints(maxWidth: 1400),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 8,
+                      child: Container(
+                        height: double.infinity,
+                        decoration: const BoxDecoration(
+                          border: Border(right: BorderSide(color: Color(0xFFEEECEB), width: 1)),
+                        ),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(top: 40, bottom: 40, right: 20),
+                          child: _buildWebLeftPanel(
+                            theme: theme,
+                            choferNombre: choferNombre,
+                            estadoViaje: estadoViaje,
+                            estadoColor: estadoColor,
+                            estadoIcon: estadoIcon,
+                            esPendiente: esPendiente,
+                            esEnCurso: esEnCurso,
+                            tieneRuta: tieneRuta,
+                            todasTerminadas: todasTerminadas,
+                            tieneCargaPendiente: tieneCargaPendiente,
+                            puedeIniciar: puedeIniciar,
+                            paradas: paradas,
+                            cargas: cargas,
+                            gastos: gastos,
+                            distancia: distancia,
+                            totalKg: totalKg,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                    ],
                     ),
-                  ),
+                    // ── RIGHT COLUMN ─────────────────────────────────────────────────
+                    Expanded(
+                      flex: 4,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20, top: 40, bottom: 40),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Section header
+                                  SizedBox(
+                                    height: 36,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'ITINERARIO',
+                                          style: TextStyle(
+                                            fontFamily: 'Work Sans',
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1.5,
+                                            color: DesignTokens.onSurfaceVariant,
+                                          ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Container(
+                                          height: 1,
+                                          color: DesignTokens.outline,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: DesignTokens.primary.withOpacity(0.07),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          '${allParadas.length} PARADAS',
+                                          style: const TextStyle(
+                                            fontFamily: 'Work Sans',
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1,
+                                            color: DesignTokens.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                              ),
+                            ),
 
-                // Timeline
-                if (allParadas.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                          // Timeline
+                          if (allParadas.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 32, bottom: 32),
                       child: Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
@@ -778,14 +780,19 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                       ),
                   ),
               ],
-            ),
-            ),
-          ),
-        ],
-      ),
-      ],
-      ),
-    );
+            ), // End of Column
+            ), // End of SingleChildScrollView
+          ), // End of inner Expanded(flex: 4)
+          ], // End of inner Row children
+          ), // End of inner Row
+          ), // End of Container
+          ), // End of Align
+          ), // End of outer Expanded
+        ], // End of outer Row children
+      ), // End of outer Row
+      ], // End of Stack children
+      ), // End of Stack
+    ); // End of Scaffold
   }
 
   

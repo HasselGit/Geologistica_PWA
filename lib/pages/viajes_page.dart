@@ -147,15 +147,22 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                   children: [
                     GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
                     Expanded(
-                      child: Column(
-                        children: [
-                          _buildHeader(isDesktop),
-                          Expanded(
-                            child: _loading
-                                ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                                : _buildKanbanView(),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                          constraints: const BoxConstraints(maxWidth: 1400),
+                          child: Column(
+                            children: [
+                              _buildHeader(isDesktop),
+                              Expanded(
+                                child: _loading
+                                    ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                                    : _buildKanbanView(),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
@@ -199,7 +206,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(isDesktop ? 40 : 16, isDesktop ? 40 : 16, isDesktop ? 40 : 16, 16),
+            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 16, isDesktop ? 0 : 16, 16),
             child: Row(
               children: [
                 if (!isDesktop) ...[
@@ -299,7 +306,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
 
   Widget _buildKanbanView() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(40, 0, 40, 40),
+      padding: const EdgeInsets.only(bottom: 40),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

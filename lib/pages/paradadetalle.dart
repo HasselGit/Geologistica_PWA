@@ -245,35 +245,42 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                     displayName: _userEmail ?? '',
                   ),
                   Expanded(
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                                onPressed: () {
-                                  if (context.canPop()) {
-                                    context.pop();
-                                  } else {
-                                    context.go('/home');
-                                  }
-                                },
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                        constraints: const BoxConstraints(maxWidth: 1400),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.only(top: 24, bottom: 24, left: 16),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                                    onPressed: () {
+                                      if (context.canPop()) {
+                                        context.pop();
+                                      } else {
+                                        context.go('/home');
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Text('Operación en Parada', style: DesignTokens.headlineStyle().copyWith(fontSize: 24)),
+                                  const Spacer(),
+                                  if (!isReadOnly)
+                                    IconButton(
+                                      icon: Icon(_isEditingQuantities ? Icons.check_circle_rounded : Icons.edit_note_rounded, color: DesignTokens.primary),
+                                      onPressed: () => setState(() => _isEditingQuantities = !_isEditingQuantities),
+                                    ),
+                                ],
                               ),
-                              const SizedBox(width: 16),
-                              Text('Operación en Parada', style: DesignTokens.headlineStyle().copyWith(fontSize: 24)),
-                              const Spacer(),
-                              if (!isReadOnly)
-                                IconButton(
-                                  icon: Icon(_isEditingQuantities ? Icons.check_circle_rounded : Icons.edit_note_rounded, color: DesignTokens.primary),
-                                  onPressed: () => setState(() => _isEditingQuantities = !_isEditingQuantities),
-                                ),
-                            ],
-                          ),
+                            ),
+                            Expanded(child: content),
+                          ],
                         ),
-                        Expanded(child: content),
-                      ],
+                      ),
                     ),
                   ),
                 ],
@@ -328,7 +335,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
 
   Widget _buildWebView(Map<String, dynamic> p, bool isReadOnly, bool canFinalizarParada, bool isParadaTerminada, bool isViajePendiente) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.only(bottom: 24.0),
       child: Column(
         children: [
           if (isViajePendiente)
