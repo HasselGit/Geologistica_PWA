@@ -144,9 +144,10 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
                 children: [
                   GeoSidebar(userRole: _userRole, userEmail: _userEmail, displayName: _displayName),
                   Expanded(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
                         child: ClipRRect(child: scaffold),
                       ),
                     ),

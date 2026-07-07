@@ -529,7 +529,6 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
               alignment: Alignment.topLeft,
               child: Container(
                 padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                constraints: const BoxConstraints(maxWidth: 1400),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

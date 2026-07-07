@@ -210,13 +210,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
             if (p == null) return const Center(child: Padding(padding: EdgeInsets.all(40), child: Text('No se encontró la parada')));
 
             if (isDesktop) {
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1200),
-                  child: SingleChildScrollView(
-                    child: _buildWebView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente),
-                  ),
-                ),
+              return SingleChildScrollView(
+                child: _buildWebView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente),
               );
             } else {
               return _buildMobileView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente);
@@ -249,7 +244,6 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                       alignment: Alignment.topLeft,
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                        constraints: const BoxConstraints(maxWidth: 1400),
                         child: Column(
                           children: [
                             Container(

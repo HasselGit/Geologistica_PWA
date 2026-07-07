@@ -1181,25 +1181,34 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                   Text('MÓDULOS DE OPERACIÓN', style: TextStyle(fontFamily: 'Work Sans', fontSize: 14, fontWeight: FontWeight.w800, color: DesignTokens.primary.withOpacity(0.5), letterSpacing: 2)),
                   const SizedBox(height: 16),
                   // Mosaico Asimétrico Real (Estructura de Bloques 70/30)
-                  isDesktop ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: leftModules,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: rightModules,
-                        ),
-                      ),
-                    ],
+                  isDesktop ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      int crossAxisCount = constraints.maxWidth > 1200 ? 3 : (constraints.maxWidth > 800 ? 2 : 2);
+                      
+                      // Filter out SizedBox from existing logic
+                      List<Widget> combined = [...leftModules, ...rightModules].where((w) => w is! SizedBox).toList();
+                      
+                      List<List<Widget>> columns = List.generate(crossAxisCount, (_) => []);
+                      for (int i = 0; i < combined.length; i++) {
+                        columns[i % crossAxisCount].add(combined[i]);
+                        columns[i % crossAxisCount].add(const SizedBox(height: 16));
+                      }
+                      
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: List.generate(crossAxisCount, (i) {
+                          return Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(right: i < crossAxisCount - 1 ? 16.0 : 0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: columns[i],
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    },
                   ) : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [...leftModules, if (rightModules.isNotEmpty) const SizedBox(height: 16), ...rightModules],
@@ -1310,7 +1319,6 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                       alignment: Alignment.topLeft,
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                        constraints: const BoxConstraints(maxWidth: 1400),
                         child: _buildMainContent(context, isDesktop),
                       ),
                     ),

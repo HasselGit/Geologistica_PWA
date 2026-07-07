@@ -147,6 +147,17 @@ class MyApp extends StatelessWidget {
         Locale('en', 'US'),
       ],
       locale: const Locale('es', 'AR'),
+      theme: ThemeData(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: <TargetPlatform, PageTransitionsBuilder>{
+            TargetPlatform.android: FadePageTransitionsBuilder(),
+            TargetPlatform.iOS: FadePageTransitionsBuilder(),
+            TargetPlatform.windows: FadePageTransitionsBuilder(),
+            TargetPlatform.macOS: FadePageTransitionsBuilder(),
+            TargetPlatform.linux: FadePageTransitionsBuilder(),
+          },
+        ),
+      ),
     );
   }
 }
@@ -376,3 +387,5 @@ final GoRouter _router = GoRouter(
     ),
   ],
 );
+c l a s s   F a d e P a g e T r a n s i t i o n s B u i l d e r   e x t e n d s   P a g e T r a n s i t i o n s B u i l d e r   {   c o n s t   F a d e P a g e T r a n s i t i o n s B u i l d e r ( ) ;   @ o v e r r i d e   W i d g e t   b u i l d T r a n s i t i o n s < T > ( P a g e R o u t e < T >   r o u t e ,   B u i l d C o n t e x t   c o n t e x t ,   A n i m a t i o n < d o u b l e >   a n i m a t i o n ,   A n i m a t i o n < d o u b l e >   s e c o n d a r y A n i m a t i o n ,   W i d g e t   c h i l d )   {   r e t u r n   F a d e T r a n s i t i o n ( o p a c i t y :   a n i m a t i o n ,   c h i l d :   c h i l d ) ;   }   }  
+ 

@@ -151,7 +151,6 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                         alignment: Alignment.topLeft,
                         child: Container(
                           padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                          constraints: const BoxConstraints(maxWidth: 1400),
                           child: Column(
                             children: [
                               _buildHeader(isDesktop),
