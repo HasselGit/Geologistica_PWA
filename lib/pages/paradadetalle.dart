@@ -12,6 +12,7 @@ import '../backend/app_states.dart';
 import '../backend/supabase_service.dart';
 import 'remito_registro.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/geo_sidebar.dart';
 
 class ParadaDetalleWidget extends StatefulWidget {
   const ParadaDetalleWidget({super.key, required this.paradaId});
@@ -192,44 +193,10 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
     // canFinalizarParada: el chofer puede finalizar la parada si el viaje está activo y la parada no está terminada
     final bool canFinalizarParada = _isChofer && !isViajePendiente && !isViajeTerminado && !isParadaTerminada;
 
-    return Scaffold(
-      backgroundColor: DesignTokens.surface,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          'Operación en Parada',
-          style: DesignTokens.headlineStyle().copyWith(fontSize: 17),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/home');
-            }
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_rounded, color: DesignTokens.primary),
-            onPressed: () => context.go('/home'),
-          ),
-          if (!isReadOnly)
-            IconButton(
-              icon: Icon(_isEditingQuantities ? Icons.check_circle_rounded : Icons.edit_note_rounded, color: DesignTokens.primary),
-              onPressed: () => setState(() => _isEditingQuantities = !_isEditingQuantities),
-            ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08)),
-        ),
-      ),
-      body: SafeArea(
+    return LayoutBuilder(builder: (context, constraints) {
+      final isDesktop = constraints.maxWidth >= 900;
+
+      Widget content = SafeArea(
         child: FutureBuilder<Map<String, dynamic>?>(
           future: _paradaFuture,
           builder: (context, snapshot) {
@@ -242,26 +209,121 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
             final p = snapshot.data;
             if (p == null) return const Center(child: Padding(padding: EdgeInsets.all(40), child: Text('No se encontró la parada')));
 
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth >= 900) {
-                  return Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                      child: SingleChildScrollView(
-                        child: _buildWebView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente),
-                      ),
-                    ),
-                  );
-                } else {
-                  return _buildMobileView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente);
-                }
-              },
-            );
+            if (isDesktop) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  child: SingleChildScrollView(
+                    child: _buildWebView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente),
+                  ),
+                ),
+              );
+            } else {
+              return _buildMobileView(p, isReadOnly, canFinalizarParada, isParadaTerminada, isViajePendiente);
+            }
           },
         ),
-      ),
-    );
+      );
+
+      if (isDesktop) {
+        return Scaffold(
+          backgroundColor: DesignTokens.surfaceLow,
+          body: Stack(
+            children: [
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: HoneycombPainter(),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  GeoSidebar(
+                    userRole: _userRole ?? '',
+                    userEmail: _userEmail ?? '',
+                    displayName: _userEmail ?? '',
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                                onPressed: () {
+                                  if (context.canPop()) {
+                                    context.pop();
+                                  } else {
+                                    context.go('/home');
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 16),
+                              Text('Operación en Parada', style: DesignTokens.headlineStyle().copyWith(fontSize: 24)),
+                              const Spacer(),
+                              if (!isReadOnly)
+                                IconButton(
+                                  icon: Icon(_isEditingQuantities ? Icons.check_circle_rounded : Icons.edit_note_rounded, color: DesignTokens.primary),
+                                  onPressed: () => setState(() => _isEditingQuantities = !_isEditingQuantities),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Expanded(child: content),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Mobile fallback
+      return Scaffold(
+        backgroundColor: DesignTokens.surface,
+        appBar: AppBar(
+          backgroundColor: DesignTokens.surface,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          title: Text(
+            'Operación en Parada',
+            style: DesignTokens.headlineStyle().copyWith(fontSize: 17),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/home');
+              }
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.home_rounded, color: DesignTokens.primary),
+              onPressed: () => context.go('/home'),
+            ),
+            if (!isReadOnly)
+              IconButton(
+                icon: Icon(_isEditingQuantities ? Icons.check_circle_rounded : Icons.edit_note_rounded, color: DesignTokens.primary),
+                onPressed: () => setState(() => _isEditingQuantities = !_isEditingQuantities),
+              ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08)),
+          ),
+        ),
+        body: content,
+      );
+    });
   }
 
   Widget _buildWebView(Map<String, dynamic> p, bool isReadOnly, bool canFinalizarParada, bool isParadaTerminada, bool isViajePendiente) {
@@ -274,18 +336,18 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: const Color(0xFFFFFBEB),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFFFDE68A)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
+                  const Icon(Icons.info_outline_rounded, color: const Color(0xFFD97706), size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Consulta únicamente. El viaje aún no ha comenzado.',
-                      style: TextStyle(color: Colors.orange[900], fontWeight: FontWeight.bold, fontSize: 12),
+                      style: TextStyle(color: const Color(0xFF92400E), fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
                 ],
@@ -311,16 +373,13 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('FICHA DEL APICULTOR', style: DesignTokens.labelStyle()),
+          Text('FICHA DEL APICULTOR', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -335,7 +394,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(p['persona_nombre'] ?? p['ubicacion'] ?? 'Sin Nombre', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
-                    if (p['persona_dni'] != null) Text('DNI: ${p['persona_dni']}', style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
+                    if (p['persona_dni'] != null) Text('DNI: ${p['persona_dni']}', style: const TextStyle(fontFamily: 'Manrope', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -366,7 +425,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: const TextStyle(fontSize: 11, color: DesignTokens.onSurfaceVariant, fontFamily: 'Work Sans')),
-              Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: DesignTokens.onSurface)),
+              Text(value, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600, fontSize: 14, color: DesignTokens.onSurface)),
             ],
           ),
         ),
@@ -388,16 +447,13 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ITINERARIO DE PARADA', style: DesignTokens.labelStyle()),
+          Text('ITINERARIO DE PARADA', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
           const SizedBox(height: 24),
           _buildTimelineNode(
             'Resumen de Productos',
@@ -469,21 +525,33 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: DesignTokens.primary,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F3622), Color(0xFF1A6B43)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              const Text('KILOS ACUMULADOS', style: TextStyle(fontFamily: 'Work Sans', color: DesignTokens.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
-              const SizedBox(height: 8),
-              Text(
-                '${kilosAcumulados.toStringAsFixed(1)} kg',
-                style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800),
+              Positioned(
+                right: -20,
+                top: -20,
+                child: Icon(Icons.scale_rounded, size: 100, color: Colors.white.withOpacity(0.05)),
               ),
-              const SizedBox(height: 4),
-              Text('En $tamboresCount tambores', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('KILOS ACUMULADOS', style: TextStyle(fontFamily: 'Work Sans', color: DesignTokens.secondary, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${kilosAcumulados.toStringAsFixed(1)} kg',
+                    style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('En $tamboresCount tambores', style: TextStyle(fontFamily: 'Manrope', color: Colors.white.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w500)),
+                ],
+              ),
             ],
           ),
         ),
@@ -493,14 +561,13 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: DesignTokens.primary.withOpacity(0.08)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ACCIONES', style: DesignTokens.labelStyle()),
+              Text('ACCIONES', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
               const SizedBox(height: 16),
               if (!isReadOnly || canFinalizarParada) ...[
                 if (!isParadaTerminada)
@@ -593,18 +660,18 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: const Color(0xFFFFFBEB),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 20),
+                    const Icon(Icons.info_outline_rounded, color: const Color(0xFFD97706), size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Consulta únicamente. El viaje aún no ha comenzado.',
-                        style: TextStyle(color: Colors.orange[900], fontWeight: FontWeight.bold, fontSize: 12),
+                        style: TextStyle(color: const Color(0xFF92400E), fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ),
                   ],
@@ -656,13 +723,13 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isLoteSinPesar ? 'REGISTRO DE TAMBORES (TCM) — OPCIONAL' : 'PESAJE DE TAMBORES (TCM) — OPCIONAL', style: DesignTokens.labelStyle()),
+            Text(isLoteSinPesar ? 'REGISTRO DE TAMBORES (TCM) — OPCIONAL' : 'PESAJE DE TAMBORES (TCM) — OPCIONAL', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: DesignTokens.secondary.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: DesignTokens.secondary.withOpacity(0.15)),
               ),
               child: Column(
@@ -864,8 +931,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: DesignTokens.primary,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 8))],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -909,7 +975,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('RESUMEN DE PRODUCTOS', style: DesignTokens.labelStyle()),
+            Text('RESUMEN DE PRODUCTOS', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
             if (!isReadOnly)
               TextButton.icon(
                 onPressed: () async {
@@ -968,8 +1034,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         children: [
@@ -998,8 +1064,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [
@@ -1080,7 +1146,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+              icon: const Icon(Icons.delete_outline_rounded, color: DesignTokens.error, size: 20),
               onPressed: () => _deleteItem(item['id']),
             ),
           ] else
@@ -1101,9 +1167,9 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('REMITOS DE ESTA PARADA', style: DesignTokens.labelStyle()),
+            Text('REMITOS DE ESTA PARADA', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
             if (remitos.isNotEmpty)
-              const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+              const Icon(Icons.check_circle_rounded, color: DesignTokens.success, size: 20),
           ],
         ),
         const SizedBox(height: 12),
@@ -1124,7 +1190,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                   // Botón eliminar remito: solo visible para admin
                   if (_isAdmin)
                     IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                      icon: const Icon(Icons.delete_outline_rounded, color: DesignTokens.error, size: 20),
                       tooltip: 'Eliminar remito (Admin)',
                       onPressed: () async {
                         final confirm = await showDialog<bool>(
@@ -1304,7 +1370,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
+                      const Icon(Icons.error_outline_rounded, color: DesignTokens.error, size: 48),
                       const SizedBox(height: 16),
                       Text('Error al cargar vista previa del PDF: ${snapshot.error}', textAlign: TextAlign.center),
                       const SizedBox(height: 24),
@@ -1376,22 +1442,25 @@ class _TimelinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paintLine = Paint()
-      ..color = isCompleted ? DesignTokens.primary : Colors.grey.withOpacity(0.3)
-      ..strokeWidth = 2;
+      ..color = isCompleted ? DesignTokens.primary.withOpacity(0.4) : const Color(0xFFE2E8F0)
+      ..strokeWidth = 1.5;
     
     if (!isLast) {
+      // Draw line from below the circle to the bottom of the widget
       canvas.drawLine(const Offset(12, 24), Offset(12, size.height), paintLine);
     }
 
     final paintDot = Paint()
-      ..color = isCompleted ? DesignTokens.primary : (isActive ? DesignTokens.secondary : Colors.grey.withOpacity(0.3))
-      ..style = PaintingStyle.fill;
+      ..color = isCompleted ? DesignTokens.primary : (isActive ? DesignTokens.secondary : const Color(0xFFE2E8F0))
+      ..style = isCompleted || isActive ? PaintingStyle.fill : PaintingStyle.stroke
+      ..strokeWidth = 2;
       
-    canvas.drawCircle(const Offset(12, 12), 8, paintDot);
+    // Circle size is smaller and hollow if not active/completed
+    canvas.drawCircle(const Offset(12, 12), 6, paintDot);
     
     if (isCompleted) {
       final whitePaint = Paint()..color = Colors.white;
-      canvas.drawCircle(const Offset(12, 12), 3, whitePaint);
+      canvas.drawCircle(const Offset(12, 12), 2, whitePaint);
     }
   }
 
