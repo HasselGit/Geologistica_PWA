@@ -382,10 +382,210 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/perfil',
+      name: 'choferHome',
+      builder: (context, state) => const ChoferHomeWidget(),
+    ),
+    GoRoute(
+      path: '/gerenteHome',
+      name: 'gerenteHome',
+      builder: (context, state) => const GerenteHomeWidget(),
+    ),
+    GoRoute(
+      path: '/comprasHome',
+      name: 'comprasHome',
+      builder: (context, state) => const ComprasHomeWidget(),
+    ),
+    GoRoute(
+      path: '/depositoHome',
+      name: 'depositoHomePage',
+      builder: (context, state) => DepositohomeWidget(
+        initialTab: state.uri.queryParameters['tab'],
+      ),
+    ),
+    GoRoute(
+      path: '/necesidades',
+      name: 'NecesidadesPage',
+      builder: (context, state) => const NecesidadesPageWidget(),
+    ),
+    GoRoute(
+      path: '/planificarViaje',
+      name: 'PlanificarViaje',
+      builder: (context, state) {
+        final editId = state.uri.queryParameters['editId'];
+        return PlanificarViajeWidget(editId: editId);
+      },
+    ),
+    GoRoute(
+      path: '/viajedetalle',
+      name: 'ViajeDetalle',
+      builder: (context, state) {
+        final viajeId = state.uri.queryParameters['viajeId'] ?? '';
+        return ViajeDetalleWidget(viajeId: viajeId);
+      },
+    ),
+    GoRoute(
+      path: '/rutadetalle',
+      name: 'RutaDetalle',
+      builder: (context, state) {
+        final viajeId = state.uri.queryParameters['viajeId'] ?? '';
+        return RutaDetalleWidget(viajeId: viajeId);
+      },
+    ),
+    GoRoute(
+      path: '/paradaDetalle',
+      name: 'paradaDetalle',
+      builder: (context, state) {
+        final paradaId = state.uri.queryParameters['paradaId'] ?? '';
+        return ParadaDetalleWidget(paradaId: paradaId);
+      },
+    ),
+    GoRoute(
+      path: '/pesajes',
+      name: 'Pesajes',
+      builder: (context, state) => const PesajesPageWidget(),
+    ),
+    GoRoute(
+      path: '/pesajesItem',
+      name: 'pesajesItem',
+      builder: (context, state) {
+        final paradaId = state.uri.queryParameters['paradaId'] ?? '';
+        final paradaItemId = state.uri.queryParameters['paradaItemId'];
+        return PesajesItemWidget(paradaId: paradaId, paradaItemId: paradaItemId);
+      },
+    ),
+    GoRoute(
+      path: '/remito',
+      name: 'RemitoPage',
+      builder: (context, state) {
+        final params = state.uri.queryParameters;
+        return RemitoPageWidget(
+          paradaId: params['paradaId'] ?? '',
+          receptorTipo: params['receptorTipo'],
+          receptorNombre: params['receptorNombre'],
+          receptorDni: params['receptorDni'],
+        );
+      },
+    ),
+    GoRoute(
+      path: '/rutas',
+      name: 'rutasPage',
+      builder: (context, state) => const RutasPageWidget(),
+    ),
+    GoRoute(
+      name: ViajesPageWidget.routeName,
+      path: ViajesPageWidget.routePath,
+      builder: (context, state) => ViajesPageWidget(
+        initialEstado: state.uri.queryParameters['estado'],
+      ),
+    ),
+    GoRoute(
+      path: '/recolecciones',
+      name: 'recoleccionesPage',
+      builder: (context, state) => const RecoleccionesPageWidget(),
+    ),
+    GoRoute(
+      path: '/distribuciones',
+      name: 'distribucionesPage',
+      builder: (context, state) => const DistribucionesPageWidget(),
+    ),
+    GoRoute(
+      path: '/vehiculos',
+      name: 'VehiculosPage',
+      builder: (context, state) => const VehiculosPageWidget(),
+    ),
+    GoRoute(
+      path: '/vehiculoDetalle',
+      name: 'VehiculoDetalle',
+      builder: (context, state) {
+        final vehiculoId = state.uri.queryParameters['id'];
+        return VehiculoDetalleWidget(vehiculoId: vehiculoId);
+      },
+    ),
+    GoRoute(
+      path: '/productos',
+      name: 'ProductosPage',
+      builder: (context, state) => const ProductosPageWidget(),
+    ),
+    GoRoute(
+      path: '/apicultores',
+      name: 'ApicultoresPage',
+      builder: (context, state) => const ApicultoresPageWidget(),
+    ),
+    GoRoute(
+      path: '/gastos',
+      name: 'GastosPage',
+      builder: (context, state) => const GastosPageWidget(),
+    ),
+    GoRoute(
+      path: '/remitosLista',
+      name: 'RemitosListaPage',
+      builder: (context, state) => const RemitosListaPageWidget(),
+    ),
+    GoRoute(
+      path: '/agregarPesaje',
+      name: 'AgregarPesaje',
+      builder: (context, state) {
+        // Acepta params por extra (desde context.push) o por queryParameters (URL directa)
+        final extra = state.extra as Map<String, dynamic>?;
+        final params = state.uri.queryParameters;
+        return AgregarPesajeWidget(
+          paradaId: extra?['paradaId']?.toString() ?? params['paradaId'] ?? '',
+          viajeId: extra?['viajeId']?.toString() ?? params['viajeId'],
+          viajeCode: extra?['viajeCode']?.toString() ?? params['viajeCode'] ?? 'V-S/N',
+          apicultorNombre: extra?['apicultorNombre']?.toString() ?? params['apicultorNombre'] ?? 'S/D',
+          localidad: extra?['localidad']?.toString() ?? params['localidad'] ?? 'S/D',
+          apicultorId: extra?['apicultorId']?.toString() ?? params['apicultorId'],
+        );
+      },
+    ),
+    GoRoute(
+      path: '/cargas',
+      name: 'CargasPage',
+      builder: (context, state) => const CargasPageWidget(),
+    ),
+    GoRoute(
+      path: '/cargaDetalle',
+      name: 'CargaDetalle',
+      builder: (context, state) {
+        final id = state.uri.queryParameters['id'];
+        final isNew = state.uri.queryParameters['new'] == 'true';
+        return CargaDetalleWidget(cargaId: id, isNew: isNew);
+      },
+    ),
+    GoRoute(
+      path: '/remito_carga',
+      name: 'RemitoCargaPage',
+      builder: (context, state) {
+        final cargaId = state.uri.queryParameters['cargaId'] ?? '';
+        return RemitoCargaPageWidget(cargaId: cargaId);
+      },
+    ),
+    GoRoute(
+      path: '/reportes',
+      name: 'ReportesPage',
+      builder: (context, state) => const ReportesPage(),
+    ),
+    GoRoute(
+      path: '/trazabilidad',
+      name: 'TrazabilidadPage',
+      builder: (context, state) => const TrazabilidadPage(),
+    ),
+    GoRoute(
+      path: '/configuracion',
+      name: 'ConfiguracionPage',
+      builder: (context, state) => const ConfiguracionPage(),
+    ),
+    GoRoute(
+      path: '/perfil',
       name: 'PerfilUsuarioPage',
       builder: (context, state) => const PerfilUsuarioPage(),
     ),
   ],
 );
-c l a s s   F a d e P a g e T r a n s i t i o n s B u i l d e r   e x t e n d s   P a g e T r a n s i t i o n s B u i l d e r   {   c o n s t   F a d e P a g e T r a n s i t i o n s B u i l d e r ( ) ;   @ o v e r r i d e   W i d g e t   b u i l d T r a n s i t i o n s < T > ( P a g e R o u t e < T >   r o u t e ,   B u i l d C o n t e x t   c o n t e x t ,   A n i m a t i o n < d o u b l e >   a n i m a t i o n ,   A n i m a t i o n < d o u b l e >   s e c o n d a r y A n i m a t i o n ,   W i d g e t   c h i l d )   {   r e t u r n   F a d e T r a n s i t i o n ( o p a c i t y :   a n i m a t i o n ,   c h i l d :   c h i l d ) ;   }   }  
- 
+class FadePageTransitionsBuilder extends PageTransitionsBuilder {
+  const FadePageTransitionsBuilder();
+  @override
+  Widget buildTransitions<T>(PageRoute<T> route, BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
+    return FadeTransition(opacity: animation, child: child);
+  }
+}
