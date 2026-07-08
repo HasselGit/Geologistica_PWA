@@ -98,9 +98,21 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
           backgroundColor: DesignTokens.surface,
           elevation: 0,
           scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-            onPressed: () => context.go('/home'),
+          leading: Center(
+            child: InkWell(
+              onTap: () => context.go('/home'),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+              ),
+            ),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,9 +240,19 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                        onPressed: () => context.go('/home'),
+                      InkWell(
+                        onTap: () => context.go('/home'),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.black.withOpacity(0.05)),
+                          ),
+                          child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Column(

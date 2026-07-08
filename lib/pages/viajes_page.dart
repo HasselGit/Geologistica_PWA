@@ -208,13 +208,21 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
             padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 16, isDesktop ? 0 : 16, 16),
             child: Row(
               children: [
-                if (!isDesktop) ...[
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                    onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+                InkWell(
+                  onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.black.withOpacity(0.05)),
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
                   ),
-                  const SizedBox(width: 8),
-                ],
+                ),
+                const SizedBox(width: 14),
                 const Expanded(
                   child: Text(
                     'Control de Viajes',

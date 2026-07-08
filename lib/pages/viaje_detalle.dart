@@ -2629,9 +2629,8 @@ Widget _buildWebLeftPanel({
           margin: const EdgeInsets.only(bottom: 24),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                onPressed: () async {
+              InkWell(
+                onTap: () async {
                   final prefs = await SharedPreferences.getInstance();
                   final userRole = prefs.getString('user_puesto');
                   if (userRole == 'Gerente') {
@@ -2644,8 +2643,19 @@ Widget _buildWebLeftPanel({
                     }
                   }
                 },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 14),
               const Text('VOLVER', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.primary, letterSpacing: 1.5)),
             ],
           ),

@@ -250,17 +250,27 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                               padding: const EdgeInsets.only(top: 24, bottom: 24, left: 16),
                               child: Row(
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                                    onPressed: () {
+                                  InkWell(
+                                    onTap: () {
                                       if (context.canPop()) {
                                         context.pop();
                                       } else {
                                         context.go('/home');
                                       }
                                     },
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                      ),
+                                      child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                                    ),
                                   ),
-                                  const SizedBox(width: 16),
+                                  const SizedBox(width: 14),
                                   Text('Operación en Parada', style: DesignTokens.headlineStyle().copyWith(fontSize: 24)),
                                   const Spacer(),
                                   if (!isReadOnly)
@@ -296,15 +306,27 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
             'Operación en Parada',
             style: DesignTokens.headlineStyle().copyWith(fontSize: 17),
           ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('/home');
-              }
-            },
+          leading: Center(
+            child: InkWell(
+              onTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/home');
+                }
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+              ),
+            ),
           ),
           actions: [
             IconButton(

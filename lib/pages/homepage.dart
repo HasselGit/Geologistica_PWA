@@ -1063,12 +1063,22 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                     icon: const Icon(Icons.refresh_rounded, color: DesignTokens.primary),
                   ),
                   if (_isManagement || _isAdmin)
-                    IconButton(
-                      onPressed: () {
+                    InkWell(
+                      onTap: () {
                         if (context.canPop()) context.pop();
                         else context.go('/gerenteHome');
                       },
-                      icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black.withOpacity(0.05)),
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                      ),
                     ),
                 ],
               ),
@@ -1085,12 +1095,22 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
               Row(
                 children: [
                   if (_isManagement || _isAdmin)
-                    IconButton(
-                      onPressed: () {
+                    InkWell(
+                      onTap: () {
                         if (context.canPop()) context.pop();
                         else context.go('/gerenteHome');
                       },
-                      icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black.withOpacity(0.05)),
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                      ),
                     ),
                 ],
               ),
