@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -5,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
-import 'dart:typed_data';
 import '../components/agregaritem.dart';
 import '../backend/design_tokens.dart';
 import '../backend/app_states.dart';
@@ -504,15 +504,17 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 16),
-              _buildInfoRow(Icons.location_on_rounded, 'Ubicación', p['ubicacion'] ?? 'S/D'),
-              const SizedBox(height: 12),
-              _buildInfoRow(Icons.map_rounded, 'Localidad', p['localidad'] ?? 'S/D'),
-              const SizedBox(height: 12),
-              _buildInfoRow(Icons.info_outline_rounded, 'Tipo de Parada', p['tipo'] ?? 'S/D'),
-              const SizedBox(height: 12),
-              _buildInfoRow(Icons.flag_rounded, 'Estado', p['estado'] ?? 'Pendiente'),
-              const SizedBox(height: 12),
-              _buildInfoRow(Icons.format_list_numbered_rounded, 'Secuencia', '#${p['orden_secuencia'] ?? '?'}'),
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(width: 140, child: _buildInfoRow(Icons.location_on_rounded, 'Ubicación', p['ubicacion'] ?? 'S/D')),
+                  SizedBox(width: 140, child: _buildInfoRow(Icons.map_rounded, 'Localidad', p['localidad'] ?? 'S/D')),
+                  SizedBox(width: 140, child: _buildInfoRow(Icons.info_outline_rounded, 'Tipo de Parada', p['tipo'] ?? 'S/D')),
+                  SizedBox(width: 140, child: _buildInfoRow(Icons.flag_rounded, 'Estado', p['estado'] ?? 'Pendiente')),
+                  SizedBox(width: 140, child: _buildInfoRow(Icons.format_list_numbered_rounded, 'Secuencia', '#${p['orden_secuencia'] ?? '?'}')),
+                ],
+              ),
               const SizedBox(height: 24),
               if (apicultorData['id'] != null)
                 SizedBox(
@@ -1322,8 +1324,9 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           final apiId = api['id']?.toString() ?? '';
           final apiRemitos = remitos.where((r) {
             final rId = r['apicultor_id']?.toString() ?? '';
-            // Si el remito no tiene apicultor_id, asumimos que es del principal o lo mostramos si solo hay 1 apicultor
-            if (rId.isEmpty && apicultores.length == 1) return true;
+            if (rId.isEmpty) {
+              return apiId == p['apicultor_id']?.toString();
+            }
             return rId == apiId;
           }).toList();
 
@@ -1403,14 +1406,42 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                                 }
                               },
                             ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.print_rounded, size: 18, color: DesignTokens.primary),
+                            tooltip: 'Imprimir PDF',
+                            onPressed: () {
+                              final url = r['pdf_url'];
+                              if (url != null && url.isNotEmpty) {
+                                _printPdf(url);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
+                              }
+                            },
+                          ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.picture_as_pdf_rounded, size: 18, color: Colors.redAccent),
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.picture_as_pdf_rounded, size: 18, color: Colors.redAccent),
+                            tooltip: 'Abrir PDF (Nueva pestaña)',
+                            onPressed: () {
+                              final url = r['pdf_url'];
+                              if (url != null && url.isNotEmpty) {
+                                launchUrl(Uri.parse(url), webOnlyWindowName: '_blank');
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
+                              }
+                            },
+                          ),
                         ],
                       ),
                       onTap: () {
                         final url = r['pdf_url'];
                         if (url != null && url.isNotEmpty) {
-                          _showPdfPreviewDialog(context, url, 'Remito - ${api['nombre']}');
+                          launchUrl(Uri.parse(url), webOnlyWindowName: '_blank');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
                         }
@@ -1532,107 +1563,15 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
     }
   }
 
-  void _showPdfPreviewDialog(BuildContext context, String url, String title) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Scaffold(
-        appBar: AppBar(
-          backgroundColor: DesignTokens.primary,
-          elevation: 0,
-          title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded, color: Colors.white),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.open_in_browser_rounded, color: Colors.white),
-              tooltip: 'Abrir en Navegador',
-              onPressed: () async {
-                try {
-                  final uri = Uri.parse(url);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
-                  }
-                } catch (e) {
-                  print('Error al abrir PDF externo: $e');
-                }
-              },
-            ),
-          ],
-        ),
-        body: FutureBuilder<Uint8List>(
-          future: _downloadPdf(url),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: DesignTokens.secondary));
-            }
-            if (snapshot.hasError || !snapshot.hasData) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline_rounded, color: DesignTokens.error, size: 48),
-                      const SizedBox(height: 16),
-                      Text('Error al cargar vista previa del PDF: ${snapshot.error}', textAlign: TextAlign.center),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.open_in_browser_rounded),
-                        label: const Text('ABRIR EN NAVEGADOR'),
-                        style: ElevatedButton.styleFrom(backgroundColor: DesignTokens.primary),
-                        onPressed: () async {
-                          try {
-                            final uri = Uri.parse(url);
-                            await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
-                          } catch (_) {}
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-            try {
-              return PdfPreview(
-                build: (format) => snapshot.data!,
-                allowPrinting: true,
-                allowSharing: true,
-                canChangePageFormat: false,
-                dynamicLayout: false,
-              );
-            } catch (previewErr) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.picture_as_pdf_rounded, color: DesignTokens.primary, size: 48),
-                      const SizedBox(height: 16),
-                      const Text('El plugin de vista previa no es compatible con este dispositivo.', textAlign: TextAlign.center),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.open_in_browser_rounded),
-                        label: const Text('ABRIR CON VISOR NATIVO'),
-                        style: ElevatedButton.styleFrom(backgroundColor: DesignTokens.primary),
-                        onPressed: () async {
-                          try {
-                            final uri = Uri.parse(url);
-                            await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
-                          } catch (_) {}
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-          },
-        ),
-      ),
-    );
+  Future<void> _printPdf(String url) async {
+    try {
+      final bytes = await _downloadPdf(url);
+      await Printing.layoutPdf(onLayout: (format) async => bytes);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al imprimir: $e'), backgroundColor: Colors.red));
+      }
+    }
   }
 }
 
