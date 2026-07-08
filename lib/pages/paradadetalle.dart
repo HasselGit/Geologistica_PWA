@@ -13,6 +13,7 @@ import '../backend/supabase_service.dart';
 import 'remito_registro.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/geo_sidebar.dart';
+import 'apicultor_detalle.dart';
 
 class ParadaDetalleWidget extends StatefulWidget {
   const ParadaDetalleWidget({super.key, required this.paradaId});
@@ -271,6 +272,20 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                                   ),
                                   const SizedBox(width: 14),
                                   Text('Operación en Parada', style: DesignTokens.headlineStyle().copyWith(fontSize: 24)),
+                                  if (viajeAsociado.isNotEmpty && viajeAsociado['viaje_codigo'] != null) ...[
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: DesignTokens.secondary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        viajeAsociado['viaje_codigo'] ?? '',
+                                        style: const TextStyle(color: DesignTokens.secondary, fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                    ),
+                                  ],
                                   const Spacer(),
                                   if (!isReadOnly)
                                     IconButton(
@@ -430,7 +445,38 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           const SizedBox(height: 12),
           _buildInfoRow(Icons.info_outline_rounded, 'Tipo de Parada', p['tipo'] ?? 'S/D'),
           const SizedBox(height: 12),
+          _buildInfoRow(Icons.flag_rounded, 'Estado', p['estado'] ?? 'Pendiente'),
+          const SizedBox(height: 12),
           _buildInfoRow(Icons.format_list_numbered_rounded, 'Secuencia', '#${p['orden_secuencia'] ?? '?'}'),
+          const SizedBox(height: 24),
+          if (p['apicultor_id'] != null)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.person_rounded, size: 16),
+                label: const Text('Ver Perfil'),
+                onPressed: () {
+                  final apicultorData = {
+                    'apicultor_codigo': p['apicultor_id'], // or 'id': p['apicultor_id'] since it uses either
+                    'id': p['apicultor_id'],
+                    'nombre': p['persona_nombre'] ?? p['ubicacion'] ?? 'Sin Nombre',
+                    'dni': p['persona_dni'],
+                  };
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: apicultorData)),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: DesignTokens.primary.withOpacity(0.05),
+                  foregroundColor: DesignTokens.primary,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -960,13 +1006,40 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: DesignTokens.secondary, borderRadius: BorderRadius.circular(8)),
-                child: Text(
-                  'PARADA #${p['orden_secuencia'] ?? '?' }',
-                  style: const TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.w800, fontSize: 10, letterSpacing: 1),
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: DesignTokens.secondary, borderRadius: BorderRadius.circular(8)),
+                    child: Text(
+                      'PARADA #${p['orden_secuencia'] ?? '?' }',
+                      style: const TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.w800, fontSize: 10, letterSpacing: 1),
+                    ),
+                  ),
+                  Builder(
+                    builder: (context) {
+                      dynamic viajesRaw = p['viajes'];
+                      Map<String, dynamic> viajeAsociado = {};
+                      if (viajesRaw is Map) {
+                        viajeAsociado = Map<String, dynamic>.from(viajesRaw);
+                      } else if (viajesRaw is List && viajesRaw.isNotEmpty) {
+                        viajeAsociado = Map<String, dynamic>.from(viajesRaw.first);
+                      }
+                      if (viajeAsociado.isNotEmpty && viajeAsociado['viaje_codigo'] != null) {
+                        return Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                          child: Text(
+                            viajeAsociado['viaje_codigo'],
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
               ),
               Text(
                 (p['tipo'] ?? 'Operación').toString().toUpperCase(),
@@ -978,10 +1051,41 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           Text(p['ubicacion'] ?? 'Sin Nombre', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 24)),
           const SizedBox(height: 4),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Icon(Icons.location_on_rounded, size: 14, color: DesignTokens.secondary.withOpacity(0.8)),
-              const SizedBox(width: 4),
-              Text(p['localidad'] ?? 'Sin Localidad', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, fontWeight: FontWeight.w500)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on_rounded, size: 14, color: DesignTokens.secondary.withOpacity(0.8)),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        p['localidad'] ?? 'Sin Localidad',
+                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (p['estado'] != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: p['estado'] == 'Completada' ? Colors.green.withOpacity(0.2) : Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: p['estado'] == 'Completada' ? Colors.green.withOpacity(0.5) : Colors.transparent),
+                  ),
+                  child: Text(
+                    p['estado'],
+                    style: TextStyle(
+                      color: p['estado'] == 'Completada' ? Colors.greenAccent : Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
             ],
           ),
         ],
@@ -1027,12 +1131,15 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           ],
         ),
         const SizedBox(height: 12),
-        StreamBuilder<List<Map<String, dynamic>>>(
-          stream: Supabase.instance.client.from('parada_items').stream(primaryKey: ['id']).eq('parada_id', widget.paradaId!).order('id'),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-            final items = snapshot.data!;
+        Builder(
+          builder: (context) {
+            final List<dynamic> rawItems = _resolvedParada?['parada_items'] ?? [];
+            final items = rawItems.whereType<Map<String, dynamic>>().toList();
+            
             if (items.isEmpty) return _buildEmptyItems();
+            
+            // sort by ID like the original stream query
+            items.sort((a, b) => (a['id'] ?? 0).compareTo(b['id'] ?? 0));
             
             return ListView.builder(
               shrinkWrap: true,
