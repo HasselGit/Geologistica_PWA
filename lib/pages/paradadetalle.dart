@@ -404,81 +404,142 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
     );
   }
 
+  List<Map<String, dynamic>> _extractApicultores(Map<String, dynamic> p) {
+    final Map<String, Map<String, dynamic>> apicultoresUnicos = {};
+
+    // 1. Apicultor principal de la parada
+    if (p['apicultor_id'] != null) {
+      final id = p['apicultor_id'].toString();
+      apicultoresUnicos[id] = {
+        'id': id,
+        'nombre': p['persona_nombre'] ?? p['ubicacion'] ?? 'Sin Nombre',
+        'dni': p['persona_dni'],
+        'apicultor_codigo': id,
+      };
+    }
+
+    // 2. Apicultores de los pesajes
+    final pesajes = p['pesajes'] as List? ?? [];
+    for (var pe in pesajes) {
+      if (pe is Map) {
+        final id = pe['apicultor_id']?.toString();
+        if (id != null && id.isNotEmpty) {
+          apicultoresUnicos[id] ??= {
+            'id': id,
+            'nombre': _apicultoresMap[id.trim().toLowerCase()] ?? p['ubicacion'] ?? 'S/D',
+            'dni': null,
+            'apicultor_codigo': id,
+          };
+        }
+      }
+    }
+
+    // 3. Apicultores de los remitos
+    final remitos = p['remitos'] as List? ?? [];
+    for (var r in remitos) {
+      if (r is Map) {
+        final id = r['apicultor_id']?.toString();
+        if (id != null && id.isNotEmpty) {
+          apicultoresUnicos[id] ??= {
+            'id': id,
+            'nombre': _apicultoresMap[id.trim().toLowerCase()] ?? p['ubicacion'] ?? 'S/D',
+            'dni': null,
+            'apicultor_codigo': id,
+          };
+        }
+      }
+    }
+
+    return apicultoresUnicos.values.toList();
+  }
+
   Widget _buildWebLeftColumn(Map<String, dynamic> p) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('FICHA DEL APICULTOR', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-          const SizedBox(height: 16),
-          Row(
+    final apicultores = _extractApicultores(p);
+    
+    // Si no hay apicultores, mostramos una tarjeta vacía con los datos de ubicación
+    if (apicultores.isEmpty) {
+      apicultores.add({
+        'nombre': p['ubicacion'] ?? 'Sin Nombre',
+        'dni': null,
+        'id': null,
+        'apicultor_codigo': null,
+      });
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: apicultores.map((apicultorData) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: DesignTokens.primary.withOpacity(0.1),
-                child: const Icon(Icons.person_rounded, color: DesignTokens.primary),
+              Text('FICHA DEL APICULTOR', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: DesignTokens.primary.withOpacity(0.1),
+                    child: const Icon(Icons.person_rounded, color: DesignTokens.primary),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(apicultorData['nombre'] ?? 'Sin Nombre', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
+                        if (apicultorData['dni'] != null) Text('DNI: ${apicultorData['dni']}', style: const TextStyle(fontFamily: 'Manrope', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(p['persona_nombre'] ?? p['ubicacion'] ?? 'Sin Nombre', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
-                    if (p['persona_dni'] != null) Text('DNI: ${p['persona_dni']}', style: const TextStyle(fontFamily: 'Manrope', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
-                  ],
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.location_on_rounded, 'Ubicación', p['ubicacion'] ?? 'S/D'),
+              const SizedBox(height: 12),
+              _buildInfoRow(Icons.map_rounded, 'Localidad', p['localidad'] ?? 'S/D'),
+              const SizedBox(height: 12),
+              _buildInfoRow(Icons.info_outline_rounded, 'Tipo de Parada', p['tipo'] ?? 'S/D'),
+              const SizedBox(height: 12),
+              _buildInfoRow(Icons.flag_rounded, 'Estado', p['estado'] ?? 'Pendiente'),
+              const SizedBox(height: 12),
+              _buildInfoRow(Icons.format_list_numbered_rounded, 'Secuencia', '#${p['orden_secuencia'] ?? '?'}'),
+              const SizedBox(height: 24),
+              if (apicultorData['id'] != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.person_rounded, size: 16),
+                    label: const Text('Ver Perfil'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: apicultorData)),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DesignTokens.primary.withOpacity(0.05),
+                      foregroundColor: DesignTokens.primary,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.location_on_rounded, 'Ubicación', p['ubicacion'] ?? 'S/D'),
-          const SizedBox(height: 12),
-          _buildInfoRow(Icons.map_rounded, 'Localidad', p['localidad'] ?? 'S/D'),
-          const SizedBox(height: 12),
-          _buildInfoRow(Icons.info_outline_rounded, 'Tipo de Parada', p['tipo'] ?? 'S/D'),
-          const SizedBox(height: 12),
-          _buildInfoRow(Icons.flag_rounded, 'Estado', p['estado'] ?? 'Pendiente'),
-          const SizedBox(height: 12),
-          _buildInfoRow(Icons.format_list_numbered_rounded, 'Secuencia', '#${p['orden_secuencia'] ?? '?'}'),
-          const SizedBox(height: 24),
-          if (p['apicultor_id'] != null)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.person_rounded, size: 16),
-                label: const Text('Ver Perfil'),
-                onPressed: () {
-                  final apicultorData = {
-                    'apicultor_codigo': p['apicultor_id'], // or 'id': p['apicultor_id'] since it uses either
-                    'id': p['apicultor_id'],
-                    'nombre': p['persona_nombre'] ?? p['ubicacion'] ?? 'Sin Nombre',
-                    'dni': p['persona_dni'],
-                  };
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: apicultorData)),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DesignTokens.primary.withOpacity(0.05),
-                  foregroundColor: DesignTokens.primary,
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 
@@ -535,15 +596,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
               _buildPesajeSection(p, isReadOnly),
               isCompleted: hasPesajes,
               isActive: hasItems && !hasPesajes,
-              isLast: remitos.isEmpty,
+              isLast: true,
             ),
-          _buildTimelineNode(
-            'Remitos Digitales',
-            _buildDigitalRemitoForm(p, isReadOnly, isWebTimelineMode: true),
-            isCompleted: remitos.isNotEmpty,
-            isActive: (showPesaje ? hasPesajes : hasItems) && remitos.isEmpty,
-            isLast: true,
-          ),
         ],
       ),
     );
@@ -579,7 +633,10 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         if (pe is Map) {
           final double bruto = (pe['peso_bruto'] as num?)?.toDouble() ?? 0.0;
           final double tara = (pe['tara'] as num?)?.toDouble() ?? 0.0;
-          kilosAcumulados += (bruto - tara);
+          if (bruto > 0.0) {
+            final double neto = (bruto - tara) > 0 ? (bruto - tara) : 0.0;
+            kilosAcumulados += neto;
+          }
           tamboresCount++;
         }
       }
@@ -631,80 +688,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('ACCIONES', style: DesignTokens.labelStyle().copyWith(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-              const SizedBox(height: 16),
-              if (!isReadOnly || canFinalizarParada) ...[
-                if (!isParadaTerminada)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: !isReadOnly ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RemitoRegistroPage(
-                              paradaId: widget.paradaId!,
-                              apicultorId: p['apicultor_id'],
-                              apicultorNombre: p['persona_nombre'] ?? p['ubicacion'],
-                              apicultorDni: p['persona_dni'],
-                              tipoOperacion: p['tipo'] ?? 'Recolección',
-                            ),
-                          ),
-                        ).then((success) {
-                          if (success == true) {
-                            setState(() {
-                              _quantityControllers.clear();
-                              _receptorNombreController.clear();
-                              _receptorDniController.clear();
-                              _paradaFuture = _fetchParadaData();
-                            });
-                          }
-                        });
-                      } : null,
-                      icon: const Icon(Icons.add_task_rounded, color: Colors.white, size: 20),
-                      label: const Text('GENERAR REMITO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: !isReadOnly ? const Color(0xFF1A6B43) : Colors.grey,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                if (remitos.isNotEmpty && canFinalizarParada) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        setState(() => _isFinishing = true);
-                        dynamic viajesRaw = p['viajes'];
-                        Map<String, dynamic> viajeAsociado = {};
-                        if (viajesRaw is Map) {
-                          viajeAsociado = Map<String, dynamic>.from(viajesRaw);
-                        } else if (viajesRaw is List && viajesRaw.isNotEmpty) {
-                          viajeAsociado = Map<String, dynamic>.from(viajesRaw.first);
-                        }
-                        final String vehiculoCodigo = viajeAsociado['vehiculo_codigo']?.toString() ?? 'CAMION-01';
-                        await SupabaseService().finalizarParada(widget.paradaId!, vehiculoCodigo);
-                        if (mounted) context.pop();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: DesignTokens.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('FINALIZAR PARADA', style: TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ] else ...[
-                const Text('No hay acciones disponibles para esta parada.', style: TextStyle(fontSize: 13, color: Colors.grey)),
-              ],
-            ],
-          ),
+          child: _buildDigitalRemitoForm(p, isReadOnly, canFinalizarParada: canFinalizarParada, isParadaTerminada: isParadaTerminada),
         ),
       ],
     );
@@ -745,6 +729,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                 ),
               ),
             _buildHeader(p),
+            const SizedBox(height: 32),
+            _buildWebLeftColumn(p),
             const SizedBox(height: 32),
             _buildItemsSection(isReadOnly),
             if (isRecoleccion || hasPesajes || hasTcmItem) ...[
@@ -845,14 +831,32 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                           const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 20),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              isLoteSinPesar ? 'Ya existe un registro de ${pesajes.length} TCM' : 'Ya existe un pesaje de ${pesajes.length} TCM',
-                              style: const TextStyle(
-                                fontFamily: 'Manrope',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: Color(0xFF2E7D32),
-                              ),
+                            child: Builder(
+                              builder: (context) {
+                                int sinPesar = pesajes.where((pe) {
+                                  final b = (pe['peso_bruto'] as num?)?.toDouble() ?? 0.0;
+                                  final t = (pe['tara'] as num?)?.toDouble() ?? 0.0;
+                                  return b == 0.0 && t == 0.0;
+                                }).length;
+                                int pesados = pesajes.length - sinPesar;
+                                String text = '';
+                                if (sinPesar == 0) {
+                                  text = 'Hay ${pesajes.length} tambores pesados';
+                                } else if (pesados == 0) {
+                                  text = 'Hay ${pesajes.length} tambores registrados sin pesar';
+                                } else {
+                                  text = 'Hay ${pesajes.length} tambores y $pesados pesados';
+                                }
+                                return Text(
+                                  text,
+                                  style: const TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Color(0xFF2E7D32),
+                                  ),
+                                );
+                              }
                             ),
                           ),
                         ],
@@ -1289,6 +1293,18 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
 
   Widget _buildDigitalRemitoForm(Map<String, dynamic> p, bool isReadOnly, {bool canFinalizarParada = false, bool isParadaTerminada = false, bool isWebTimelineMode = false}) {
     final remitos = p['remitos'] as List? ?? [];
+    final apicultores = _extractApicultores(p);
+    
+    // Si no hay apicultores en absoluto (raro pero posible), añadimos el default de la parada
+    if (apicultores.isEmpty) {
+      apicultores.add({
+        'nombre': p['persona_nombre'] ?? p['ubicacion'] ?? 'Sin Nombre',
+        'dni': p['persona_dni'],
+        'apicultor_codigo': p['apicultor_id'],
+        'id': p['apicultor_id'],
+      });
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1301,115 +1317,150 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           ],
         ),
         const SizedBox(height: 12),
-        if (remitos.isEmpty)
-          const Text('No hay remitos generados para esta parada.', style: TextStyle(fontSize: 13, color: Colors.grey))
-        else
-          ...remitos.map((r) => Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: ListTile(
-              leading: const Icon(Icons.description_rounded, color: DesignTokens.primary),
-              title: Text('Remito #${r['id'].toString().substring(0, 6).toUpperCase()}'),
-              subtitle: Text('Fecha: ${r['fecha'] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(r['fecha'])) : 'S/D'} | Tipo: ${r['tipo'] ?? 'S/D'}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.chevron_right_rounded),
-                  // Botón eliminar remito: solo visible para admin
-                  if (_isAdmin)
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: DesignTokens.error, size: 20),
-                      tooltip: 'Eliminar remito (Admin)',
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Eliminar Remito'),
-                            content: const Text('¿Confirma eliminar este remito? La parada volverá a estar editable para regenerarlo.'),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCELAR')),
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                child: const Text('ELIMINAR'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirm == true && mounted) {
-                          try {
-                            await SupabaseService().deleteRemito(r['id'].toString(), widget.paradaId!);
-                            setState(() { _paradaFuture = _fetchParadaData(); });
-                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Remito eliminado. La parada está editable nuevamente.'), backgroundColor: Colors.orange),
-                            );
-                          } catch (e) {
-                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                            );
-                          }
+        
+        ...apicultores.map((api) {
+          final apiId = api['id']?.toString() ?? '';
+          final apiRemitos = remitos.where((r) {
+            final rId = r['apicultor_id']?.toString() ?? '';
+            // Si el remito no tiene apicultor_id, asumimos que es del principal o lo mostramos si solo hay 1 apicultor
+            if (rId.isEmpty && apicultores.length == 1) return true;
+            return rId == apiId;
+          }).toList();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: DesignTokens.secondary.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: DesignTokens.primary.withOpacity(0.08)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.person_rounded, size: 16, color: DesignTokens.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        api['nombre'] ?? 'Apicultor',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: DesignTokens.primary),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (apiRemitos.isEmpty)
+                  const Text('No hay remitos para este apicultor.', style: TextStyle(fontSize: 12, color: Colors.grey))
+                else
+                  ...apiRemitos.map((r) => Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
+                    child: ListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      leading: Icon(
+                        r['tipo'] == 'Distribución' ? Icons.local_shipping_rounded : Icons.inventory_2_rounded,
+                        color: r['tipo'] == 'Distribución' ? Colors.blue : DesignTokens.primary,
+                        size: 20,
+                      ),
+                      title: Text('Remito #${r['id'].toString().substring(0, 6).toUpperCase()} - ${r['tipo'] ?? 'Recolección'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      subtitle: Text(r['fecha'] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(r['fecha'])) : 'S/D', style: const TextStyle(fontSize: 11)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_isAdmin)
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.delete_outline_rounded, color: DesignTokens.error, size: 18),
+                              tooltip: 'Eliminar remito (Admin)',
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Eliminar Remito'),
+                                    content: const Text('¿Confirma eliminar este remito?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCELAR')),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                        child: const Text('ELIMINAR'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true && mounted) {
+                                  try {
+                                    await SupabaseService().deleteRemito(r['id'].toString(), widget.paradaId!);
+                                    setState(() { _paradaFuture = _fetchParadaData(); });
+                                  } catch (e) {
+                                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                                  }
+                                }
+                              },
+                            ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.picture_as_pdf_rounded, size: 18, color: Colors.redAccent),
+                        ],
+                      ),
+                      onTap: () {
+                        final url = r['pdf_url'];
+                        if (url != null && url.isNotEmpty) {
+                          _showPdfPreviewDialog(context, url, 'Remito - ${api['nombre']}');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
                         }
                       },
                     ),
-                ],
-              ),
-              onTap: () {
-                final url = r['pdf_url'];
-                if (url != null && url.isNotEmpty) {
-                  _showPdfPreviewDialog(context, url, 'Remito - ${p['persona_nombre'] ?? 'Parada'}');
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Este remito no tiene un PDF asociado')),
-                  );
-                }
-              },
-            ),
-          )),
-        // Botones de acción: si la parada no es solo lectura O si el chofer puede finalizar
-        if (!isWebTimelineMode && (!isReadOnly || canFinalizarParada)) ...[
-          const SizedBox(height: 24),
-          if (!isParadaTerminada) // Botón GENERAR NUEVO REMITO solo si la parada no está terminada
-          SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: ElevatedButton.icon(
-              onPressed: !isReadOnly ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RemitoRegistroPage(
-                      paradaId: widget.paradaId!,
-                      apicultorId: p['apicultor_id'],
-                      apicultorNombre: p['persona_nombre'] ?? p['ubicacion'],
-                      apicultorDni: p['persona_dni'],
-                      tipoOperacion: p['tipo'] ?? 'Recolección',
-                    ),
+                  )),
+                if (!isWebTimelineMode && (!isReadOnly || canFinalizarParada) && !isParadaTerminada) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _goToRemito(api, 'Recolección'),
+                          icon: const Icon(Icons.add_rounded, size: 16),
+                          label: const Text('Recolección', style: TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: DesignTokens.primary,
+                            side: const BorderSide(color: DesignTokens.primary),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _goToRemito(api, 'Distribución'),
+                          icon: const Icon(Icons.add_rounded, size: 16),
+                          label: const Text('Distribución', style: TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                            side: const BorderSide(color: Colors.blue),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ).then((success) {
-                  if (success == true) {
-                    setState(() {
-                      _quantityControllers.clear();
-                      _receptorNombreController.clear();
-                      _receptorDniController.clear();
-                      _paradaFuture = _fetchParadaData();
-                    });
-                  }
-                });
-              } : null,
-              icon: const Icon(Icons.add_task_rounded, color: Colors.white),
-              label: const Text('GENERAR NUEVO REMITO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: !isReadOnly ? const Color(0xFF1A6B43) : Colors.grey,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+                ],
+              ],
             ),
-          ),
+          );
+        }),
+
+        if (!isWebTimelineMode && (!isReadOnly || canFinalizarParada)) ...[
           if (remitos.isNotEmpty && canFinalizarParada) ...[
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: OutlinedButton(
+              child: ElevatedButton.icon(
                 onPressed: () async {
                   setState(() => _isFinishing = true);
                   dynamic viajesRaw = p['viajes'];
@@ -1423,17 +1474,42 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                   await SupabaseService().finalizarParada(widget.paradaId!, vehiculoCodigo);
                   if (mounted) context.pop();
                 },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: DesignTokens.primary),
+                icon: const Icon(Icons.flag_rounded, color: Colors.white),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A6B43),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('FINALIZAR PARADA COMPLETA', style: TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.bold)),
+                label: const Text('FINALIZAR PARADA COMPLETA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
         ],
       ],
     );
+  }
+
+  void _goToRemito(Map<String, dynamic> api, String tipoOperacion) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RemitoRegistroPage(
+          paradaId: widget.paradaId!,
+          apicultorId: api['apicultor_codigo'],
+          apicultorNombre: api['nombre'],
+          apicultorDni: api['dni'],
+          tipoOperacion: tipoOperacion,
+        ),
+      ),
+    ).then((success) {
+      if (success == true) {
+        setState(() {
+          _quantityControllers.clear();
+          _receptorNombreController.clear();
+          _receptorDniController.clear();
+          _paradaFuture = _fetchParadaData();
+        });
+      }
+    });
   }
 
   Future<Uint8List> _downloadPdf(String url) async {
