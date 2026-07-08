@@ -285,9 +285,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ),
         );

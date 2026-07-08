@@ -784,7 +784,6 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
           ], // End of inner Row children
           ), // End of inner Row
           ), // End of Container
-          ), // End of Align
           ), // End of outer Expanded
         ], // End of outer Row children
       ), // End of outer Row
