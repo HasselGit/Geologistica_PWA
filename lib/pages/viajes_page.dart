@@ -147,11 +147,10 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                   children: [
                     GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
                     Expanded(
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Container(
-                          padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                          child: Column(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                        child: Column(
                             children: [
                               _buildHeader(isDesktop),
                               Expanded(

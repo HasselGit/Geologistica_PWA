@@ -525,13 +525,12 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                   displayName: _displayName),
 
           Expanded(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     Expanded(
                       flex: 8,
                       child: Container(
