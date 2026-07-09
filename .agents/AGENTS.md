@@ -19,3 +19,6 @@
 
 - El 03/07/2026, se rediseñó el detalle de viaje a estándar Premium/Bento, se implementó _GlassCard y se ajustaron componentes.
 El 2026-07-09, se modificaron los archivos lib/pages/paradadetalle.dart, vercel.json, generate_sw.py y deploy.ps1 para arreglar el conteo de tambores, insignias en la UI de la parada y resolver problemas de cacheado estricto en el CDN de Vercel.
+
+- El 09/07/2026, se modificó paradadetalle.dart para remover el fallback por nombre y se usaron scripts en scratch/ para actualizar la tabla remitos y establecer la relación estricta por apicultor_id.
+
