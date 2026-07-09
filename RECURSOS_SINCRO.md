@@ -20,5 +20,5 @@ Para cualquier IA nueva:
 3.  No reintroducir elementos gráficos redundantes y siempre ejecutar `flutter analyze` para verificar la estabilidad de compilación antes de finalizar.
 
 ---
-**GeoLogística v1.0.6** - *Estabilidad, Optimización de Tránsito, Pre-población de Carga y Handoff Garantizado*
-- **Actualización (29 de Mayo)**: Incorporación de pre-población predictiva de Cargas, validación en tiempo real de peso proyectado y stock de tránsito, y habilitación del panel de Cargas a roles de Compras, CEO y Gerente.
+**GeoLogística v1.0.7** - *Estabilidad, Optimización de Tránsito, Visor Nativo de PDF y Soporte Multi-Apicultor*
+- **Actualización (8 de Julio, 2026)**: Implementación de soporte Multi-Apicultor por parada con diseño compacto, generación de Remitos Múltiples, visor nativo de PDF con impresión rápida, y limpieza en la UI.

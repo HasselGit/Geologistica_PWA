@@ -1,4 +1,5 @@
 import os
+import time
 
 build_dir = os.path.join("build", "web")
 urls_to_cache = ['/']
@@ -13,7 +14,8 @@ for root, dirs, files in os.walk(build_dir):
         url = '/' + rel_path.replace('\\', '/')
         urls_to_cache.append(url)
 
-sw_content = f"""var CACHE_NAME = 'geologistica-pwa-cache-v5';
+cache_timestamp = int(time.time())
+sw_content = f"""var CACHE_NAME = 'geologistica-pwa-cache-{cache_timestamp}';
 var urlsToCache = {urls_to_cache};
 
 self.addEventListener('install', function(event) {{

@@ -18,3 +18,4 @@
 - El 03/07/2026, se corrigieron los colores de fondo y texto de las tarjetas de Home y los contadores en la Matriz de Operaciones (escritorio y mvil).
 
 - El 03/07/2026, se rediseñó el detalle de viaje a estándar Premium/Bento, se implementó _GlassCard y se ajustaron componentes.
+El 2026-07-09, se modificaron los archivos lib/pages/paradadetalle.dart, vercel.json, generate_sw.py y deploy.ps1 para arreglar el conteo de tambores, insignias en la UI de la parada y resolver problemas de cacheado estricto en el CDN de Vercel.

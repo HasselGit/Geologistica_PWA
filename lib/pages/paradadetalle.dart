@@ -125,6 +125,21 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
     }
   }
 
+  Color _getBadgeColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pendiente':
+        return const Color(0xFFD97706);
+      case 'en progreso':
+      case 'en_progreso':
+        return const Color(0xFF2563EB);
+      case 'completada':
+      case 'terminado':
+        return const Color(0xFF16A34A);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
   TextEditingController _getController(String id, String initialValue) {
     if (!_quantityControllers.containsKey(id)) {
       _quantityControllers[id] = TextEditingController(text: initialValue);
@@ -283,6 +298,32 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                                       child: Text(
                                         viajeAsociado['viaje_codigo'] ?? '',
                                         style: const TextStyle(color: DesignTokens.secondary, fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                    ),
+                                  ],
+                                  if (_resolvedParada != null) ...[
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: _getBadgeColor(_resolvedParada!['estado'] ?? 'Pendiente').withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: _getBadgeColor(_resolvedParada!['estado'] ?? 'Pendiente').withOpacity(0.3)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.flag_rounded, size: 14, color: _getBadgeColor(_resolvedParada!['estado'] ?? 'Pendiente')),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            (_resolvedParada!['estado'] ?? 'Pendiente').toString().toUpperCase(),
+                                            style: TextStyle(
+                                              color: _getBadgeColor(_resolvedParada!['estado'] ?? 'Pendiente'),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -511,7 +552,6 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                   SizedBox(width: 140, child: _buildInfoRow(Icons.location_on_rounded, 'Ubicación', p['ubicacion'] ?? 'S/D')),
                   SizedBox(width: 140, child: _buildInfoRow(Icons.map_rounded, 'Localidad', p['localidad'] ?? 'S/D')),
                   SizedBox(width: 140, child: _buildInfoRow(Icons.info_outline_rounded, 'Tipo de Parada', p['tipo'] ?? 'S/D')),
-                  SizedBox(width: 140, child: _buildInfoRow(Icons.flag_rounded, 'Estado', p['estado'] ?? 'Pendiente')),
                   SizedBox(width: 140, child: _buildInfoRow(Icons.format_list_numbered_rounded, 'Secuencia', '#${p['orden_secuencia'] ?? '?'}')),
                 ],
               ),
@@ -638,8 +678,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           if (bruto > 0.0) {
             final double neto = (bruto - tara) > 0 ? (bruto - tara) : 0.0;
             kilosAcumulados += neto;
+            tamboresCount++;
           }
-          tamboresCount++;
         }
       }
     }
@@ -651,11 +691,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0F3622), Color(0xFF1A6B43)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: DesignTokens.primary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Stack(
@@ -1079,14 +1115,14 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: p['estado'] == 'Completada' ? Colors.green.withOpacity(0.2) : Colors.white.withOpacity(0.1),
+                    color: _getBadgeColor(p['estado']).withOpacity(0.2),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: p['estado'] == 'Completada' ? Colors.green.withOpacity(0.5) : Colors.transparent),
+                    border: Border.all(color: _getBadgeColor(p['estado']).withOpacity(0.5)),
                   ),
                   child: Text(
                     p['estado'],
                     style: TextStyle(
-                      color: p['estado'] == 'Completada' ? Colors.greenAccent : Colors.white70,
+                      color: _getBadgeColor(p['estado']),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1323,8 +1359,9 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         ...apicultores.map((api) {
           final apiId = api['id']?.toString() ?? '';
           final apiRemitos = remitos.where((r) {
-            final rId = r['apicultor_id']?.toString() ?? '';
-            if (rId.isEmpty) {
+            final rawId = r['apicultor_id'];
+            final rId = rawId == null ? '' : rawId.toString();
+            if (rId.isEmpty || rId == 'null') {
               return apiId == p['apicultor_id']?.toString();
             }
             return rId == apiId;
@@ -1366,7 +1403,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                       leading: Icon(
                         r['tipo'] == 'Distribución' ? Icons.local_shipping_rounded : Icons.inventory_2_rounded,
-                        color: r['tipo'] == 'Distribución' ? Colors.blue : DesignTokens.primary,
+                        color: r['tipo'] == 'Distribución' ? DesignTokens.secondary : DesignTokens.primary,
                         size: 20,
                       ),
                       title: Text('Remito #${r['id'].toString().substring(0, 6).toUpperCase()} - ${r['tipo'] ?? 'Recolección'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -1471,8 +1508,8 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                           icon: const Icon(Icons.add_rounded, size: 16),
                           label: const Text('Distribución', style: TextStyle(fontSize: 12)),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blue,
-                            side: const BorderSide(color: Colors.blue),
+                            foregroundColor: DesignTokens.secondary,
+                            side: const BorderSide(color: DesignTokens.secondary),
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
                         ),

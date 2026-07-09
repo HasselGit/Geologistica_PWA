@@ -13,6 +13,7 @@ if (-not (Test-Path "build\web\.vercel")) {
     New-Item -ItemType Directory -Force -Path "build\web\.vercel" | Out-Null
 }
 Copy-Item ".vercel\project.json" "build\web\.vercel\project.json" -Force
+Copy-Item "vercel.json" "build\web\vercel.json" -Force
 
 Write-Host "Generando Service Worker Seguro (v4)..."
 python generate_sw.py

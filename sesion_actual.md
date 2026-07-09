@@ -214,3 +214,27 @@ A pesar de la optimización del Service Worker al nivel más extremo, concluimos
 - **Evicción Silenciosa**: iOS/Android purgan cachés pesados (archivos .wasm de >2MB) de forma arbitraria, causando fallas catastróficas de booteo en el campo.
 - **Veredicto Definitivo**: El uso en terreno por los choferes deberá transicionar obligatoriamente a un **Compilado Nativo de Android (APK)** en fases futuras. Esto esquiva la latencia web, anula las dependencias de Service Workers y habilita una carga instantánea 100% aislada de CDNs para zonas agrícolas sin cobertura celular.
 
+---
+
+## 🍯 Hito Logístico: Soporte Multi-Apicultor, Optimización UI y Visor de Remitos Nativo (8 de Julio, 2026)
+
+En esta sesión perfeccionamos la pantalla de `Operación en Parada` (`paradadetalle.dart`) para soportar operaciones complejas con múltiples apicultores por parada, eliminando redundancias visuales y arreglando el flujo de documentos PDF.
+
+### 👥 1. Soporte Real para Múltiples Apicultores por Parada
+- **El Problema**: Cuando una misma parada (mismo SENASA y ubicación) recogía tambores de distintos apicultores (ej. Urrutia y Zupan), la UI colapsaba omitiendo la "Ficha del Apicultor" en móviles y ocultaba remitos heredados.
+- **La Solución**: Se refactorizó la generación de tarjetas, garantizando que cada apicultor detectado en la parada tenga su propia ficha y recuadro de remitos, tanto en la vista móvil como en escritorio.
+
+### 📐 2. Diseño Compacto de Ficha de Apicultor
+- **El Problema**: La información de la parada (Ubicación, Localidad, Tipo, Estado, Secuencia) se repetía en una larga columna vertical para cada apicultor, generando un scroll excesivo.
+- **La Solución**: Se introdujo un widget `Wrap` que redistribuye estos atributos de forma horizontal en un layout tipo grilla, acortando la altura de cada ficha en más de un 50% y maximizando la densidad de información sin reducir el tamaño de letra.
+
+### 📄 3. Visor de PDF Nativo e Impresión Directa
+- **El Problema**: El plugin interno (`pdf_preview`) mostraba el remito de forma desproporcionada, causaba errores en algunos navegadores web y dificultaba la impresión rápida de los comprobantes por parte de los choferes.
+- **La Solución**: 
+  - Se eliminó el uso del popup/plugin integrado para la web.
+  - Al presionar el remito, este ahora se abre mediante `launchUrl(..., webOnlyWindowName: '_blank')`, delegando la renderización al **visor nativo** del navegador, que escala perfectamente.
+  - Se añadió un botón explícito de **Impresora** a cada tarjeta de remito. Utilizando `Printing.layoutPdf()`, este botón envía el archivo de inmediato a la cola de impresión del sistema operativo, acelerando dramáticamente la logística en campo.
+
+### 👻 4. Corrección de Remitos Legados o Huérfanos
+- **El Problema**: Los remitos generados en versiones anteriores de la app no tenían el campo `apicultor_id` grabado en la tabla. Al haber varios apicultores, el sistema no sabía a quién asignárselo y lo invisibilizaba.
+- **La Solución**: Se añadió lógica de *fallback*. Si el sistema detecta un remito donde `apicultor_id` está vacío, lo asignará proactivamente al Apicultor Principal (el creador/dueño lógico de la parada), evitando la pérdida visual de comprobantes en paradas compartidas.
