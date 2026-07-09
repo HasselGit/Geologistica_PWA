@@ -9,8 +9,9 @@ description: Repasa automáticamente el estado del proyecto, arquitecturas, dire
 
 Cuando el usuario active esta skill, debes ejecutar de forma proactiva y silenciosa los siguientes pasos en este orden EXACTO:
 
-1. **Leer las Directrices y Reglas del Proyecto:**
+1. **Leer y Actualizar las Directrices y Reglas del Proyecto:**
    - Usa `view_file` o la herramienta equivalente para leer el archivo `.agents/AGENTS.md` (ahí están las reglas críticas, ej. los comandos obligatorios de Vercel).
+   - **IMPORTANTE:** Además de leerlo, si durante tu sincronización detectas que la bitácora o las reglas en `.agents/AGENTS.md` están desactualizadas respecto al progreso reciente (o el archivo `walkthrough.md`), debes **ACTUALIZAR** `.agents/AGENTS.md` para reflejar el estado correcto y las últimas decisiones.
    - Lee `sesion_actual.md` para entender los hitos de negocio más recientes y las restricciones operativas.
    - Revisa `RECURSOS_SINCRO.md` para obtener el panorama general del estado del sistema.
    - Verifica `ARQUITECTURA_GEOLOGISTICA.md` en la raíz y léelo si lo consideras necesario para repasar el diseño de componentes.
