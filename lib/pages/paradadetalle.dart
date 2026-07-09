@@ -842,13 +842,16 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isLoteSinPesar ? 'Registrar códigos SENASA' : 'Registrar pesos por tambor',
+                              isReadOnly
+                                ? 'Detalle de Pesajes'
+                                : (isLoteSinPesar ? 'Registrar códigos SENASA' : 'Registrar pesos por tambor'),
                               style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 15, color: DesignTokens.primary),
                             ),
-                            Text(
-                              isLoteSinPesar ? 'Escáner de código SENASA • Sin pesar' : 'Escán cod. SENASA • Ingresá Bruto y Tara',
-                              style: TextStyle(fontSize: 12, color: DesignTokens.primary.withOpacity(0.45)),
-                            ),
+                            if (!isReadOnly)
+                              Text(
+                                isLoteSinPesar ? 'Escáner de código SENASA • Sin pesar' : 'Escán cod. SENASA • Ingresá Bruto y Tara',
+                                style: TextStyle(fontSize: 12, color: DesignTokens.primary.withOpacity(0.45)),
+                              ),
                           ],
                         ),
                       ),
@@ -1356,18 +1359,24 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
         ),
         const SizedBox(height: 12),
         
-        ...apicultores.map((api) {
-          final apiId = api['id']?.toString() ?? '';
-          final apiRemitos = remitos.where((r) {
-            final rawId = r['apicultor_id'];
-            final rId = rawId == null ? '' : rawId.toString();
-            if (rId.isEmpty || rId == 'null') {
-              return apiId == p['apicultor_id']?.toString();
+        Builder(builder: (context) {
+          final matchedRemitoIds = <String>{};
+          final apicultorWidgets = apicultores.map((api) {
+            final apiId = api['id']?.toString() ?? '';
+            final apiRemitos = remitos.where((r) {
+              final rawId = r['apicultor_id'];
+              final rId = rawId == null ? '' : rawId.toString();
+              if (rId.isEmpty || rId == 'null') {
+                return apiId == p['apicultor_id']?.toString();
+              }
+              return rId == apiId;
+            }).toList();
+            
+            for (var r in apiRemitos) {
+              matchedRemitoIds.add(r['id']?.toString() ?? '');
             }
-            return rId == apiId;
-          }).toList();
 
-          return Container(
+            return Container(
             margin: const EdgeInsets.only(bottom: 20),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1519,6 +1528,93 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                 ],
               ],
             ),
+          );
+        }).toList();
+
+          final unmatchedRemitos = remitos.where((r) => !matchedRemitoIds.contains(r['id']?.toString() ?? '')).toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ...apicultorWidgets,
+              if (unmatchedRemitos.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.error_outline_rounded, size: 18, color: Colors.redAccent),
+                          const SizedBox(width: 8),
+                          Text('Remitos con Error de Asignación', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.redAccent)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('Estos remitos no tienen un ID de apicultor válido en la base de datos.', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                      const SizedBox(height: 12),
+                      ...unmatchedRemitos.map((r) => Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          leading: const Icon(Icons.receipt_long_rounded, color: DesignTokens.secondary),
+                          title: Text(r['numero_remito'] ?? 'Borrador', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: DesignTokens.primary)),
+                          subtitle: Text('Estado: ${r['estado'] ?? 'Desconocido'} • Tipo: ${r['tipo_remito'] ?? 'Recolección'}', style: TextStyle(fontSize: 11, color: DesignTokens.primary.withOpacity(0.6))),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(Icons.print_rounded, size: 18, color: DesignTokens.primary),
+                                onPressed: () {
+                                  final url = r['pdf_url'];
+                                  if (url != null && url.isNotEmpty) {
+                                    _printPdf(url);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(Icons.open_in_new_rounded, size: 18, color: DesignTokens.primary),
+                                onPressed: () {
+                                  final url = r['pdf_url'];
+                                  if (url != null && url.isNotEmpty) {
+                                    launchUrl(Uri.parse(url), webOnlyWindowName: '_blank');
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            final url = r['pdf_url'];
+                            if (url != null && url.isNotEmpty) {
+                              launchUrl(Uri.parse(url), webOnlyWindowName: '_blank');
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
+                            }
+                          },
+                        ),
+                      )),
+                    ],
+                  ),
+                ),
+            ],
           );
         }),
 
