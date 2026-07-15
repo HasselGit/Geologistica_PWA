@@ -872,13 +872,13 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
       double peso = 0.0;
       if (prod == 'TCM' || prod == '1') {
          if (isTcm && pesajes != null && pesajes.isNotEmpty) {
-            double netoTcm = 0;
+            double brutoTcm = 0;
             for (var p in pesajes) {
                final bruto = (p['peso_bruto'] as num?)?.toDouble() ?? 0;
-               final tara = (p['tara'] as num?)?.toDouble() ?? 0;
-               netoTcm += bruto > 0 ? (bruto - tara) : 330.0; 
+               // El camión carga el tambor físico completo, por lo tanto usamos el PESO BRUTO.
+               brutoTcm += bruto > 0 ? bruto : 330.0; 
             }
-            peso = netoTcm;
+            peso = brutoTcm;
          } else {
             peso = qty * 330.0;
          }
