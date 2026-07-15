@@ -22,3 +22,5 @@ El 2026-07-09, se modificaron los archivos lib/pages/paradadetalle.dart, vercel.
 
 - El 09/07/2026, se modificó paradadetalle.dart para remover el fallback por nombre y se usaron scripts en scratch/ para actualizar la tabla remitos y establecer la relación estricta por apicultor_id.
 
+
+- El 15/07/2026, se modificó lib/pages/carga_detalle.dart rediseñando su layout con el Diseño Premium y corrigiendo el uso de geo_sidebar.
