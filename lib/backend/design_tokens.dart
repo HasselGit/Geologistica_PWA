@@ -49,7 +49,7 @@ class DesignTokens {
     foregroundColor: Colors.white,
     elevation: 0,
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
     textStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1),
   );
 
@@ -59,7 +59,7 @@ class DesignTokens {
     elevation: 0,
     side: const BorderSide(color: secondary, width: 1.5),
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
     textStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1),
   );
 }

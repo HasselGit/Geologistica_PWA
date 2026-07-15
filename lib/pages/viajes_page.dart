@@ -123,6 +123,40 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
     return filtered;
   }
 
+  Widget _buildTableViewDesktop() {
+    List<Map<String, dynamic>> filtered = _viajes;
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((v) {
+        final codigo = (v['viaje_codigo'] ?? '').toString().toLowerCase();
+        final vehiculo = (v['vehiculo_codigo'] ?? '').toString().toLowerCase();
+        
+        final rawChofer = v['chofer'];
+        String choferNombre = '';
+        if (rawChofer is Map) {
+          choferNombre = '${rawChofer['nombre'] ?? ''} ${rawChofer['apellido'] ?? ''}'.toLowerCase();
+        }
+
+        bool matchParada = false;
+        if (v['paradas'] != null && v['paradas'] is List) {
+          for (var p in v['paradas']) {
+            final loc = (p['localidad'] ?? '').toString().toLowerCase();
+            final api = (p['apicultor_nombre'] ?? '').toString().toLowerCase();
+            if (loc.contains(_searchQuery) || api.contains(_searchQuery)) {
+              matchParada = true;
+              break;
+            }
+          }
+        }
+        
+        return codigo.contains(_searchQuery) || 
+               vehiculo.contains(_searchQuery) || 
+               choferNombre.contains(_searchQuery) ||
+               matchParada;
+      }).toList();
+    }
+    return _buildTableView(filtered);
+  }
+
   bool get _canCreate => _isAdmin || (_userRole != null && _userRole != 'Chofer');
 
   @override
@@ -156,7 +190,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                               Expanded(
                                 child: _loading
                                     ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                                    : _buildKanbanView(),
+                                    : _isCardView ? _buildKanbanView() : _buildTableViewDesktop(),
                               ),
                             ],
                           ),
@@ -264,10 +298,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                     onPressed: () => context.push('/planificarViaje').then((_) => _fetchViajes()),
                     style: DesignTokens.primaryButtonStyle,
                     icon: const Icon(Icons.add_rounded, size: 20),
-                    label: const Text(
-                      'NUEVO VIAJE',
-                      style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5),
-                    ),
+                    label: const Text('NUEVO VIAJE'),
                   ),
                 ],
               ],
