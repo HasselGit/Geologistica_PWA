@@ -95,6 +95,12 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
     setState(() => _loading = true);
     try {
       final data = await SupabaseService().getCargaDetalle(widget.cargaId!);
+      if (data != null && data['viaje_id'] != null) {
+        final viajeData = await SupabaseService().getViajeDetalle(data['viaje_id']);
+        if (viajeData != null) {
+          data['viaje_detalle'] = viajeData;
+        }
+      }
       print('CargaDetalle: Carga fetched. Data: $data');
       if (data != null) {
         print('CargaDetalle: carga_items in map: ${data['carga_items']} (type: ${data['carga_items']?.runtimeType})');
@@ -323,8 +329,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           if (vehiculo.isNotEmpty) ...[
             _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
             const SizedBox(height: 10),
-            _depositoCard(capKg, capTamb, cargaActualKg, cargaActualTamb,
-                estaCargaKg, estaCargaTamb, proyectadoKg, excede, progreso),
+            _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
             const SizedBox(height: 20),
           ],
 
@@ -382,7 +387,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
             Container(
               width: double.infinity, padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                  color: const Color(0xFFD4F0E1), borderRadius: BorderRadius.circular(14)),
+                  color: const Color(0xFFD4F0E1), borderRadius: BorderRadius.circular(8)),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -407,7 +412,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: DesignTokens.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           title: const Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
@@ -447,7 +452,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: DesignTokens.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         title: const Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
@@ -545,60 +550,15 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
     );
   }
 
-  Widget _depositoCard(double capKg, int capTamb, double actualKg, int actualTamb,
-      double estaCargaKg, int estaCargaTamb, double proyectadoKg, bool excede, double progreso) {
+  Widget _depositoCard(Map<String, Map<String, dynamic>> baseInventario, List<Map<String, dynamic>> itemsCarga) {
     return Container(
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: excede ? const Color(0xFFFFF3E0) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: excede ? Colors.orange.withOpacity(0.4) : DesignTokens.primary.withOpacity(0.06)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (excede) ...[
-          Row(children: const [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
-            SizedBox(width: 6),
-            Text('CAPACIDAD EXCEDIDA', style: TextStyle(fontFamily: 'Work Sans',
-                fontWeight: FontWeight.w800, fontSize: 11, color: Colors.orange)),
-          ]),
-          const SizedBox(height: 10),
-        ],
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${proyectadoKg.round()} kg',
-                style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900,
-                    fontSize: 22, color: excede ? Colors.orange : DesignTokens.primary)),
-            Text('de ${capKg.round()} kg cap.',
-                style: TextStyle(fontFamily: 'Inter', fontSize: 12,
-                    color: DesignTokens.onSurfaceVariant.withOpacity(0.6))),
-          ]),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('${actualTamb + estaCargaTamb} tamb.',
-                style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900,
-                    fontSize: 20, color: DesignTokens.primary)),
-            Text('de $capTamb cap.',
-                style: TextStyle(fontFamily: 'Inter', fontSize: 12,
-                    color: DesignTokens.onSurfaceVariant.withOpacity(0.6))),
-          ]),
-        ]),
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: progreso.clamp(0.0, 1.0),
-            minHeight: 8,
-            backgroundColor: DesignTokens.primary.withOpacity(0.06),
-            valueColor: AlwaysStoppedAnimation<Color>(
-                excede ? Colors.orange : const Color(0xFF1A6B43)),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text('Carga actual: ${actualKg.round()} kg  |  Esta carga: +${estaCargaKg.round()} kg',
-            style: TextStyle(fontFamily: 'Inter', fontSize: 11,
-                color: DesignTokens.onSurfaceVariant.withOpacity(0.6))),
-      ]),
+      child: _buildInventarioTable(baseInventario, itemsCarga),
     );
   }
 
@@ -607,14 +567,14 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(14),
+        color: Colors.white, borderRadius: BorderRadius.circular(8),
         border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
       ),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
-              color: DesignTokens.surface, borderRadius: BorderRadius.circular(10)),
+              color: DesignTokens.surface, borderRadius: BorderRadius.circular(8)),
           child: const Icon(Icons.inventory_2_rounded, size: 18, color: DesignTokens.primary),
         ),
         const SizedBox(width: 14),
@@ -655,7 +615,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
   Widget _emptyCard(String msg) => Container(
     width: double.infinity, padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8),
         border: Border.all(color: DesignTokens.primary.withOpacity(0.05))),
     child: Text(msg, textAlign: TextAlign.center,
         style: const TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant)),
@@ -675,7 +635,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
         style: ElevatedButton.styleFrom(
             backgroundColor: color, foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             elevation: 0),
       ),
     );
@@ -757,8 +717,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                   if (vehiculo.isNotEmpty) ...[
                     _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
                     const SizedBox(height: 10),
-                    _depositoCard(capKg, capTamb, cargaActualKg, cargaActualTamb,
-                        estaCargaKg, estaCargaTamb, proyectadoKg, excede, progreso),
+                    _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
                     const SizedBox(height: 24),
                   ],
                   // BOTONES
@@ -791,7 +750,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                     Container(
                       width: double.infinity, padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                          color: const Color(0xFFD4F0E1), borderRadius: BorderRadius.circular(14)),
+                          color: const Color(0xFFD4F0E1), borderRadius: BorderRadius.circular(8)),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -859,12 +818,12 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8)],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         child: DataTable(
           headingRowColor: MaterialStateProperty.all(DesignTokens.surfaceLow),
           dataRowMinHeight: 56,
@@ -898,6 +857,174 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
   }
 
   // ─── NUEVA CARGA (formulario) ─────────────────────────────────────────────
+
+    Map<String, Map<String, dynamic>> _calcularInventarioCamion(Map<String, dynamic>? viajeDetalle) {
+    if (viajeDetalle == null) return {};
+    Map<String, Map<String, dynamic>> inventario = {};
+
+    void _add(String prod, double qty, {bool isTcm = false, List<Map<String, dynamic>>? pesajes}) {
+      prod = prod.trim().toUpperCase();
+      if (!inventario.containsKey(prod)) {
+        inventario[prod] = {'cantidad': 0.0, 'peso': 0.0, 'unidad': 'UN'};
+      }
+      inventario[prod]!['cantidad'] += qty;
+      
+      double peso = 0.0;
+      if (prod == 'TCM' || prod == '1') {
+         if (isTcm && pesajes != null && pesajes.isNotEmpty) {
+            double netoTcm = 0;
+            for (var p in pesajes) {
+               final bruto = (p['peso_bruto'] as num?)?.toDouble() ?? 0;
+               final tara = (p['tara'] as num?)?.toDouble() ?? 0;
+               netoTcm += bruto > 0 ? (bruto - tara) : 330.0; 
+            }
+            peso = netoTcm;
+         } else {
+            peso = qty * 330.0;
+         }
+      } else if (prod.startsWith('T') && (prod.contains('V') || prod.contains('N') || prod.contains('R') || prod.contains('E') || prod.contains('A'))) {
+         peso = qty * 20.0;
+      } else if (prod == 'AZ') {
+         peso = qty * 50.0;
+      } else {
+         peso = qty * 1.0;
+      }
+      inventario[prod]!['peso'] += peso;
+    }
+
+    void _sub(String prod, double qty) {
+      prod = prod.trim().toUpperCase();
+      if (!inventario.containsKey(prod)) return;
+      
+      double qtyBefore = inventario[prod]!['cantidad'];
+      double pesoBefore = inventario[prod]!['peso'];
+      double avgWeight = qtyBefore > 0 ? pesoBefore / qtyBefore : 0;
+      
+      inventario[prod]!['cantidad'] -= qty;
+      inventario[prod]!['peso'] -= qty * avgWeight;
+      
+      if (inventario[prod]!['cantidad'] <= 0) {
+        inventario.remove(prod);
+      }
+    }
+
+    final cargas = List<Map<String, dynamic>>.from(viajeDetalle['cargas'] ?? []);
+    for (var c in cargas) {
+       if (c['id']?.toString() == widget.cargaId) continue;
+       final estado = (c['estado'] ?? '').toString().toLowerCase();
+       if (estado == 'cancelada' || estado == 'anulada') continue;
+       final items = List<Map<String, dynamic>>.from(c['carga_items'] ?? []);
+       for (var it in items) {
+          final prod = (it['producto_codigo'] ?? '').toString();
+          final qty = (it['cantidad'] as num?)?.toDouble() ?? 0;
+          if (prod.isNotEmpty && qty > 0) _add(prod, qty);
+       }
+    }
+
+    final paradas = List<Map<String, dynamic>>.from(viajeDetalle['paradas'] ?? []);
+    for (var p in paradas) {
+       final estado = (p['estado'] ?? '').toString().toLowerCase();
+       if (estado != 'terminado' && estado != 'terminada') continue;
+       final tipo = (p['tipo'] ?? '').toString().toLowerCase();
+       final isRec = tipo.contains('recol') || tipo.contains('mixt') || tipo.contains('ambos');
+       final pesajes = List<Map<String, dynamic>>.from(p['pesajes'] ?? []);
+       
+       final items = List<Map<String, dynamic>>.from(p['parada_items'] ?? []);
+       for (var it in items) {
+          final prod = (it['producto_codigo'] ?? '').toString();
+          final qty = (it['cantidad'] as num?)?.toDouble() ?? 0;
+          if (prod.isEmpty || qty <= 0) continue;
+          
+          final uni = (it['unidad'] ?? '').toString().toLowerCase();
+          final isRecoleccion = uni.contains('recol') || uni.contains('retiro') || isRec; 
+          
+          if (isRecoleccion) {
+             _add(prod, qty, isTcm: true, pesajes: pesajes);
+          } else {
+             _sub(prod, qty);
+          }
+       }
+    }
+    return inventario;
+  }
+
+  Widget _buildInventarioTable(Map<String, Map<String, dynamic>> base, List<Map<String, dynamic>> itemsCarga) {
+    Map<String, Map<String, dynamic>> proyectado = {};
+    base.forEach((k, v) => proyectado[k] = {'cantidad': v['cantidad'], 'peso': v['peso']});
+    
+    for (var it in itemsCarga) {
+       final prod = (it['producto_codigo'] ?? '').toString().trim().toUpperCase();
+       final qty = (it['cantidad'] as num?)?.toDouble() ?? 0;
+       if (prod.isEmpty || qty <= 0) continue;
+       
+       if (!proyectado.containsKey(prod)) proyectado[prod] = {'cantidad': 0.0, 'peso': 0.0};
+       proyectado[prod]!['cantidad'] += qty;
+       
+       double peso = 0.0;
+       if (prod == 'TCM' || prod == '1') peso = qty * 330.0;
+       else if (prod.startsWith('T') && (prod.contains('V') || prod.contains('N') || prod.contains('R') || prod.contains('E'))) peso = qty * 20.0;
+       else if (prod == 'AZ') peso = qty * 50.0;
+       else peso = qty * 1.0;
+       
+       proyectado[prod]!['peso'] += peso;
+    }
+    
+    final allProds = proyectado.keys.toList()..sort();
+    if (allProds.isEmpty) {
+       return const Padding(padding: EdgeInsets.all(16), child: Text('El camión está vacío', style: TextStyle(color: Colors.grey)));
+    }
+    
+    double totalPeso = 0;
+    
+    final rows = allProds.map((prod) {
+       final bQty = base[prod]?['cantidad'] ?? 0.0;
+       final pQty = proyectado[prod]?['cantidad'] ?? 0.0;
+       final addQty = pQty - bQty;
+       final pPeso = proyectado[prod]?['peso'] ?? 0.0;
+       totalPeso += pPeso;
+       
+       return TableRow(
+         decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+         children: [
+           Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8), child: Text(prod, style: const TextStyle(fontWeight: FontWeight.bold, color: DesignTokens.primary))),
+           Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8), child: Text(bQty > 0 ? bQty.toStringAsFixed(0) : '-', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))),
+           Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8), child: Text(addQty > 0 ? '+${addQty.toStringAsFixed(0)}' : '-', textAlign: TextAlign.center, style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
+           Padding(padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8), child: Text('${pPeso.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.w600))),
+         ],
+       );
+    }).toList();
+    
+    return Column(
+      children: [
+        Table(
+          columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(1.2), 2: FlexColumnWidth(1.2), 3: FlexColumnWidth(1.5)},
+          children: [
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey.shade50),
+              children: const [
+                Padding(padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8), child: Text('Prod.', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Padding(padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8), child: Text('Actual', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Padding(padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8), child: Text('Suma', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Padding(padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8), child: Text('Total Kg', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+              ],
+            ),
+            ...rows,
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.05), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+               const Text('PESO TOTAL PROYECTADO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: DesignTokens.primary)),
+               Text('${totalPeso.toStringAsFixed(0)} kg', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: DesignTokens.primary)),
+            ],
+          )
+        )
+      ]
+    );
+  }
 
   Widget _buildNewCarga() {
     // Los choferes no pueden crear cargas
@@ -957,7 +1084,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: DesignTokens.primary.withOpacity(0.1))),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -991,7 +1118,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: _depositoBloqueado ? DesignTokens.surfaceLow : Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: _depositoBloqueado
                 ? DesignTokens.secondary.withOpacity(0.4)
                 : DesignTokens.primary.withOpacity(0.1))),
@@ -1009,7 +1136,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: DesignTokens.secondary.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(8)),
                         child: const Text('FIJO', style: TextStyle(fontFamily: 'Work Sans',
                             fontWeight: FontWeight.w800, fontSize: 9, color: DesignTokens.primary)),
                       ),
@@ -1103,7 +1230,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: DesignTokens.primary.withOpacity(0.1))),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
@@ -1136,7 +1263,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       color: _depositoBloqueado ? DesignTokens.surfaceLow : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: _depositoBloqueado
                         ? DesignTokens.secondary.withOpacity(0.4)
                         : DesignTokens.primary.withOpacity(0.1))),
@@ -1154,7 +1281,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: DesignTokens.secondary.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(10)),
+                                  borderRadius: BorderRadius.circular(8)),
                                 child: const Text('FIJO', style: TextStyle(fontFamily: 'Work Sans',
                                     fontWeight: FontWeight.w800, fontSize: 9, color: DesignTokens.primary)),
                               ),
@@ -1267,7 +1394,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                         value: selectedProductoCode,
                         decoration: InputDecoration(
                             filled: true, fillColor: DesignTokens.surfaceLow,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide.none)),
                         items: _productos.map((p) => DropdownMenuItem<String>(
                           value: p['codigo'].toString(),
@@ -1292,7 +1419,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                         decoration: InputDecoration(
                             labelText: 'Cantidad',
                             filled: true, fillColor: DesignTokens.surfaceLow,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide.none)),
                       ),
                       const SizedBox(height: 20),
@@ -1394,7 +1521,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: DesignTokens.primary.withOpacity(0.04),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: DesignTokens.primary.withOpacity(0.1)),
                           ),
                           child: Row(
