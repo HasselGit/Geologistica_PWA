@@ -24,6 +24,7 @@ Se activa cuando el usuario solicita aplicar el "diseño premium", "estandarizar
    - **Regla 2:** Padding asimétrico `EdgeInsets.fromLTRB(120, 0, 40, 0)` en el contenido. Remover `maxWidth` y `Center`.
    - **Regla 3:** Control de proporciones con `LayoutBuilder`.
    - **Regla 4:** Reemplazar el botón de volver atrás con el formato Premium (`InkWell` + Contenedor 36x36 blanco + sombra) usando la lógica `context.canPop() ? context.pop() : context.go('/home')`.
+   - **Regla 5:** Todos los botones principales de acción (tipo `ElevatedButton`) deben tener un `BorderRadius.circular(8)` para mantener la consistencia con el diseño de Login y Sidebar (estética rectangular ligeramente redondeada, no ovalada). Si es posible, utiliza `DesignTokens.primaryButtonStyle`.
 5. **Sin Excepciones:** No existe lista negra de páginas.
 6. **Reporte:** Una vez hecho el cambio con replace_file_content, avísale al usuario que has completado el proceso resumiendo qué cambios específicos lograste aplicar. **No pidas permiso, edita el código directamente**.
 7. **Despliegue Automático (Git Push):** Al finalizar los cambios en el código, DEBES ejecutar obligatoriamente los comandos para subir a producción: `git add .`, seguido de `git commit -m "style: aplicar premium_ui a [nombre_de_la_pagina]"` y por último `git push origin HEAD`. Notifica al usuario que los cambios se desplegarán en Vercel en 2 minutos.

@@ -87,7 +87,7 @@ class _GeoSidebarState extends State<GeoSidebar> {
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
         color: active ? DesignTokens.secondary.withOpacity(0.15) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
         visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
@@ -104,7 +104,7 @@ class _GeoSidebarState extends State<GeoSidebar> {
               )
             : null,
         onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

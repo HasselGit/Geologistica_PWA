@@ -1023,7 +1023,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: DesignTokens.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           elevation: 0,
                         ),
                       ),
@@ -1641,7 +1641,7 @@ class _ParadaDetalleWidgetState extends State<ParadaDetalleWidget> {
                 icon: const Icon(Icons.flag_rounded, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A6B43),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 label: const Text('FINALIZAR PARADA COMPLETA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),

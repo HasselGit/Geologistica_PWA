@@ -302,7 +302,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: puedeIniciar ? const Color(0xFF1565C0) : Colors.grey,
                                 foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                             onPressed: (_saving || !puedeIniciar) ? null : () => _cambiarEstado(AppStates.enCurso),
                           ),
                         ),
@@ -342,7 +342,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                         style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A6B43),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                         onPressed: _saving ? null : () => _cambiarEstado(AppStates.terminado),
                       ),
                     ),
@@ -689,7 +689,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14)),
+                                        borderRadius: BorderRadius.circular(8)),
                                     textStyle: const TextStyle(
                                         fontFamily: 'Manrope',
                                         fontWeight: FontWeight.w800,
@@ -720,7 +720,7 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14)),
+                                        borderRadius: BorderRadius.circular(8)),
                                     textStyle: const TextStyle(
                                         fontFamily: 'Manrope',
                                         fontWeight: FontWeight.w800,
@@ -3507,7 +3507,7 @@ Widget _buildWebLeftPanel({
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: DesignTokens.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () async {
                 final double? dIni = double.tryParse(iniCtrl.text);
