@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../backend/supabase_service.dart';
 import '../backend/app_states.dart';
 import '../backend/design_tokens.dart';
+import '../widgets/geo_sidebar.dart';
 
 class CargaDetalleWidget extends StatefulWidget {
   final String? cargaId;
@@ -258,6 +259,48 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
   }
 
   // ─── DETALLE DE CARGA EXISTENTE (MOBILE) ──────────────────────────────────
+  Widget _buildPremiumHeader(String title) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24, top: 16),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              final userRole = prefs.getString('user_puesto');
+              if (userRole == 'Gerente') {
+                if (context.mounted) context.go('/gerentehome');
+              } else {
+                if (context.mounted) {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/home');
+                  }
+                }
+              }
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_rounded, size: 18, color: DesignTokens.primary),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Text(title, style: DesignTokens.headlineStyle().copyWith(fontSize: 24), overflow: TextOverflow.ellipsis)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDetalleMobile() {
     final estado = _carga!['estado'] ?? AppStates.pendiente;
     final viaje = _carga!['viaje'] as Map<String, dynamic>? ?? {};
@@ -303,24 +346,10 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(codigo,
-            style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
-                fontSize: 17, color: DesignTokens.primary)),
-        bottom: PreferredSize(preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08))),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _buildPremiumHeader(codigo),
           // ── HEADER ────────────────────────────────────────────────────────
           _sectionHeader(codigo, estado, viajeCode, vehiculoCode, choferNombre),
           const SizedBox(height: 20),
@@ -684,32 +713,19 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(codigo,
-            style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
-                fontSize: 17, color: DesignTokens.primary)),
-        bottom: PreferredSize(preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08))),
-      ),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
           // COLUMNA IZQUIERDA (Detalles y Acciones)
           Expanded(
             flex: 4,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.fromLTRB(40, 24, 20, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildPremiumHeader(codigo),
                   _sectionHeader(codigo, estado, viajeCode, vehiculoCode, choferNombre),
                   const SizedBox(height: 24),
                   _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
@@ -771,7 +787,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           Expanded(
             flex: 6,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.fromLTRB(20, 24, 40, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1061,20 +1077,10 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text('Nueva Carga',
-            style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
-                fontSize: 17, color: DesignTokens.primary)),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _buildPremiumHeader('Nueva Carga'),
           _labelText('1. SELECCIONAR VIAJE'),
           const SizedBox(height: 10),
           Container(
@@ -1198,29 +1204,18 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text('Nueva Carga',
-            style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
-                fontSize: 17, color: DesignTokens.primary)),
-        bottom: PreferredSize(preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08))),
-      ),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
           Expanded(
             flex: 4,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.fromLTRB(40, 24, 20, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildPremiumHeader('Nueva Carga'),
                   _labelText('1. SELECCIONAR VIAJE'),
                   const SizedBox(height: 10),
                   Container(
@@ -1316,7 +1311,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           Expanded(
             flex: 6,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.fromLTRB(20, 24, 40, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
