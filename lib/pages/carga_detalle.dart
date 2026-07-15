@@ -826,45 +826,111 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
   // ─── HELPER PARA DATA TABLE (DESKTOP) ─────────────────────────────────────
   Widget _buildItemsTable(List<Map<String, dynamic>> items, {bool isNew = false, void Function(int)? onRemove}) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8)],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(DesignTokens.surfaceLow),
-          dataRowMinHeight: 56,
-          dataRowMaxHeight: 56,
-          columns: [
-            DataColumn(label: Text('PRODUCTO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
-            DataColumn(label: Text('CANTIDAD', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
-            DataColumn(label: Text('UNIDAD', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
-            if (isNew)
-              DataColumn(label: Text('', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant))),
-          ],
-          rows: items.asMap().entries.map((e) {
-            final idx = e.key;
-            final it = e.value;
-            return DataRow(cells: [
-              DataCell(Text(it['producto_codigo'] ?? 'Producto', style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, color: DesignTokens.primary))),
-              DataCell(Text('${it['cantidad']}', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: DesignTokens.primary))),
-              DataCell(Text(it['unidad'] ?? '', style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant))),
-              if (isNew)
-                DataCell(
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
-                    onPressed: () => onRemove?.call(idx),
-                  )
+    return Column(
+      children: items.asMap().entries.map((e) {
+        final idx = e.key;
+        final it = e.value;
+        final prodStr = (it['producto_codigo'] ?? '').toString().toUpperCase();
+        final isTcm = prodStr == 'TCM' || prodStr == '1';
+        final icon = isTcm ? Icons.inventory_2_rounded : Icons.category_rounded;
+        final color = isTcm ? const Color(0xFFE65100) : const Color(0xFF1565C0);
+        final bg = isTcm ? const Color(0xFFFFF3E0) : const Color(0xFFE3F2FD);
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: DesignTokens.primary.withOpacity(0.06)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-            ]);
-          }).toList(),
-        ),
-      ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      it['producto_codigo'] ?? 'Producto',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: DesignTokens.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Unidad: ${it['unidad'] ?? 'N/A'}',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                        color: DesignTokens.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${it['cantidad']}',
+                    style: const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                      color: DesignTokens.primary,
+                    ),
+                  ),
+                  const Text(
+                    'CANTIDAD',
+                    style: TextStyle(
+                      fontFamily: 'Work Sans',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                      color: DesignTokens.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              if (isNew) ...[
+                const SizedBox(width: 16),
+                Container(
+                  width: 1,
+                  height: 32,
+                  color: DesignTokens.primary.withOpacity(0.08),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => onRemove?.call(idx),
+                  icon: const Icon(Icons.remove_circle_outline_rounded, color: Colors.redAccent),
+                  splashRadius: 24,
+                ),
+              ]
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
