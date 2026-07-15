@@ -326,12 +326,10 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           const SizedBox(height: 20),
 
           // ── DEPÓSITO CIRCULANTE ───────────────────────────────────────────
-          if (vehiculo.isNotEmpty) ...[
-            _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
-            const SizedBox(height: 10),
-            _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
-            const SizedBox(height: 20),
-          ],
+          _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
+              const SizedBox(height: 10),
+              _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
+              const SizedBox(height: 20),
 
           // ── ÍTEMS DE CARGA ────────────────────────────────────────────────
           Row(
@@ -714,12 +712,10 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                 children: [
                   _sectionHeader(codigo, estado, viajeCode, vehiculoCode, choferNombre),
                   const SizedBox(height: 24),
-                  if (vehiculo.isNotEmpty) ...[
-                    _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
-                    const SizedBox(height: 10),
-                    _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
-                    const SizedBox(height: 24),
-                  ],
+                  _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
+                      const SizedBox(height: 10),
+                      _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
+                      const SizedBox(height: 24),
                   // BOTONES
                   if ((_isDeposito || _isChoferDepositoHuinca) && _canChangeEstado) ...[
                     if (estado == AppStates.pendiente)
