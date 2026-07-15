@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../backend/supabase_service.dart';
 import '../backend/app_states.dart';
 import '../backend/design_tokens.dart';
-import '../components/sidebar.dart';
 
 class CargaDetalleWidget extends StatefulWidget {
   final String? cargaId;
@@ -304,12 +303,25 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _buildPremiumHeader(codigo),
-            // ── HEADER ────────────────────────────────────────────────────────
+      appBar: AppBar(
+        backgroundColor: DesignTokens.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(codigo,
+            style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
+                fontSize: 17, color: DesignTokens.primary)),
+        bottom: PreferredSize(preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: DesignTokens.primary.withOpacity(0.08))),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // ── HEADER ────────────────────────────────────────────────────────
           _sectionHeader(codigo, estado, viajeCode, vehiculoCode, choferNombre),
           const SizedBox(height: 20),
 
@@ -1049,12 +1061,21 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _buildPremiumHeader('Nueva Carga'),
-            _labelText('1. SELECCIONAR VIAJE'),
+      appBar: AppBar(
+        backgroundColor: DesignTokens.surface,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Nueva Carga',
+            style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800,
+                fontSize: 17, color: DesignTokens.primary)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _labelText('1. SELECCIONAR VIAJE'),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
