@@ -136,11 +136,9 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
                     opacity: _isSplashActive ? 0.0 : 1.0,
                     duration: const Duration(milliseconds: 800),
                     curve: Curves.easeIn,
-                    child: CustomPaint(
-                      painter: HoneycombPainter(
-                        color: theme.primary.withOpacity(0.03),
+                      child: CustomPaint(
+                        painter: const HoneycombPainter(),
                       ),
-                    ),
                   ),
                 ),
                 // Main Content
@@ -339,46 +337,4 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
   }
 }
 
-class HoneycombPainter extends CustomPainter {
-  final Color color;
-  HoneycombPainter({required this.color});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    const double radius = 30.0;
-    const double height = radius * 2;
-    const double width = radius * 1.732;
-
-    for (double y = 0; y < size.height + height; y += height * 0.75) {
-      bool offset = (y / (height * 0.75)).floor() % 2 != 0;
-      for (double x = 0; x < size.width + width; x += width) {
-        double currentX = x + (offset ? width / 2 : 0);
-        _drawHexagon(canvas, paint, currentX, y, radius);
-      }
-    }
-  }
-
-  void _drawHexagon(Canvas canvas, Paint paint, double x, double y, double r) {
-    final path = Path();
-    for (int i = 0; i < 6; i++) {
-      double angle = (30 + 60 * i) * 3.14159 / 180;
-      double px = x + r * cos(angle);
-      double py = y + r * sin(angle);
-      if (i == 0) {
-        path.moveTo(px, py);
-      } else {
-        path.lineTo(px, py);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

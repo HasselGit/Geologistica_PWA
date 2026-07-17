@@ -346,7 +346,16 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      body: SingleChildScrollView(
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: HoneycombPainter(),
+              ),
+            ),
+          ),
+          SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _buildPremiumHeader(codigo),
@@ -429,6 +438,8 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
             const SizedBox(height: 40),
           ],
         ]),
+      ),
+      ],
       ),
     );
   }
@@ -745,7 +756,16 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      body: Row(
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: HoneycombPainter(),
+              ),
+            ),
+          ),
+          Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
@@ -871,6 +891,8 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
         ),
       ),
         ],
+      ),
+      ],
       ),
     );
   }
@@ -1206,7 +1228,16 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      body: SingleChildScrollView(
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: HoneycombPainter(),
+              ),
+            ),
+          ),
+          SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _buildPremiumHeader('Nueva Carga'),
@@ -1324,6 +1355,8 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           const SizedBox(height: 40),
         ]),
       ),
+      ],
+      ),
     );
   }
 
@@ -1333,7 +1366,16 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
     return Scaffold(
       backgroundColor: DesignTokens.surfaceLow,
-      body: Row(
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: HoneycombPainter(),
+              ),
+            ),
+          ),
+          Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
@@ -1498,6 +1540,8 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
         ),
       ),
         ],
+      ),
+      ],
       ),
     );
   }
