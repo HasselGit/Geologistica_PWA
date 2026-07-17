@@ -357,7 +357,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
           // ── DEPÓSITO CIRCULANTE ───────────────────────────────────────────
           _labelText('DEPÓSITO CIRCULANTE DEL VEHÍCULO'),
               const SizedBox(height: 10),
-              _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
+              _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items, capKg),
               const SizedBox(height: 20),
 
           // ── ÍTEMS DE CARGA ────────────────────────────────────────────────
@@ -609,15 +609,15 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
     );
   }
 
-  Widget _depositoCard(Map<String, Map<String, dynamic>> baseInventario, List<Map<String, dynamic>> itemsCarga) {
+  Widget _depositoCard(Map<String, Map<String, dynamic>> baseInventario, List<Map<String, dynamic>> itemsCarga, double capKg) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
-      child: _buildInventarioTable(baseInventario, itemsCarga),
+      child: _buildInventarioTable(baseInventario, itemsCarga, capKg),
     );
   }
 
@@ -771,7 +771,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                               const SizedBox(height: 32),
                               _labelText('DEPÓSITO CIRCULANTE (PROYECTADO)'),
                               const SizedBox(height: 16),
-                              _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
+                              _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items, capKg),
                           const SizedBox(height: 32),
                           if ((_isDeposito || _isChoferDepositoHuinca) && _canChangeEstado) ...[
                             if (estado == AppStates.pendiente)
@@ -1077,7 +1077,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
     return inventario;
   }
 
-  Widget _buildInventarioTable(Map<String, Map<String, dynamic>> base, List<Map<String, dynamic>> itemsCarga) {
+  Widget _buildInventarioTable(Map<String, Map<String, dynamic>> base, List<Map<String, dynamic>> itemsCarga, double capKg) {
     Map<String, Map<String, dynamic>> proyectado = {};
     base.forEach((k, v) => proyectado[k] = {'cantidad': v['cantidad'], 'peso': v['peso']});
     
@@ -1142,7 +1142,7 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
         ),
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: DesignTokens.primary.withOpacity(0.05), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
+          decoration: BoxDecoration(color: DesignTokens.primary.withValues(alpha: 0.05), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1150,7 +1150,19 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                Text('${totalPeso.toStringAsFixed(0)} kg', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: DesignTokens.primary)),
             ],
           )
-        )
+        ),
+        if (capKg > 0)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                 const Text('CAPACIDAD DISPONIBLE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.green)),
+                 Text('${(capKg - totalPeso) > 0 ? (capKg - totalPeso).toStringAsFixed(0) : 0} kg', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Colors.green)),
+              ],
+            ),
+          ),
       ]
     );
   }
