@@ -1173,18 +1173,17 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
             ],
           )
         ),
-        if (capKg > 0)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                 const Text('CAPACIDAD DISPONIBLE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.green)),
-                 Text('${(capKg - totalPeso) > 0 ? (capKg - totalPeso).toStringAsFixed(0) : 0} kg', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Colors.green)),
-              ],
-            ),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: capKg > 0 ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8))),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+               Text('CAPACIDAD DISPONIBLE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: capKg > 0 ? Colors.green : Colors.grey)),
+               Text(capKg > 0 ? '${(capKg - totalPeso) > 0 ? (capKg - totalPeso).toStringAsFixed(0) : 0} kg' : 'No definida', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: capKg > 0 ? Colors.green : Colors.grey)),
+            ],
           ),
+        ),
       ]
     );
   }
