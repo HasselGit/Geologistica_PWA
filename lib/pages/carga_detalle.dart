@@ -754,21 +754,24 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
               padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
               child: Padding(
                 padding: const EdgeInsets.only(top: 48, bottom: 64),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // COLUMNA IZQUIERDA
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildPremiumHeader(codigo),
-                          _sectionHeader(codigo, estado, viajeCode, vehiculoCode, choferNombre),
-                          const SizedBox(height: 32),
-                          _labelText('DEPÓSITO CIRCULANTE (PROYECTADO)'),
-                          const SizedBox(height: 16),
-                          _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
+                    _buildPremiumHeader(codigo),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // COLUMNA IZQUIERDA
+                        Expanded(
+                          flex: 4,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _sectionHeader(codigo, estado, viajeCode, vehiculoCode, choferNombre),
+                              const SizedBox(height: 32),
+                              _labelText('DEPÓSITO CIRCULANTE (PROYECTADO)'),
+                              const SizedBox(height: 16),
+                              _depositoCard(_calcularInventarioCamion(_carga!["viaje_detalle"]), items),
                           const SizedBox(height: 32),
                           if ((_isDeposito || _isChoferDepositoHuinca) && _canChangeEstado) ...[
                             if (estado == AppStates.pendiente)
@@ -862,9 +865,11 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
+        ),
+      ),
         ],
       ),
     );
@@ -1325,17 +1330,20 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
               padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
               child: Padding(
                 padding: const EdgeInsets.only(top: 48, bottom: 64),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // COLUMNA IZQUIERDA
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildPremiumHeader('Nueva Carga'),
-                          _labelText('1. SELECCIONAR VIAJE'),
+                    _buildPremiumHeader('Nueva Carga'),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // COLUMNA IZQUIERDA
+                        Expanded(
+                          flex: 4,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _labelText('1. SELECCIONAR VIAJE'),
                           const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1472,9 +1480,11 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
+        ),
+      ),
         ],
       ),
     );
