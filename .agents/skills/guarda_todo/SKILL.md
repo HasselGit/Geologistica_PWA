@@ -22,7 +22,9 @@ Cuando el usuario invoque esta skill mediante el comando verbal "guarda todo" (o
 
 ## 3. Auto-Actualización de Directrices
 - Revisa superficialmente usando `git status` y `git diff` qué archivos se han modificado.
-- Agrega un comentario en `.agents/AGENTS.md` o actualiza brevemente el archivo de arquitectura en `docs/` (si existiera) detallando: "El [fecha], se modificaron los archivos X, Y, Z para las funcionalidades correspondientes". Mantén esta actualización muy concisa.
+- Agrega un comentario en `.agents/AGENTS.md` resumiendo las modificaciones realizadas.
+- Actualiza obligatoriamente `sesion_actual.md` (ubicado en la raíz) añadiendo una sección detallada sobre las tareas realizadas en la sesión actual.
+- Actualiza `ARQUITECTURA_GEOLOGISTICA.md` (ubicado en la raíz) si hubo algún cambio o decisión estructural, de diseño, base de datos o lógica relevante que deba ser documentado permanentemente.
 
 ## 4. Subida a Producción (Commit y Push Autónomo)
 - Ejecuta `git add .`
