@@ -24,3 +24,5 @@ El 2026-07-09, se modificaron los archivos lib/pages/paradadetalle.dart, vercel.
 
 
 - El 15/07/2026, se modificó lib/pages/carga_detalle.dart rediseñando su layout con el Diseño Premium y corrigiendo el uso de geo_sidebar.
+
+- El 18/07/2026, se corrigió el diseño y responsiveness de los detalles de gastos en viaje_detalle.dart conectándolo con gastos_detalle.dart, y se aplicó skeleton a carga_detalle.dart.
