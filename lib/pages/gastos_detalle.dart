@@ -94,24 +94,85 @@ class GastosDetalleDialog extends StatelessWidget {
                   ),
                   SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                    _buildBentoItem('Importe Total', '\$ $importe', Icons.attach_money_rounded, Colors.white, width: 380, isHighlight: true),
-                    _buildBentoItem('Tipo de Gasto', tipo.toUpperCase(), Icons.category_rounded, const Color(0xFFFFF9E6), width: 340, textColor: const Color(0xFFC68E17), isHighlight: true),
-                    _buildBentoItem('Fecha de Registro', fechaStr, Icons.calendar_today_rounded, Colors.white, width: 230),
-                    _buildBentoItem('Registrado por', chofer, Icons.person_rounded, Colors.white, width: 250),
-                    _buildBentoItem('Viaje Asociado', viaje, Icons.local_shipping_rounded, Colors.white, width: 230),
-                    _buildBentoItem('Forma de Pago', metodo, Icons.payment_rounded, Colors.white, width: 230),
-                    _buildBentoItem('Comprobante', comprobante, Icons.receipt_rounded, Colors.white, width: 250),
-                    if (tipo == 'Combustible' && litros != null)
-                      _buildBentoItem('Litros Cargados', '$litros L', Icons.local_gas_station_rounded, Colors.white, width: 230),
-                    if (descripcion.toString().trim().isNotEmpty)
-                      _buildBentoItem('Observaciones', descripcion, Icons.notes_rounded, Colors.white, width: 736),
-                    if (ticketUrl != null && ticketUrl.toString().isNotEmpty)
-                      _buildBentoImage('Ticket / Comprobante', ticketUrl, context),
-                  ],
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isDesktop = constraints.maxWidth > 600;
+                        if (isDesktop) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(flex: 3, child: _buildBentoItem('Importe Total', '\$ $importe', Icons.attach_money_rounded, Colors.white, isHighlight: true)),
+                                  const SizedBox(width: 16),
+                                  Expanded(flex: 2, child: _buildBentoItem('Tipo de Gasto', tipo.toUpperCase(), Icons.category_rounded, const Color(0xFFFFF9E6), textColor: const Color(0xFFC68E17), isHighlight: true)),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(child: _buildBentoItem('Fecha de Registro', fechaStr, Icons.calendar_today_rounded, Colors.white)),
+                                  const SizedBox(width: 16),
+                                  Expanded(child: _buildBentoItem('Registrado por', chofer, Icons.person_rounded, Colors.white)),
+                                  const SizedBox(width: 16),
+                                  Expanded(child: _buildBentoItem('Viaje Asociado', viaje, Icons.local_shipping_rounded, Colors.white)),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(child: _buildBentoItem('Forma de Pago', metodo, Icons.payment_rounded, Colors.white)),
+                                  const SizedBox(width: 16),
+                                  Expanded(child: _buildBentoItem('Comprobante', comprobante, Icons.receipt_rounded, Colors.white)),
+                                  if (tipo.toLowerCase().contains('combustible') && litros != null) ...[
+                                    const SizedBox(width: 16),
+                                    Expanded(child: _buildBentoItem('Litros Cargados', '$litros L', Icons.local_gas_station_rounded, Colors.white)),
+                                  ],
+                                ],
+                              ),
+                              if (descripcion.toString().trim().isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                _buildBentoItem('Observaciones', descripcion, Icons.notes_rounded, Colors.white),
+                              ],
+                              if (ticketUrl != null && ticketUrl.toString().isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                _buildBentoImage('Ticket / Comprobante', ticketUrl, context),
+                              ],
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildBentoItem('Importe Total', '\$ $importe', Icons.attach_money_rounded, Colors.white, isHighlight: true),
+                              const SizedBox(height: 16),
+                              _buildBentoItem('Tipo de Gasto', tipo.toUpperCase(), Icons.category_rounded, const Color(0xFFFFF9E6), textColor: const Color(0xFFC68E17), isHighlight: true),
+                              const SizedBox(height: 16),
+                              _buildBentoItem('Fecha de Registro', fechaStr, Icons.calendar_today_rounded, Colors.white),
+                              const SizedBox(height: 16),
+                              _buildBentoItem('Registrado por', chofer, Icons.person_rounded, Colors.white),
+                              const SizedBox(height: 16),
+                              _buildBentoItem('Viaje Asociado', viaje, Icons.local_shipping_rounded, Colors.white),
+                              const SizedBox(height: 16),
+                              _buildBentoItem('Forma de Pago', metodo, Icons.payment_rounded, Colors.white),
+                              const SizedBox(height: 16),
+                              _buildBentoItem('Comprobante', comprobante, Icons.receipt_rounded, Colors.white),
+                              if (tipo.toLowerCase().contains('combustible') && litros != null) ...[
+                                const SizedBox(height: 16),
+                                _buildBentoItem('Litros Cargados', '$litros L', Icons.local_gas_station_rounded, Colors.white),
+                              ],
+                              if (descripcion.toString().trim().isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                _buildBentoItem('Observaciones', descripcion, Icons.notes_rounded, Colors.white),
+                              ],
+                              if (ticketUrl != null && ticketUrl.toString().isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                _buildBentoImage('Ticket / Comprobante', ticketUrl, context),
+                              ],
+                            ],
+                          );
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -123,9 +184,8 @@ class GastosDetalleDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildBentoItem(String label, String value, IconData icon, Color bgColor, {required double width, bool isHighlight = false, Color? textColor}) {
+  Widget _buildBentoItem(String label, String value, IconData icon, Color bgColor, {bool isHighlight = false, Color? textColor}) {
     return Container(
-      width: width,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: bgColor,
@@ -161,7 +221,6 @@ class GastosDetalleDialog extends StatelessWidget {
 
   Widget _buildBentoImage(String label, String url, BuildContext context) {
     return Container(
-      width: 736,
       height: 280,
       decoration: BoxDecoration(
         color: Colors.white,
