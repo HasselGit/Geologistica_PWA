@@ -241,7 +241,14 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: DesignTokens.secondary)));
+    if (_loading) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 900;
+          return isDesktop ? _buildSkeletonDesktop() : _buildSkeletonMobile();
+        },
+      );
+    }
     
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -255,6 +262,87 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
         
         return isDesktop ? _buildDetalleDesktop() : _buildDetalleMobile();
       },
+    );
+  }
+
+  Widget _buildSkeletonDesktop() {
+    return Scaffold(
+      backgroundColor: DesignTokens.surface,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+          Expanded(
+            child: Stack(
+              children: [
+                const Positioned.fill(
+                  child: CustomPaint(
+                    painter: HoneycombPainter(),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 48),
+                        Row(
+                          children: [
+                            Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10))),
+                            const SizedBox(width: 24),
+                            Container(width: 250, height: 32, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8))),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Container(height: 400, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(28))),
+                            ),
+                            const SizedBox(width: 32),
+                            Expanded(
+                              flex: 1,
+                              child: Container(height: 600, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(28))),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonMobile() {
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: DesignTokens.surface,
+        leading: Center(
+          child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10))),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Container(height: 120, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(16))),
+            const SizedBox(height: 24),
+            Container(height: 200, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(16))),
+            const SizedBox(height: 24),
+            Container(height: 200, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(16))),
+          ],
+        ),
+      ),
     );
   }
 

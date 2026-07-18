@@ -97,8 +97,8 @@ class _GeoSidebarState extends State<GeoSidebar> {
                 title,
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  fontSize: 12.5,
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                  fontSize: 13.5,
                   color: active ? DesignTokens.secondary : (color ?? Colors.white70),
                 ),
               )
