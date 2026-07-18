@@ -238,3 +238,21 @@ En esta sesión perfeccionamos la pantalla de `Operación en Parada` (`paradadet
 ### 👻 4. Corrección de Remitos Legados o Huérfanos
 - **El Problema**: Los remitos generados en versiones anteriores de la app no tenían el campo `apicultor_id` grabado en la tabla. Al haber varios apicultores, el sistema no sabía a quién asignárselo y lo invisibilizaba.
 - **La Solución**: Se añadió lógica de *fallback*. Si el sistema detecta un remito donde `apicultor_id` está vacío, lo asignará proactivamente al Apicultor Principal (el creador/dueño lógico de la parada), evitando la pérdida visual de comprobantes en paradas compartidas.
+
+---
+
+## 🎨 Hito Estético: Diseño Premium Bento y Responsiveness (18 de Julio, 2026)
+
+En esta sesión implementamos una estandarización visual premium sobre los formularios y modales de detalles, resolviendo problemas críticos de renderizado en pantallas pequeñas.
+
+### 🍱 1. Integración de Diseño Bento en Detalle de Gastos
+- **El Problema**: El modal de "Detalle de Gasto" renderizado desde `viaje_detalle.dart` usaba un layout de lista vertical antiguo codificado en duro (hardcoded), que ignoraba completamente el diseño premium y desaprovechaba el espacio en resoluciones anchas. Además, confundía al usuario con una enorme marca de agua que simulaba ser el ticket.
+- **La Solución**: Se eliminó la generación en duro del modal en `viaje_detalle.dart` y se conectó con el widget independiente `GastosDetalleDialog`. Ahora se presenta un diseño con cuadrículas (Tarjetas tipo Bento), íconos categorizados y espacios negativos correctos que jerarquizan Importe Total y Tipo de Gasto.
+
+### 📱 2. Responsiveness Adaptativo 
+- **El Problema**: Al usar anchos fijos (ej. 380px) para el diseño de escritorio en el nuevo componente Bento, las pantallas pequeñas sufrían desbordamientos (overflows) donde los componentes se "envolvían" caóticamente (Wrap), rompiendo los márgenes y empujando las tarjetas fuera del área visible de la pantalla.
+- **La Solución**: Se eliminó el uso de `Wrap` y se reconstruyó la lógica estructural empleando un `LayoutBuilder`. Ahora, si la pantalla tiene más de 600px de ancho, los elementos se subdividen proporcionalmente mediante `Row` y `Expanded`. Si es menor a 600px, el diseño colapsa limpia y ordenadamente a un formato `Column` de ancho completo, sin desbordes.
+
+### 💀 3. Skeleton Loaders Uniformes
+- **El Problema**: Algunas páginas, como `carga_detalle.dart`, no mostraban estado de carga estandarizado, generando parpadeos en blanco.
+- **La Solución**: Se implementó una pantalla de carga tipo esqueleto estructural básico que respeta la posición real del `GeoSidebar`, entregando un feedback visual inmediato e impecable durante el fetching de la base de datos de Supabase.
