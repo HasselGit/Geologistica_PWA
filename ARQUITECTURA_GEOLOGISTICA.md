@@ -290,3 +290,10 @@ Las solicitudes y viajes siguen un circuito de estados estricto:
 - **Vulnerabilidad PWA Web (Evicción de Caché)**: A pesar del Service Worker perfecto, los navegadores en iOS/Android deciden purgar proactivamente el caché WASM pesado tras unas semanas, destruyendo la garantía del Arranque en Frío de los choferes cuando viajan a campos aislados sin cobertura.
 - **Directriz Futura**: Flutter Web PWA se mantendrá de forma permanente para los roles de oficina (Gerencia, CEO, Administración, Compras). Para los roles de terreno (Chofer, Apicultor Remoto), el desarrollo debe transicionar forzosamente hacia la compilación de una **Aplicación Nativa (Android APK)** a futuro. Esta es la única forma comprobada de aislar completamente el arranque en frío y depender únicamente del estado de caché de Supabase o Hive en el dispositivo, esquivando las arbitrariedades de Safari y Chrome.
 
+
+  ## 26. Consolidaci�n del Dise�o Premium y Bento Box (18 de Julio de 2026)
+  ### A. Estructuras Modales Responsivas
+  - **Componentizaci�n**: Se proh�be el uso de layouts verticales ("en duro") para modales complejos como el Detalle de Gasto. Todo modal debe abstraerse a su propio widget independiente (gastos_detalle.dart).
+  - **Responsiveness**: Los modales complejos deben usar LayoutBuilder para colapsar de horizontal a vertical en m�viles sin usar Wrap con anchos fijos para evitar overflows.
+  ### B. Feedback de Carga Estructural (Skeletons)
+  - **Skeleton Loaders**: Toda pantalla que requiera consultas a red debe renderizar un esqueleto estructural respetando el GeoSidebar.
