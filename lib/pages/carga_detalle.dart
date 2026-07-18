@@ -280,39 +280,8 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
                     painter: HoneycombPainter(),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 48),
-                        Row(
-                          children: [
-                            Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10))),
-                            const SizedBox(width: 24),
-                            Container(width: 250, height: 32, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8))),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Container(height: 400, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(28))),
-                            ),
-                            const SizedBox(width: 32),
-                            Expanded(
-                              flex: 1,
-                              child: Container(height: 600, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(28))),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                const Center(
+                  child: CircularProgressIndicator(color: DesignTokens.secondary),
                 ),
               ],
             ),
@@ -327,21 +296,9 @@ class _CargaDetalleWidgetState extends State<CargaDetalleWidget> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: DesignTokens.surface,
-        leading: Center(
-          child: Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10))),
-        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Container(height: 120, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(16))),
-            const SizedBox(height: 24),
-            Container(height: 200, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(16))),
-            const SizedBox(height: 24),
-            Container(height: 200, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(16))),
-          ],
-        ),
+      body: const Center(
+        child: CircularProgressIndicator(color: DesignTokens.secondary),
       ),
     );
   }

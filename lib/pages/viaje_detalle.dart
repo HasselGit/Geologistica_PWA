@@ -125,10 +125,46 @@ class _ViajeDetalleWidgetState extends State<ViajeDetalleWidget> {
   // ─────────────────────────────────────────────────────────────────────────
   // BUILD
   // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildSkeletonDesktop() {
+    return Scaffold(
+      backgroundColor: DesignTokens.surface,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+          const Expanded(
+            child: Center(
+              child: CircularProgressIndicator(color: DesignTokens.secondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonMobile() {
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: DesignTokens.surface,
+      ),
+      body: const Center(
+        child: CircularProgressIndicator(color: DesignTokens.secondary),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: DesignTokens.secondary)));
+    if (_loading) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 900;
+          return isDesktop ? _buildSkeletonDesktop() : _buildSkeletonMobile();
+        },
+      );
+    }
     if (_viaje == null) return const Scaffold(body: Center(child: Text('No se encontró el viaje')));
 
     final List<Map<String, dynamic>> paradas = [];

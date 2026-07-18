@@ -24,16 +24,23 @@ class GastosDetalleDialog extends StatelessWidget {
     final litros = gasto['cantidad_litros']?.toString();
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       backgroundColor: DesignTokens.surface,
       elevation: 0,
       child: Container(
         width: 800,
         constraints: const BoxConstraints(maxWidth: 800, maxHeight: 900),
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.fromLTRB(48, 40, 48, 48),
         decoration: BoxDecoration(
           color: DesignTokens.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF08201A).withValues(alpha: 0.1),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            )
+          ]
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -42,11 +49,20 @@ class GastosDetalleDialog extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Detalle de Gasto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: DesignTokens.primary, fontFamily: 'Manrope')),
-                IconButton(icon: const Icon(Icons.close_rounded, size: 24), onPressed: () => Navigator.pop(context)),
+                const Text('Detalle de Gasto', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 28, color: DesignTokens.primary, fontFamily: 'Manrope', letterSpacing: -0.5)),
+                Container(
+                  decoration: BoxDecoration(
+                    color: DesignTokens.primary.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 24, color: DesignTokens.primary),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Flexible(
               child: Stack(
                 children: [
@@ -110,31 +126,32 @@ class GastosDetalleDialog extends StatelessWidget {
   Widget _buildBentoItem(String label, String value, IconData icon, Color bgColor, {required double width, bool isHighlight = false, Color? textColor}) {
     return Container(
       width: width,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.05)),
-        boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 2))],
+        boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 10, offset: Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: DesignTokens.secondary),
-              const SizedBox(width: 8),
-              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold, fontFamily: 'Work Sans')),
+              Icon(icon, size: 20, color: DesignTokens.secondary),
+              const SizedBox(width: 12),
+              Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold, fontFamily: 'Work Sans', letterSpacing: 0.5)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             value,
             style: TextStyle(
-              fontSize: isHighlight ? 28 : 16,
-              fontWeight: FontWeight.w800,
+              fontSize: isHighlight ? 32 : 18,
+              fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w700,
               color: textColor ?? DesignTokens.primary,
               fontFamily: isHighlight ? 'Manrope' : 'Inter',
+              letterSpacing: isHighlight ? -1.0 : -0.5,
             ),
           ),
         ],
