@@ -582,7 +582,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
             child: Row(
               children: [
                 InkWell(
-                  onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+                  onTap: () => context.go('/home'),
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     width: 36,
@@ -592,7 +592,10 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.black.withOpacity(0.05)),
                     ),
-                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                    child: const Tooltip(
+                      message: 'Volver al Inicio',
+                      child: Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -905,13 +908,20 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
           return [
             pw.Header(
               level: 0,
-              child: pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text('GeoLogística PWA - Gestión de Solicitudes', style: pw.TextStyle(font: fontBold, fontSize: 18, color: PdfColors.blueGrey900)),
-                  pw.Text('$tipoActual ${estadoFiltro != 'Todas' ? '($estadoFiltro)' : ''}'.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 14, color: PdfColors.amber800)),
-                ]
-              )
+                  pw.SizedBox(height: 4),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('$tipoActual ${estadoFiltro != 'Todas' ? '($estadoFiltro)' : ''}'.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 14, color: PdfColors.amber800)),
+                      pw.Text('Impreso el: ${DateTime.now().toLocal().toString().substring(0, 16)}', style: pw.TextStyle(font: fontData, fontSize: 10, color: PdfColors.grey700)),
+                    ],
+                  ),
+                ],
+              ),
             ),
             pw.SizedBox(height: 20),
             pw.TableHelper.fromTextArray(
@@ -941,7 +951,14 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                   children: [
                     pw.Text('Totales por producto:', style: pw.TextStyle(font: fontBold, fontSize: 12)),
                     pw.SizedBox(height: 4),
-                    ...totalesPorProducto.entries.map((e) => pw.Text('${e.key}: ${e.value} ${_getUnidad(e.key)}', style: pw.TextStyle(font: fontData, fontSize: 11))),
+                    ...totalesPorProducto.entries.map((e) => pw.Row(
+                          mainAxisSize: pw.MainAxisSize.min,
+                          children: [
+                            pw.SizedBox(width: 100, child: pw.Text('${e.key}:', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: fontData, fontSize: 11))),
+                            pw.SizedBox(width: 10),
+                            pw.SizedBox(width: 80, child: pw.Text('${e.value} ${_getUnidad(e.key)}', textAlign: pw.TextAlign.left, style: pw.TextStyle(font: fontData, fontSize: 11))),
+                          ],
+                        )),
                     pw.SizedBox(height: 8),
                     pw.Text('Total de solicitudes: ${list.length}', style: pw.TextStyle(font: fontBold, fontSize: 12)),
                   ],
@@ -953,9 +970,10 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => doc.save(),
-      name: 'Resumen_Solicitudes_$tipoActual.pdf',
+    final bytes = await doc.save();
+    await Printing.sharePdf(
+      bytes: bytes,
+      filename: 'Resumen_Solicitudes_$tipoActual.pdf',
     );
   }
 
@@ -963,7 +981,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
     final api = n['apicultores'] ?? {};
     final estado = n['estado'] ?? AppStates.pendiente;
     final normalizedEstado = AppStates.normalize(estado);
-    final bool canNavigate = (normalizedEstado == AppStates.asignada || normalizedEstado == AppStates.enCurso);
+    final bool canNavigate = (normalizedEstado == AppStates.asignada || normalizedEstado == AppStates.enCurso || normalizedEstado == AppStates.terminado);
 
     return Container(
       width: double.infinity,
@@ -979,7 +997,11 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
             ? () {
                 final viajeId = _solicitudToViaje[n['id'].toString()];
                 if (viajeId != null) {
-                  context.push('/viajedetalle?viajeId=$viajeId');
+                  if (normalizedEstado == AppStates.asignada) {
+                    context.push('/planificarViaje?editId=$viajeId').then((_) => _fetchData());
+                  } else {
+                    context.push('/viajedetalle?viajeId=$viajeId').then((_) => _fetchData());
+                  }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
