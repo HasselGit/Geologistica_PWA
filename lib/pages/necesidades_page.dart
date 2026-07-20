@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../backend/supabase_service.dart';
 import '../backend/productos_data.dart';
 import '../backend/design_tokens.dart';
 import '../backend/app_states.dart';
+import '../widgets/geo_sidebar.dart';
 
 class NecesidadesPageWidget extends StatefulWidget {
   const NecesidadesPageWidget({super.key});
@@ -21,6 +23,8 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
   Map<String, String> _solicitudToViaje = {};
   bool _loading = true;
   String? _error;
+  String? _userRole;
+  String? _userEmail;
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -42,6 +46,9 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
   Future<void> _fetchData() async {
     setState(() { _loading = true; _error = null; });
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final userRole = prefs.getString('userRole');
+      final userEmail = prefs.getString('userEmail');
       final service = SupabaseService();
       final neceData = await service.getAllNecesidades();
       final apiData = await service.getApicultores();
@@ -62,6 +69,8 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
 
       if (mounted) {
         setState(() {
+          _userRole = userRole;
+          _userEmail = userEmail;
           _necesidades = neceData;
           _filteredNecesidades = neceData;
           _apicultores = apiData;
@@ -482,57 +491,161 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DesignTokens.surfaceLow,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        title: Text('Gestión de Solicitudes', style: DesignTokens.headlineStyle().copyWith(fontSize: 17)),
-        iconTheme: const IconThemeData(color: DesignTokens.primary),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: DesignTokens.primary,
-          indicatorColor: DesignTokens.secondary,
-          tabs: const [
-            Tab(text: 'RECOLECCIONES'),
-            Tab(text: 'DISTRIBUCIONES'),
-          ],
-        ),
-      ),
-      body: _loading 
-        ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-        : Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar apicultor, localidad o producto...',
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+        
+        if (isDesktop) {
+          return Scaffold(
+            backgroundColor: DesignTokens.surfaceLow,
+            body: Stack(
+              children: [
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: HoneycombPainter(),
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
+                Row(
                   children: [
-                    _buildList('Recolección'),
-                    _buildList('Distribución'),
+                    GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                        child: Column(
+                          children: [
+                            _buildHeader(isDesktop),
+                            Expanded(
+                              child: _loading 
+                                ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                                : TabBarView(
+                                    controller: _tabController,
+                                    children: [
+                                      _buildList('Recolección'),
+                                      _buildList('Distribución'),
+                                    ],
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: _addNecesidad,
+              backgroundColor: DesignTokens.secondary,
+              foregroundColor: DesignTokens.primary,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('NUEVA SOLICITUD', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: DesignTokens.surfaceLow,
+          body: Column(
+            children: [
+              _buildHeader(isDesktop),
+              Expanded(
+                child: _loading 
+                  ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildList('Recolección'),
+                        _buildList('Distribución'),
+                      ],
+                    ),
               ),
             ],
           ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addNecesidad,
-        backgroundColor: DesignTokens.secondary,
-        foregroundColor: DesignTokens.primary,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('NUEVA SOLICITUD', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _addNecesidad,
+            backgroundColor: DesignTokens.secondary,
+            foregroundColor: DesignTokens.primary,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('NUEVA SOLICITUD', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader(bool isDesktop) {
+    return Container(
+      color: isDesktop ? Colors.transparent : DesignTokens.surface,
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 16, isDesktop ? 0 : 16, 16),
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.black.withOpacity(0.05)),
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Text(
+                    'Gestión de Solicitudes',
+                    style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary, letterSpacing: -0.5),
+                  ),
+                ),
+                if (isDesktop) _buildSearchBar(isDesktop),
+              ],
+            ),
+          ),
+          if (!isDesktop) Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: _buildSearchBar(isDesktop),
+          ),
+          TabBar(
+            controller: _tabController,
+            labelColor: DesignTokens.primary,
+            indicatorColor: DesignTokens.secondary,
+            tabs: const [
+              Tab(text: 'RECOLECCIONES'),
+              Tab(text: 'DISTRIBUCIONES'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(bool isDesktop) {
+    return Container(
+      width: isDesktop ? 350 : double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+      ),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Buscar apicultor, localidad o producto...',
+          prefixIcon: const Icon(Icons.search_rounded, color: Colors.black45),
+          filled: true,
+          fillColor: Colors.transparent,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        ),
       ),
     );
   }
