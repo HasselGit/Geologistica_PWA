@@ -523,8 +523,8 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                                 : TabBarView(
                                     controller: _tabController,
                                     children: [
-                                      _buildList('Recolección'),
-                                      _buildList('Distribución'),
+                                      _buildList('Recolección', isDesktop),
+                                      _buildList('Distribución', isDesktop),
                                     ],
                                   ),
                             ),
@@ -557,8 +557,8 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                   : TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildList('Recolección'),
-                        _buildList('Distribución'),
+                        _buildList('Recolección', isDesktop),
+                        _buildList('Distribución', isDesktop),
                       ],
                     ),
               ),
@@ -616,8 +616,15 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
           ),
           TabBar(
             controller: _tabController,
-            labelColor: DesignTokens.primary,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            dividerColor: Colors.black.withOpacity(0.05),
             indicatorColor: DesignTokens.secondary,
+            indicatorWeight: 3,
+            labelColor: DesignTokens.primary,
+            unselectedLabelColor: Colors.black38,
+            labelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
+            unselectedLabelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w600, fontSize: 11, letterSpacing: 0.5),
             tabs: const [
               Tab(text: 'RECOLECCIONES'),
               Tab(text: 'DISTRIBUCIONES'),
@@ -631,26 +638,27 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
   Widget _buildSearchBar(bool isDesktop) {
     return Container(
       width: isDesktop ? 350 : double.infinity,
+      height: 40,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.black.withOpacity(0.05)),
       ),
       child: TextField(
         controller: _searchController,
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           hintText: 'Buscar apicultor, localidad o producto...',
-          prefixIcon: const Icon(Icons.search_rounded, color: Colors.black45),
-          filled: true,
-          fillColor: Colors.transparent,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black38),
+          prefixIcon: Icon(Icons.search_rounded, size: 18, color: Colors.black38),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87),
       ),
     );
   }
 
-  Widget _buildList(String tipo) {
+  Widget _buildList(String tipo, bool isDesktop) {
     final list = _filteredNecesidades.where((n) => n['tipo'] == tipo).toList();
     
     if (list.isEmpty) {
@@ -669,7 +677,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
     return RefreshIndicator(
       onRefresh: _fetchData,
       child: ListView.builder(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, 20, isDesktop ? 0 : 16, 20),
         itemCount: list.length,
         itemBuilder: (context, index) {
           final n = list[index];
