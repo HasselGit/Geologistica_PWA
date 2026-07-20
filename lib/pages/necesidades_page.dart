@@ -536,13 +536,6 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                 ),
               ],
             ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: _addNecesidad,
-              backgroundColor: DesignTokens.secondary,
-              foregroundColor: DesignTokens.primary,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('NUEVA SOLICITUD', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
-            ),
           );
         }
 
@@ -566,10 +559,9 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: _addNecesidad,
-            backgroundColor: DesignTokens.secondary,
-            foregroundColor: DesignTokens.primary,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('NUEVA SOLICITUD', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
+            backgroundColor: DesignTokens.primary,
+            icon: const Icon(Icons.add_rounded, color: Colors.white),
+            label: const Text('NUEVA SOLICITUD', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, color: Colors.white, fontSize: 12, letterSpacing: 1)),
           ),
         );
       },
@@ -607,6 +599,15 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                   ),
                 ),
                 if (isDesktop) _buildSearchBar(isDesktop),
+                if (isDesktop) ...[
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: _addNecesidad,
+                    style: DesignTokens.primaryButtonStyle,
+                    icon: const Icon(Icons.add_rounded, size: 20),
+                    label: const Text('NUEVA SOLICITUD'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -674,21 +675,16 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _fetchData,
-      child: ListView.builder(
-        padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, 20, isDesktop ? 0 : 16, 20),
-        itemCount: list.length,
-        itemBuilder: (context, index) {
-          final n = list[index];
-          final api = n['apicultores'] ?? {};
-          final estado = n['estado'] ?? AppStates.pendiente;
-          final normalizedEstado = AppStates.normalize(estado);
-          final bool canNavigate = (normalizedEstado == AppStates.asignada || normalizedEstado == AppStates.enCurso);
+    Widget buildCard(Map<String, dynamic> n) {
+      final api = n['apicultores'] ?? {};
+      final estado = n['estado'] ?? AppStates.pendiente;
+      final normalizedEstado = AppStates.normalize(estado);
+      final bool canNavigate = (normalizedEstado == AppStates.asignada || normalizedEstado == AppStates.enCurso);
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
+      return Container(
+        width: isDesktop ? 450 : double.infinity,
+        margin: EdgeInsets.only(bottom: isDesktop ? 0 : 16),
+        decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
@@ -757,9 +753,25 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                 ],
               ),
             ),
-          );
-        },
-      ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchData,
+      child: isDesktop 
+        ? SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: list.map((n) => buildCard(n)).toList(),
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+            itemCount: list.length,
+            itemBuilder: (context, index) => buildCard(list[index]),
+          ),
     );
   }
 }
