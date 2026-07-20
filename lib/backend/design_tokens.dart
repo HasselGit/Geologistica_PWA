@@ -50,7 +50,7 @@ class DesignTokens {
     elevation: 0,
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    textStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1),
+    textStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 1),
   );
 
   static ButtonStyle secondaryButtonStyle = ElevatedButton.styleFrom(

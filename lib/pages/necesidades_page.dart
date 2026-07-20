@@ -610,7 +610,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    onPressed: _generatePdf,
+                    onPressed: _promptPdfGeneration,
                     icon: const Icon(Icons.print_rounded, color: DesignTokens.primary, size: 22),
                     tooltip: 'Imprimir/Exportar',
                   ),
@@ -837,14 +837,65 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
     );
   }
 
-  Future<void> _generatePdf() async {
+  Future<void> _promptPdfGeneration() async {
+    final estado = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Imprimir Solicitudes', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Todas'),
+                onTap: () => Navigator.pop(context, 'Todas'),
+              ),
+              ListTile(
+                title: const Text('Solo Pendientes'),
+                onTap: () => Navigator.pop(context, AppStates.pendiente),
+              ),
+              ListTile(
+                title: const Text('Solo Asignadas'),
+                onTap: () => Navigator.pop(context, AppStates.asignada),
+              ),
+              ListTile(
+                title: const Text('Solo En Curso'),
+                onTap: () => Navigator.pop(context, AppStates.enCurso),
+              ),
+              ListTile(
+                title: const Text('Solo Terminadas'),
+                onTap: () => Navigator.pop(context, AppStates.terminado),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (estado != null) {
+      await _generatePdf(estado);
+    }
+  }
+
+  Future<void> _generatePdf(String estadoFiltro) async {
     final doc = pw.Document();
 
     final fontData = await PdfGoogleFonts.workSansRegular();
     final fontBold = await PdfGoogleFonts.workSansBold();
 
     final tipoActual = _tabController.index == 0 ? 'Recolección' : 'Distribución';
-    final list = _filteredNecesidades.where((n) => n['tipo'] == tipoActual).toList();
+    var list = _filteredNecesidades.where((n) => n['tipo'] == tipoActual).toList();
+
+    if (estadoFiltro != 'Todas') {
+      list = list.where((n) => AppStates.normalize(n['estado'] ?? AppStates.pendiente) == estadoFiltro).toList();
+    }
+
+    final Map<String, int> totalesPorProducto = {};
+    for (var n in list) {
+      final prod = n['producto'] ?? 'Desconocido';
+      final cant = int.tryParse(n['cantidad'].toString()) ?? 0;
+      totalesPorProducto[prod] = (totalesPorProducto[prod] ?? 0) + cant;
+    }
 
     doc.addPage(
       pw.MultiPage(
@@ -858,7 +909,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text('GeoLogística PWA - Gestión de Solicitudes', style: pw.TextStyle(font: fontBold, fontSize: 18, color: PdfColors.blueGrey900)),
-                  pw.Text(tipoActual.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 14, color: PdfColors.amber800)),
+                  pw.Text('$tipoActual ${estadoFiltro != 'Todas' ? '($estadoFiltro)' : ''}'.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 14, color: PdfColors.amber800)),
                 ]
               )
             ),
@@ -869,12 +920,11 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
               headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
               headerStyle: pw.TextStyle(font: fontBold, fontSize: 10),
               cellStyle: pw.TextStyle(font: fontData, fontSize: 10),
-              headers: ['ID', 'Apicultor / Localidad', 'Producto', 'Cantidad', 'Estado'],
+              headers: ['Apicultor / Localidad', 'Producto', 'Cantidad', 'Estado'],
               data: list.map((n) {
                 final api = n['apicultores'] ?? {};
                 final estado = AppStates.normalize(n['estado'] ?? AppStates.pendiente);
                 return [
-                  n['id'].toString(),
                   '${api['nombre'] ?? '-'} • ${api['localidad'] ?? '-'}',
                   '${n['producto']}',
                   '${n['cantidad']} ${_getUnidad(n['producto'])}',
@@ -886,7 +936,16 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.end,
               children: [
-                pw.Text('Total de solicitudes: ${list.length}', style: pw.TextStyle(font: fontBold, fontSize: 12)),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text('Totales por producto:', style: pw.TextStyle(font: fontBold, fontSize: 12)),
+                    pw.SizedBox(height: 4),
+                    ...totalesPorProducto.entries.map((e) => pw.Text('${e.key}: ${e.value} ${_getUnidad(e.key)}', style: pw.TextStyle(font: fontData, fontSize: 11))),
+                    pw.SizedBox(height: 8),
+                    pw.Text('Total de solicitudes: ${list.length}', style: pw.TextStyle(font: fontBold, fontSize: 12)),
+                  ],
+                ),
               ]
             ),
           ];
