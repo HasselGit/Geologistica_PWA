@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../backend/supabase_service.dart';
 import '../backend/productos_data.dart';
 import '../backend/design_tokens.dart';
@@ -22,6 +25,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
   List<Map<String, dynamic>> _filteredNecesidades = [];
   Map<String, String> _solicitudToViaje = {};
   bool _loading = true;
+  bool _isCardView = true;
   String? _error;
   String? _userRole;
   String? _userEmail;
@@ -598,8 +602,20 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                     style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary, letterSpacing: -0.5),
                   ),
                 ),
-                if (isDesktop) _buildSearchBar(isDesktop),
                 if (isDesktop) ...[
+                  IconButton(
+                    onPressed: () => setState(() => _isCardView = !_isCardView),
+                    icon: Icon(_isCardView ? Icons.table_chart_rounded : Icons.dashboard_rounded, color: DesignTokens.primary, size: 22),
+                    tooltip: 'Cambiar vista',
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _generatePdf,
+                    icon: const Icon(Icons.print_rounded, color: DesignTokens.primary, size: 22),
+                    tooltip: 'Imprimir/Exportar',
+                  ),
+                  const SizedBox(width: 16),
+                  _buildSearchBar(isDesktop),
                   const SizedBox(width: 16),
                   ElevatedButton.icon(
                     onPressed: _addNecesidad,
@@ -667,7 +683,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black26),
+            const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black26),
             const SizedBox(height: 16),
             Text('No hay $tipo pendientes'.toLowerCase(), style: const TextStyle(color: Colors.black45)),
           ],
@@ -675,103 +691,279 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
       );
     }
 
-    Widget buildCard(Map<String, dynamic> n) {
-      final api = n['apicultores'] ?? {};
-      final estado = n['estado'] ?? AppStates.pendiente;
-      final normalizedEstado = AppStates.normalize(estado);
-      final bool canNavigate = (normalizedEstado == AppStates.asignada || normalizedEstado == AppStates.enCurso);
-
-      return Container(
-        width: isDesktop ? 450 : double.infinity,
-        margin: EdgeInsets.only(bottom: isDesktop ? 0 : 16),
-        decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              onTap: canNavigate
-                  ? () {
-                      final viajeId = _solicitudToViaje[n['id'].toString()];
-                      if (viajeId != null) {
-                        context.push('/viajedetalle?viajeId=$viajeId');
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('No se pudo encontrar el viaje asociado a esta solicitud'),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
-                      }
-                    }
-                  : null,
-              title: Text(
-                '${n['producto']}',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Manrope', fontSize: 16),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text('${api['nombre'] ?? 'Sin nombre'} • ${api['localidad'] ?? 'Sin loc.'}'),
-                  Text('${n['cantidad']} ${_getUnidad(n['producto'])} estimados', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF08201A))),
-                ],
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (estado == AppStates.pendiente) ...[
-                    IconButton(
-                      icon: const Icon(Icons.edit_note_rounded, color: DesignTokens.primary),
-                      onPressed: () => _editNecesidad(n),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                      onPressed: () => _confirmDelete(n['id'].toString()),
-                    ),
-                  ],
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Color(AppStates.stateBgColor(normalizedEstado)),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      normalizedEstado.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Color(AppStates.stateTextColor(normalizedEstado)),
-                      ),
-                    ),
-                  ),
-                  if (canNavigate) ...[
-                    const SizedBox(width: 8),
-                    const Icon(Icons.chevron_right_rounded, color: DesignTokens.primary, size: 20),
-                  ],
-                ],
-              ),
-            ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: _fetchData,
       child: isDesktop 
-        ? SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: list.map((n) => buildCard(n)).toList(),
-            ),
-          )
+        ? (_isCardView ? _buildKanbanView(list) : _buildTableView(list))
         : ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
             itemCount: list.length,
-            itemBuilder: (context, index) => buildCard(list[index]),
+            itemBuilder: (context, index) => _buildCard(list[index], isDesktop: false),
           ),
+    );
+  }
+
+  Widget _buildKanbanView(List<Map<String, dynamic>> list) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildKanbanColumn('PENDIENTE', AppStates.pendiente, list)),
+        const SizedBox(width: 16),
+        Expanded(child: _buildKanbanColumn('ASIGNADA', AppStates.asignada, list)),
+        const SizedBox(width: 16),
+        Expanded(child: _buildKanbanColumn('EN CURSO', AppStates.enCurso, list)),
+        const SizedBox(width: 16),
+        Expanded(child: _buildKanbanColumn('TERMINADA', AppStates.terminado, list)),
+      ],
+    );
+  }
+
+  Widget _buildKanbanColumn(String title, String estado, List<Map<String, dynamic>> allList) {
+    final filtered = allList.where((n) => AppStates.normalize(n['estado'] ?? AppStates.pendiente) == estado).toList();
+    return Container(
+      decoration: const BoxDecoration(color: Colors.transparent),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, right: 4, top: 12, bottom: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white, border: Border.all(color: const Color(0xFFE2E8F0)), borderRadius: BorderRadius.circular(12)),
+                  child: Text('${filtered.length}', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 11, color: DesignTokens.onSurfaceVariant)),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.inventory_2_outlined, size: 48, color: Colors.black12),
+                        SizedBox(height: 16),
+                        Text('Vacío', style: TextStyle(fontFamily: 'Inter', color: Colors.black45, fontSize: 12)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildCard(filtered[i], isDesktop: true),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableView(List<Map<String, dynamic>> list) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withOpacity(0.05)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(const Color(0xFFF9F9F9)),
+          dataRowMaxHeight: 64,
+          dataRowMinHeight: 64,
+          showBottomBorder: true,
+          columns: const [
+            DataColumn(label: Text('TIPO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black54))),
+            DataColumn(label: Text('APICULTOR / LOC.', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black54))),
+            DataColumn(label: Text('PRODUCTO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black54))),
+            DataColumn(label: Text('CANTIDAD', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black54))),
+            DataColumn(label: Text('ESTADO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black54))),
+            DataColumn(label: Text('', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black54))),
+          ],
+          rows: list.map((n) {
+            final api = n['apicultores'] ?? {};
+            final estado = AppStates.normalize(n['estado'] ?? AppStates.pendiente);
+            return DataRow(
+              cells: [
+                DataCell(Text(n['tipo'].toString(), style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13))),
+                DataCell(Text('${api['nombre'] ?? '-'} • ${api['localidad'] ?? '-'}', style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87))),
+                DataCell(Text('${n['producto']}', style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black54))),
+                DataCell(Text('${n['cantidad']} ${_getUnidad(n['producto'])}', style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87))),
+                DataCell(_buildStatusBadge(estado)),
+                DataCell(
+                  estado == AppStates.pendiente
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(icon: const Icon(Icons.edit, size: 16, color: DesignTokens.primary), onPressed: () => _editNecesidad(n)),
+                            IconButton(icon: const Icon(Icons.delete, size: 16, color: Colors.redAccent), onPressed: () => _confirmDelete(n['id'].toString())),
+                          ],
+                        )
+                      : const SizedBox.shrink()
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String estado) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Color(AppStates.stateBgColor(estado)),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        estado.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: Color(AppStates.stateTextColor(estado)),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _generatePdf() async {
+    final doc = pw.Document();
+
+    final fontData = await PdfGoogleFonts.workSansRegular();
+    final fontBold = await PdfGoogleFonts.workSansBold();
+
+    final tipoActual = _tabController.index == 0 ? 'Recolección' : 'Distribución';
+    final list = _filteredNecesidades.where((n) => n['tipo'] == tipoActual).toList();
+
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('GeoLogística PWA - Gestión de Solicitudes', style: pw.TextStyle(font: fontBold, fontSize: 18, color: PdfColors.blueGrey900)),
+                  pw.Text(tipoActual.toUpperCase(), style: pw.TextStyle(font: fontBold, fontSize: 14, color: PdfColors.amber800)),
+                ]
+              )
+            ),
+            pw.SizedBox(height: 20),
+            pw.TableHelper.fromTextArray(
+              context: context,
+              cellAlignment: pw.Alignment.centerLeft,
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              headerStyle: pw.TextStyle(font: fontBold, fontSize: 10),
+              cellStyle: pw.TextStyle(font: fontData, fontSize: 10),
+              headers: ['ID', 'Apicultor / Localidad', 'Producto', 'Cantidad', 'Estado'],
+              data: list.map((n) {
+                final api = n['apicultores'] ?? {};
+                final estado = AppStates.normalize(n['estado'] ?? AppStates.pendiente);
+                return [
+                  n['id'].toString(),
+                  '${api['nombre'] ?? '-'} • ${api['localidad'] ?? '-'}',
+                  '${n['producto']}',
+                  '${n['cantidad']} ${_getUnidad(n['producto'])}',
+                  estado.toUpperCase(),
+                ];
+              }).toList(),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.end,
+              children: [
+                pw.Text('Total de solicitudes: ${list.length}', style: pw.TextStyle(font: fontBold, fontSize: 12)),
+              ]
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+      name: 'Resumen_Solicitudes_$tipoActual.pdf',
+    );
+  }
+
+  Widget _buildCard(Map<String, dynamic> n, {bool isDesktop = false}) {
+    final api = n['apicultores'] ?? {};
+    final estado = n['estado'] ?? AppStates.pendiente;
+    final normalizedEstado = AppStates.normalize(estado);
+    final bool canNavigate = (normalizedEstado == AppStates.asignada || normalizedEstado == AppStates.enCurso);
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: isDesktop ? 0 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        onTap: canNavigate
+            ? () {
+                final viajeId = _solicitudToViaje[n['id'].toString()];
+                if (viajeId != null) {
+                  context.push('/viajedetalle?viajeId=$viajeId');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No se pudo encontrar el viaje asociado a esta solicitud'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
+              }
+            : null,
+        title: Text(
+          '${n['producto']}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Manrope', fontSize: 16),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text('${api['nombre'] ?? 'Sin nombre'} • ${api['localidad'] ?? 'Sin loc.'}'),
+            Text('${n['cantidad']} ${_getUnidad(n['producto'])} estimados', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF08201A))),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (estado == AppStates.pendiente) ...[
+              IconButton(
+                icon: const Icon(Icons.edit_note_rounded, color: DesignTokens.primary),
+                onPressed: () => _editNecesidad(n),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                onPressed: () => _confirmDelete(n['id'].toString()),
+              ),
+            ],
+            _buildStatusBadge(normalizedEstado),
+            if (canNavigate) ...[
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right_rounded, color: DesignTokens.primary, size: 20),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
