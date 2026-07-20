@@ -581,6 +581,26 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
             padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 16, isDesktop ? 0 : 16, 16),
             child: Row(
               children: [
+                if (context.canPop()) ...[
+                  InkWell(
+                    onTap: () => context.pop(),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.black.withOpacity(0.05)),
+                      ),
+                      child: const Tooltip(
+                        message: 'Atrás',
+                        child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 InkWell(
                   onTap: () => context.go('/home'),
                   borderRadius: BorderRadius.circular(10),

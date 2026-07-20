@@ -240,8 +240,28 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
             padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 16, isDesktop ? 0 : 16, 16),
             child: Row(
               children: [
+                if (context.canPop()) ...[
+                  InkWell(
+                    onTap: () => context.pop(),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.black.withOpacity(0.05)),
+                      ),
+                      child: const Tooltip(
+                        message: 'Atrás',
+                        child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 InkWell(
-                  onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+                  onTap: () => context.go('/home'),
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
                     width: 36,
@@ -251,7 +271,10 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.black.withOpacity(0.05)),
                     ),
-                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                    child: const Tooltip(
+                      message: 'Volver al Inicio',
+                      child: Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),

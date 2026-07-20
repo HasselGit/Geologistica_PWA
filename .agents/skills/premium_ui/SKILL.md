@@ -23,7 +23,9 @@ Se activa cuando el usuario solicita aplicar el "diseño premium", "estandarizar
    - **Regla 1:** Inyectar `GeoSidebar` en un `Row` principal para Desktop y el contenido en un `Expanded`.
    - **Regla 2:** Padding asimétrico `EdgeInsets.fromLTRB(120, 0, 40, 0)` en el contenido. Remover `maxWidth` y `Center`.
    - **Regla 3:** Control de proporciones con `LayoutBuilder`.
-   - **Regla 4:** Reemplazar el botón de volver atrás con el formato Premium (`InkWell` + Contenedor 36x36 blanco + sombra) usando la lógica `context.canPop() ? context.pop() : context.go('/home')`. Toda página debe garantizar que existe un logo o botón "Home" visible en todo momento para regresar al inicio de manera segura.
+   - **Regla 4:** La cabecera debe incluir SIEMPRE dos botones de navegación (`InkWell` + Contenedor 36x36 blanco + sombra): 
+     1. Un botón de "Atrás" (`Icons.arrow_back_ios_new_rounded`) con la lógica `context.canPop() ? context.pop() : null` (si se puede volver, vuelve).
+     2. Un botón de "Home" (`Icons.home_rounded`) con la lógica `context.go('/home')` ubicado justo al lado del botón de atrás. Toda página debe garantizar que existe el logo/botón "Home" visible en todo momento para regresar al inicio de manera segura.
    - **Regla 5:** Todos los botones principales de acción (tipo `ElevatedButton`, "NUEVO VIAJE", "NUEVA SOLICITUD") deben tener un `BorderRadius.circular(8)` para mantener la consistencia con el diseño de Login y Sidebar. 
      - **MUY IMPORTANTE (Escritorio):** En la versión de Escritorio (Desktop), los botones principales NUNCA deben ser botones flotantes (`FloatingActionButton`) en la esquina inferior. DEBEN renderizarse como `ElevatedButton` ubicados en la esquina superior derecha de la cabecera (junto a los filtros o buscador) utilizando siempre `DesignTokens.primaryButtonStyle` (el cual debe usar el color verde oscuro y la tipografía Manrope FontWeight.w700 tamaño 15, idéntico al botón INICIAR). En móviles, sí pueden ser botones flotantes.
 5. **Sin Excepciones:** No existe lista negra de páginas.
