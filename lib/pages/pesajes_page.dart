@@ -751,7 +751,9 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -935,6 +937,9 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -966,7 +971,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
                       boxShadow: [
-                        BoxShadow(color: const Color(0xFF08201A).withOpacity(0.03), blurRadius: 40, offset: const Offset(0, 10)),
+                        BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
                       ],
                     ),
                     child: ClipRRect(
