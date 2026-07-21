@@ -26,3 +26,5 @@ El 2026-07-09, se modificaron los archivos lib/pages/paradadetalle.dart, vercel.
 - El 15/07/2026, se modificó lib/pages/carga_detalle.dart rediseñando su layout con el Diseño Premium y corrigiendo el uso de geo_sidebar.
 
 - El 18/07/2026, se corrigió el diseño y responsiveness de los detalles de gastos en viaje_detalle.dart conectándolo con gastos_detalle.dart, y se aplicó skeleton a carga_detalle.dart.
+
+- El 21/07/2026, se corrigio la navegacion en las tarjetas Kanban (Asignadas, En Curso, Terminadas) hacia planificarViaje y viajedetalle; se solucionaron bugs de overflow y tablas en la exportacion PDF de necesidades_page, y se estandarizo el header Premium para incluir simultaneamente el boton Atras y Home (en necesidades_page, viajes_page y viaje_detalle).

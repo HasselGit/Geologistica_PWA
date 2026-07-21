@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../backend/design_tokens.dart';
+import '../widgets/geo_sidebar.dart';
 import 'agregar_pesaje.dart';
 
 /// Lista de pesajes agrupados por parada/viaje
@@ -233,9 +234,34 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
               color: const Color(0xFFFBF9F8),
               child: Row(
                 children: [
+                  if (context.canPop()) ...[
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black.withOpacity(0.05)),
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   GestureDetector(
                     onTap: () => context.go('/home'),
-                    child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.black.withOpacity(0.05)),
+                      ),
+                      child: const Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   const Text(
@@ -804,14 +830,16 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
 
   Widget _buildDesktopLayout(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const GeoSidebar(),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(120, 40, 40, 40),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // Filtros Laterales (Fijos)
                 SizedBox(
                   width: 280,
@@ -820,20 +848,44 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                     children: [
                       Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
-                            onPressed: () async {
-                              final prefs = await SharedPreferences.getInstance();
-                              final rol = prefs.getString('user_puesto') ?? '';
-                              if (rol == 'Gerente') {
-                                context.go('/gerenteHome');
-                              } else {
-                                if (context.canPop()) context.pop();
-                                else context.go('/home');
-                              }
-                            },
+                          if (context.canPop()) ...[
+                            InkWell(
+                              onTap: () => context.pop(),
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                ),
+                                child: const Tooltip(
+                                  message: 'Atrás',
+                                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          InkWell(
+                            onTap: () => context.go('/home'),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                              ),
+                              child: const Tooltip(
+                                message: 'Volver al Inicio',
+                                child: Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+                              ),
+                            ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 14),
                           const Expanded(
                             child: Text(
                               'Histórico de Pesajes',
