@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../backend/design_tokens.dart';
 import '../widgets/geo_sidebar.dart';
 import 'agregar_pesaje.dart';
+import 'apicultor_detalle.dart';
 
 /// Lista de pesajes agrupados por parada/viaje
 class PesajesPageWidget extends StatefulWidget {
@@ -217,10 +218,12 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
         final apicultor = (g['apicultor'] ?? '').toString().toLowerCase();
         final localidad = (g['localidad'] ?? '').toString().toLowerCase();
         final viajeCode = (g['viaje_codigo'] ?? '').toString().toLowerCase();
+        final fechaStr = g['viaje_fecha'] != null ? DateFormat('dd/MM/yy').format(DateTime.tryParse(g['viaje_fecha'].toString()) ?? DateTime.now()).toLowerCase() : '';
         
         final matchesSearch = apicultor.contains(query) ||
                               localidad.contains(query) ||
-                              viajeCode.contains(query);
+                              viajeCode.contains(query) ||
+                              fechaStr.contains(query);
                               
         bool dateMatch = true;
         if (_selectedDate != null) {
@@ -294,7 +297,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                     width: 220,
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Buscar...',
+                        hintText: 'Viaje, Apicultor o Fecha...',
                         prefixIcon: const Icon(Icons.search_rounded, size: 18),
                         filled: true,
                         fillColor: const Color(0xFFF5F3F3),
@@ -864,10 +867,12 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
             displayName: _userEmail ?? '',
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(120, 40, 40, 40),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                 // Filtros Laterales (Fijos)
                 SizedBox(
@@ -938,7 +943,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                             const SizedBox(height: 16),
                             TextField(
                               decoration: InputDecoration(
-                                hintText: 'Viaje, Apicultor o SENASA...',
+                                hintText: 'Viaje, Apicultor o Fecha...',
                                 prefixIcon: const Icon(Icons.search_rounded, size: 18),
                                 filled: true,
                                 fillColor: const Color(0xFFFBF9F8),
@@ -946,16 +951,6 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                               ),
                               onChanged: (val) { setState(() { _searchQuery = val; _applyFilters(); }); },
                             ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                style: DesignTokens.primaryButtonStyle,
-                                icon: const Icon(Icons.filter_list_rounded, size: 16),
-                                label: const Text('Aplicar Filtros', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13)),
-                                onPressed: () => _applyFilters(),
-                              ),
-                            )
                           ],
                         ),
                       ),
@@ -1049,7 +1044,9 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                                               ),
                                               DataCell(Text(fechaStr, style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.black54))),
                                               DataCell(InkWell(
-                                                onTap: () => context.push('/apicultores'),
+                                                onTap: () {
+                                                  Navigator.push(context, MaterialPageRoute(builder: (context) => ApicultorDetalleWidget(apicultor: {'id': g['apicultor_id'], 'nombre': apicultor, 'localidad': localidad})));
+                                                },
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1081,7 +1078,8 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                     ),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
