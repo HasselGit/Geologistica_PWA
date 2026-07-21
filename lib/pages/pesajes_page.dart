@@ -21,11 +21,25 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
   List<Map<String, dynamic>> _filteredGrupos = [];
   String _searchQuery = '';
   DateTime? _selectedDate;
+  String? _userRole;
+  String? _userEmail;
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     _fetchData();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('user_email') ?? Supabase.instance.client.auth.currentUser?.email ?? '';
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_puesto');
+        _userEmail = email;
+      });
+    }
   }
 
   Future<void> _fetchData() async {
@@ -833,7 +847,11 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const GeoSidebar(),
+          GeoSidebar(
+            userRole: _userRole ?? '',
+            userEmail: _userEmail ?? '',
+            displayName: _userEmail ?? '',
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(120, 40, 40, 40),
@@ -1049,6 +1067,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
             ),
           ),
         ),
+        ],
       ),
     );
   }
