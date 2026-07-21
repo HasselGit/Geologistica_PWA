@@ -849,7 +849,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 900;
         return Scaffold(
-          backgroundColor: isDesktop ? const Color(0xFFFBF9F8) : const Color(0xFFF5F3F3),
+          backgroundColor: DesignTokens.surfaceLow,
           body: isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(context),
         );
       },
@@ -870,7 +870,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
             child: Align(
               alignment: Alignment.topLeft,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                padding: const EdgeInsets.fromLTRB(120, 40, 40, 40),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
