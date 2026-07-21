@@ -167,6 +167,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
           'viaje_id': firstItem['viaje_id']?.toString() ?? '',
           'viaje_codigo': viaje['viaje_codigo'] ?? 'V-S/N',
           'viaje_fecha': viaje['fecha'],
+          'apicultor_id': apicId,
           'apicultor': parada['ubicacion'] ?? parada['localidad'] ?? apicId,
           'localidad': parada['localidad'] ?? 'S/D',
           'tipo': parada['tipo'] ?? 'Recolección',
@@ -372,6 +373,10 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
         (grupo['items'] as List?)?.cast<dynamic>() ?? [];
     final totalNeto = (grupo['total_neto'] as double?) ?? 0.0;
     final totalBruto = (grupo['total_bruto'] as double?) ?? 0.0;
+    final fechaStr = grupo['viaje_fecha'] != null
+        ? DateFormat('dd/MM/yy').format(DateTime.tryParse(grupo['viaje_fecha'].toString()) ?? DateTime.now())
+        : '--/--/--';
+    final viajeId = grupo['viaje_id']?.toString() ?? '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -404,15 +409,21 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                         const Icon(Icons.alt_route_rounded,
                             size: 14, color: Color(0xFF08201A)),
                         const SizedBox(width: 6),
-                        Text(
-                          viajeCodigo,
-                          style: const TextStyle(
-                            fontFamily: 'JetBrains Mono',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: Color(0xFF08201A),
+                        InkWell(
+                          onTap: () => context.push('/viajedetalle?viajeId=$viajeId'),
+                          child: Text(
+                            viajeCodigo,
+                            style: const TextStyle(
+                              fontFamily: 'JetBrains Mono',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: DesignTokens.primary,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Text(fechaStr, style: TextStyle(fontSize: 11, color: DesignTokens.primary.withOpacity(0.5))),
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -939,15 +950,10 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFC68E17),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                ),
+                                style: DesignTokens.primaryButtonStyle,
                                 icon: const Icon(Icons.filter_list_rounded, size: 16),
-                                label: const Text('Aplicar Filtros', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold)),
-                                onPressed: () {},
+                                label: const Text('Aplicar Filtros', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13)),
+                                onPressed: () => _applyFilters(),
                               ),
                             )
                           ],
@@ -1017,6 +1023,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                                         columnSpacing: 20,
                                         columns: const [
                                           DataColumn(label: Text('VIAJE', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
+                                          DataColumn(label: Text('FECHA', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
                                           DataColumn(label: Text('APICULTOR / LOC', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
                                           DataColumn(label: Text('TCM', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
                                           DataColumn(label: Text('BRUTO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
@@ -1025,6 +1032,8 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                                         ],
                                         rows: _filteredGrupos.map((g) {
                                           final viajeCode = g['viaje_codigo'] as String;
+                                          final viajeId = g['viaje_id']?.toString() ?? '';
+                                          final fechaStr = g['viaje_fecha'] != null ? DateFormat('dd/MM/yy').format(DateTime.tryParse(g['viaje_fecha'].toString()) ?? DateTime.now()) : '--/--/--';
                                           final apicultor = g['apicultor'] as String;
                                           final localidad = g['localidad'] as String;
                                           final tcmCount = g['tcm_count'] as int;
@@ -1032,14 +1041,23 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                                           final totalNeto = g['total_neto'] as double;
                                           return DataRow(
                                             cells: [
-                                              DataCell(Text(viajeCode, style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: Color(0xFF08201A)))),
-                                              DataCell(Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  Text(apicultor, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF08201A))),
-                                                  Text(localidad, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: const Color(0xFF08201A).withOpacity(0.5))),
-                                                ],
+                                              DataCell(
+                                                InkWell(
+                                                  onTap: () => context.push('/viajedetalle?viajeId=$viajeId'),
+                                                  child: Text(viajeCode, style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: DesignTokens.primary, decoration: TextDecoration.underline)),
+                                                ),
+                                              ),
+                                              DataCell(Text(fechaStr, style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.black54))),
+                                              DataCell(InkWell(
+                                                onTap: () => context.push('/apicultores'),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(apicultor, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: DesignTokens.primary, decoration: TextDecoration.underline)),
+                                                    Text(localidad, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: const Color(0xFF08201A).withOpacity(0.5))),
+                                                  ],
+                                                ),
                                               )),
                                               DataCell(Text('$tcmCount', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 14))),
                                               DataCell(Text(totalBruto.toStringAsFixed(1), style: const TextStyle(fontFamily: 'JetBrains Mono', color: Colors.black54))),
