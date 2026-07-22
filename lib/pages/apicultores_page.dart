@@ -6,6 +6,8 @@ import 'apicultor_detalle.dart';
 import 'package:go_router/go_router.dart';
 import '../backend/design_tokens.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/geo_sidebar.dart';
 
 class ApicultoresPageWidget extends StatefulWidget {
   const ApicultoresPageWidget({super.key});
@@ -20,11 +22,26 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
   bool _loading = true;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  
+  String? _userRole;
+  String? _userEmail;
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     _fetchData();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('user_email') ?? Supabase.instance.client.auth.currentUser?.email ?? '';
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_puesto');
+        _userEmail = email;
+      });
+    }
   }
 
   @override
@@ -124,10 +141,220 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isDesktop = constraints.maxWidth >= 900;
+        return Scaffold(
+          backgroundColor: DesignTokens.surfaceLow,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: const HoneycombPainter(),
+                  ),
+                ),
+              ),
+              isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(context),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    return SafeArea(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GeoSidebar(
+            userRole: _userRole ?? '',
+            userEmail: _userEmail ?? '',
+            displayName: _userEmail ?? '',
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(120, 40, 40, 40),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Filtros Laterales (Fijos)
+                    SizedBox(
+                      width: 280,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (context.canPop()) ...[
+                                InkWell(
+                                  onTap: () => context.pop(),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                    ),
+                                    child: const Tooltip(
+                                      message: 'Atrás',
+                                      child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              InkWell(
+                                onTap: () => context.go('/home'),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                  ),
+                                  child: const Tooltip(
+                                    message: 'Volver al Inicio',
+                                    child: Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              const Expanded(
+                                child: Text(
+                                  'Directorio de Apicultores',
+                                  style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF08201A)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('BÚSQUEDA', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 12, color: Colors.black54)),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: _searchController,
+                                  onChanged: _onSearchChanged,
+                                  decoration: InputDecoration(
+                                    hintText: 'Nombre o localidad...',
+                                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF5F3F3),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(color: Color(0xFFC2C8C4)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: const Color(0xFFC2C8C4).withOpacity(0.4)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(color: Color(0xFFC68E17)),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                    // Tabla (DataGrid Corporativo)
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            children: [
+                              // Textura de Fondo Translucido (2%)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        const Color(0xFF08201A).withOpacity(0.02),
+                                        const Color(0xFFC68E17).withOpacity(0.02),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Icono Vectorizado Absoluto (3%)
+                              Positioned(
+                                bottom: -20,
+                                right: -20,
+                                child: Icon(Icons.group_rounded, size: 120, color: const Color(0xFF08201A).withOpacity(0.03)),
+                              ),
+                              // Tabla Content
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: const Color(0xFF08201A).withOpacity(0.05)))),
+                                    child: const Text(
+                                      'REGISTRO DE APICULTORES',
+                                      style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 1.2, color: Color(0xFF08201A)),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _loading && _apicultores.isEmpty
+                                      ? const Center(child: CircularProgressIndicator(color: Color(0xFFC68E17)))
+                                      : _buildWebTable(),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: DesignTokens.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: DesignTokens.primary),
@@ -157,11 +384,11 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.2)),
+                      borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.2)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.1)),
+                      borderSide: BorderSide(color: DesignTokens.outline.withOpacity(0.1)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -173,15 +400,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
               Expanded(
                 child: _loading && _apicultores.isEmpty
                     ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth >= 900) {
-                            return _buildWebTable();
-                          } else {
-                            return _buildMobileList();
-                          }
-                        },
-                      ),
+                    : _buildMobileList(),
               ),
             ],
           ),
@@ -204,54 +423,12 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.05)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 40,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF08201A).withValues(alpha: 0.02),
-                        const Color(0xFFC68E17).withValues(alpha: 0.02),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: -20,
-              bottom: -20,
-              child: Icon(
-                Icons.group_rounded,
-                size: 120,
-                color: const Color(0xFF08201A).withValues(alpha: 0.03),
-              ),
-            ),
-            Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: DataTable(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: DataTable(
                 headingRowColor: MaterialStateProperty.all(DesignTokens.surfaceLow),
                 dataRowMinHeight: 60,
                 dataRowMaxHeight: 60,
@@ -333,13 +510,10 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                     )
                   ],
                 ),
-              ),
-          ],
-        ),
-        ],
-        ),
-      ),
-    );
+              )
+            ],
+          ),
+        );
   }
 
   Widget _buildMobileList() {
