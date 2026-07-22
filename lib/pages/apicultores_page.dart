@@ -123,10 +123,16 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
 
   void _onSearch(String val) {
     setState(() {
+      final query = val.toLowerCase();
       final filtered = _apicultores.where((a) {
         final name = (a['nombre'] ?? '').toString().toLowerCase();
         final loc = (a['localidad'] ?? '').toString().toLowerCase();
-        return name.contains(val.toLowerCase()) || loc.contains(val.toLowerCase());
+        final cuit = (a['cuit'] ?? '').toString().toLowerCase();
+        final dni = (a['dni'] ?? '').toString().toLowerCase();
+        final id = a['id']?.toString() ?? '';
+        final codigo = (a['apicultor_codigo'] ?? (id.length > 6 ? id.substring(0, 6) : id)).toString().toLowerCase();
+        
+        return name.contains(query) || loc.contains(query) || cuit.contains(query) || dni.contains(query) || codigo.contains(query);
       }).toList();
       
       filtered.sort((a, b) => (a['nombre'] ?? '').toString().trim().toLowerCase()
@@ -255,7 +261,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                                   controller: _searchController,
                                   onChanged: _onSearchChanged,
                                   decoration: InputDecoration(
-                                    hintText: 'Nombre o localidad...',
+                                  hintText: 'Nombre, localidad, CUIT o código...',
                                     prefixIcon: const Icon(Icons.search_rounded, size: 18),
                                     filled: true,
                                     fillColor: const Color(0xFFF5F3F3),
@@ -377,7 +383,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Buscar por nombre o localidad...',
+                    hintText: 'Nombre, localidad, CUIT o código...',
                     prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
                     filled: true,
                     fillColor: Colors.white,
@@ -437,6 +443,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                   DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('LOCALIDAD', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('CUIT / DNI', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('TELÉFONO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                 ],
@@ -444,6 +451,9 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                   final nombre = a['nombre'] ?? 'Sin nombre';
                   final localidad = a['localidad'] ?? 'Sin localidad';
                   final telefono = a['telefono'] ?? '-';
+                  final cuitDni = (a['cuit'] != null && a['cuit'].toString().isNotEmpty) 
+                                    ? a['cuit'].toString() 
+                                    : (a['dni']?.toString() ?? '-');
                   final id = a['id']?.toString() ?? '';
                   final codigo = a['apicultor_codigo'] ?? (id.length > 6 ? id.substring(0, 6).toUpperCase() : id);
 
@@ -452,6 +462,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                       DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'JetBrains Mono'))),
                       DataCell(Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter'))),
                       DataCell(Text(localidad, style: const TextStyle(color: DesignTokens.onSurfaceVariant, fontFamily: 'Inter'))),
+                      DataCell(Text(cuitDni, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
                       DataCell(Text(telefono, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
                       DataCell(
                         TextButton.icon(
