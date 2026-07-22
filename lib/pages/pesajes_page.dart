@@ -852,7 +852,18 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
         final bool isDesktop = constraints.maxWidth >= 900;
         return Scaffold(
           backgroundColor: DesignTokens.surfaceLow,
-          body: isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(context),
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: const HoneycombPainter(),
+                  ),
+                ),
+              ),
+              isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(context),
+            ],
+          ),
         );
       },
     );
