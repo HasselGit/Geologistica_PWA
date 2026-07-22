@@ -697,6 +697,9 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
     final totalBruto = g['total_bruto'] as double;
     final totalTara = g['total_tara'] as double;
     final totalNeto = g['total_neto'] as double;
+    final fechaStr = g['viaje_fecha'] != null
+        ? DateFormat('dd/MM/yy').format(DateTime.tryParse(g['viaje_fecha'].toString()) ?? DateTime.now())
+        : '--/--/--';
 
     showModalBottomSheet(
       context: context,
@@ -723,7 +726,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(viajeCode, style: DesignTokens.headlineStyle().copyWith(fontSize: 20, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 4),
-                      Text('$apicultor  •  $localidad', style: const TextStyle(fontSize: 13, color: Colors.black45)),
+                      Text('$apicultor  •  $localidad  •  $fechaStr', style: const TextStyle(fontSize: 13, color: Colors.black45)),
                     ])),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -773,21 +776,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                                 itemBuilder: (ctx, i) => _detalleRow(i + 1, items[i]),
                               ),
                       ),
-                      // Footer
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: DesignTokens.primary.withOpacity(0.04),
-                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                          border: const Border(top: BorderSide(color: Color(0xFFF0F0F0))),
-                        ),
-                        child: Row(children: [
-                          const Expanded(flex: 5, child: Text('TOTALES', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF1E302C)))),
-                          Expanded(flex: 2, child: Text('${totalBruto.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846)))),
-                          Expanded(flex: 2, child: Text('${totalTara.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF424846)))),
-                          Expanded(flex: 2, child: Text('${totalNeto.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 14, color: DesignTokens.secondary))),
-                        ]),
-                      ),
+
                     ],
                   ),
                 ),
@@ -821,7 +810,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
   Widget _th(String text, int flex, {bool right = false}) {
     return Expanded(flex: flex, child: Text(text,
         textAlign: right ? TextAlign.right : TextAlign.left,
-        style: const TextStyle(fontFamily: 'Work Sans', color: Colors.white, fontSize: 7, fontWeight: FontWeight.w900, letterSpacing: 0.5)));
+        style: const TextStyle(fontFamily: 'Work Sans', color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5)));
   }
 
   Widget _detalleRow(int index, Map<String, dynamic> item) {
