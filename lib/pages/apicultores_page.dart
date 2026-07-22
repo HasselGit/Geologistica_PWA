@@ -443,7 +443,8 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                   DataColumn(label: Text('CÓDIGO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('NOMBRE', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('LOCALIDAD', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
-                  DataColumn(label: Text('CUIT / DNI', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('CUIT', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
+                  DataColumn(label: Text('DNI', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('TELÉFONO', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                   DataColumn(label: Text('ACCIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'Manrope', color: DesignTokens.primary, fontSize: 13))),
                 ],
@@ -451,9 +452,8 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                   final nombre = a['nombre'] ?? 'Sin nombre';
                   final localidad = a['localidad'] ?? 'Sin localidad';
                   final telefono = a['telefono'] ?? '-';
-                  final cuitDni = (a['cuit'] != null && a['cuit'].toString().isNotEmpty) 
-                                    ? a['cuit'].toString() 
-                                    : (a['dni']?.toString() ?? '-');
+                  final cuit = (a['cuit'] != null && a['cuit'].toString().isNotEmpty) ? a['cuit'].toString() : '-';
+                  final dni = (a['dni'] != null && a['dni'].toString().isNotEmpty) ? a['dni'].toString() : '-';
                   final id = a['id']?.toString() ?? '';
                   final codigo = a['apicultor_codigo'] ?? (id.length > 6 ? id.substring(0, 6).toUpperCase() : id);
 
@@ -462,7 +462,8 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                       DataCell(Text(codigo, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'JetBrains Mono'))),
                       DataCell(Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Inter'))),
                       DataCell(Text(localidad, style: const TextStyle(color: DesignTokens.onSurfaceVariant, fontFamily: 'Inter'))),
-                      DataCell(Text(cuitDni, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
+                      DataCell(Text(cuit, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
+                      DataCell(Text(dni, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
                       DataCell(Text(telefono, style: const TextStyle(fontFamily: 'JetBrains Mono', color: DesignTokens.onSurfaceVariant))),
                       DataCell(
                         TextButton.icon(
