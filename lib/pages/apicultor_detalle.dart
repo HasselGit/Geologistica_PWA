@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../backend/supabase_service.dart';
 import '../backend/apicultores_data.dart';
 import '../backend/productos_data.dart';
+import '../widgets/geo_sidebar.dart';
 
 class ApicultorDetalleWidget extends StatefulWidget {
   final Map<String, dynamic> apicultor;
@@ -26,6 +27,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
   double _maxTotal = 1.0;
   double _maxTotalPendiente = 1.0;
   String? _userRole;
+  String? _userEmail;
+  String? _displayName;
 
   @override
   void initState() {
@@ -37,7 +40,13 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
 
   Future<void> _loadRole() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) setState(() => _userRole = prefs.getString('user_puesto'));
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_puesto');
+        _userEmail = prefs.getString('user_email');
+        _displayName = prefs.getString('user_nombre');
+      });
+    }
   }
 
   Future<void> _refreshApicultorData() async {
@@ -310,47 +319,164 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     }
 
     final a = widget.apicultor;
-    return Scaffold(
-      backgroundColor: DesignTokens.surface,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
-            onPressed: () => context.pop(),
-          ),
-          centerTitle: false,
-          title: Text('Perfil de Apicultor', 
-            style: DesignTokens.headlineStyle().copyWith(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: DesignTokens.primary)
-          ),
-        ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-        : RefreshIndicator(
-            onRefresh: _fetchDetailedData,
-            color: DesignTokens.secondary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth >= 900) {
-                    return _buildBentoLayout(a);
-                  } else {
-                    return _buildMobileLayout(a);
-                  }
-                },
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        Widget mainContent = _isLoading 
+          ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+          : RefreshIndicator(
+              onRefresh: _fetchDetailedData,
+              color: DesignTokens.secondary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 20, vertical: isDesktop ? 0 : 20),
+                child: isDesktop ? _buildBentoLayout(a) : _buildMobileLayout(a),
               ),
+            );
+
+        if (isDesktop) {
+          return Scaffold(
+            backgroundColor: DesignTokens.surfaceLow,
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GeoSidebar(
+                  userRole: _userRole ?? '',
+                  userEmail: _userEmail ?? '',
+                  displayName: _displayName ?? _userEmail ?? '',
+                ),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(120, 40, 40, 40),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                  ),
+                                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              InkWell(
+                                onTap: () => context.go('/home'),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.black.withOpacity(0.05)),
+                                  ),
+                                  child: const Icon(Icons.home_rounded, size: 16, color: DesignTokens.primary),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Text('Perfil de Apicultor', 
+                                style: DesignTokens.headlineStyle().copyWith(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: DesignTokens.primary)
+                              ),
+                              const Spacer(),
+                              if (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras')
+                                ElevatedButton.icon(
+                                  onPressed: _showAddSolicitudModal,
+                                  icon: const Icon(Icons.add_rounded, size: 18),
+                                  label: const Text('NUEVA SOLICITUD'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: DesignTokens.secondary,
+                                    foregroundColor: DesignTokens.primary,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+                          Expanded(child: mainContent),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-      floatingActionButton: (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras') 
-        ? FloatingActionButton(
-            onPressed: _showAddSolicitudModal,
-            backgroundColor: DesignTokens.secondary,
-            elevation: 8,
-            child: const Icon(Icons.add_rounded, color: DesignTokens.primary, size: 32),
-          )
-        : null,
+          );
+        } else {
+          return Scaffold(
+            backgroundColor: DesignTokens.surface,
+            appBar: AppBar(
+              backgroundColor: DesignTokens.surface,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: Center(
+                child: InkWell(
+                  onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.black.withOpacity(0.05)),
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                  ),
+                ),
+              ),
+              title: Text('Perfil de Apicultor', 
+                style: DesignTokens.headlineStyle().copyWith(fontSize: 18, fontWeight: FontWeight.w900, color: DesignTokens.primary)
+              ),
+              centerTitle: false,
+              actions: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: InkWell(
+                      onTap: () => context.go('/home'),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black.withOpacity(0.05)),
+                        ),
+                        child: const Icon(Icons.home_rounded, size: 16, color: DesignTokens.primary),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            body: mainContent,
+            floatingActionButton: (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras') 
+              ? FloatingActionButton(
+                  onPressed: _showAddSolicitudModal,
+                  backgroundColor: DesignTokens.secondary,
+                  elevation: 8,
+                  child: const Icon(Icons.add_rounded, color: DesignTokens.primary, size: 32),
+                )
+              : null,
+          );
+        }
+      }
     );
   }
 
