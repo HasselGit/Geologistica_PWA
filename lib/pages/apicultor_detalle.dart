@@ -339,10 +339,19 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         if (isDesktop) {
           return Scaffold(
             backgroundColor: DesignTokens.surfaceLow,
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            body: Stack(
               children: [
-                GeoSidebar(
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: const HoneycombPainter(),
+                    ),
+                  ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GeoSidebar(
                   userRole: _userRole ?? '',
                   userEmail: _userEmail ?? '',
                   displayName: _displayName ?? _userEmail ?? '',
@@ -396,13 +405,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                                   onPressed: _showAddSolicitudModal,
                                   icon: const Icon(Icons.add_rounded, size: 18),
                                   label: const Text('NUEVA SOLICITUD'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: DesignTokens.secondary,
-                                    foregroundColor: DesignTokens.primary,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
+                                  style: DesignTokens.primaryButtonStyle,
                                 ),
                             ],
                           ),
@@ -415,8 +418,10 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                 ),
               ],
             ),
-          );
-        } else {
+          ],
+        ),
+      );
+    } else {
           return Scaffold(
             backgroundColor: DesignTokens.surface,
             appBar: AppBar(

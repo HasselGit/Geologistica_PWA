@@ -261,7 +261,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                                   controller: _searchController,
                                   onChanged: _onSearchChanged,
                                   decoration: InputDecoration(
-                                  hintText: 'Nombre, localidad, CUIT o código...',
+                                  hintText: 'Nombre, localidad, DNI, CUIT o código...',
                                     prefixIcon: const Icon(Icons.search_rounded, size: 18),
                                     filled: true,
                                     fillColor: const Color(0xFFF5F3F3),
@@ -383,7 +383,7 @@ class _ApicultoresPageWidgetState extends State<ApicultoresPageWidget> {
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Nombre, localidad, CUIT o código...',
+                    hintText: 'Nombre, localidad, DNI, CUIT o código...',
                     prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
                     filled: true,
                     fillColor: Colors.white,
