@@ -260,4 +260,6 @@ En esta sesión implementamos una estandarización visual premium sobre los form
  -   S e   a c t u a l i z o   a p i c u l t o r _ d e t a l l e . d a r t   p a r a   s o p o r t a r   o n F i l t e r T a p ,   o n T a p   y   o n D o w n l o a d T a p   e n   l a s   c a b e c e r a s   d e   s e c c i o n .  
  -   S e   a n a d i o   l a   l o g i c a   d e   f i l t r a d o   r e a c t i v o   p a r a   O p e r a c i o n e s   R e c i e n t e s .  
  -   S e   i n c o r p o r o   l a   v i s t a   d e   H i s t o r i a l   d e   P e s a j e s   q u e   n a v e g a   h a c i a   l a   p r e v i s u a l i z a c i o n   d e l   r e m i t o   ( p d f _ i n v o i c e _ g e n e r a t o r ) .  
+ -   S e   a j u s t o   _ b u i l d E m p t y S t a t e   p a r a   r e c i b i r   o n T a p   y   e n v o l v e r   e n   M a t e r i a l + I n k W e l l .  
+ -   S e   c o r r i g i e r o n   l a s   r e f e r e n c i a s   d e   p r o d u c t o ,   p e s o _ b r u t o ,   t a r a   y   k i l o s _ n e t o s   e n   _ b u i l d P e s a j e C a r d .  
  

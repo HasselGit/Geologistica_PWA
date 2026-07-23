@@ -545,7 +545,10 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                         ),
                         const SizedBox(height: 16),
                         if (_pendientes.isEmpty)
-                          _buildEmptyState('No hay solicitudes activas')
+                          _buildEmptyState(
+                            'No hay solicitudes activas',
+                            onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['id']}'),
+                          )
                         else
                           ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
                       ],
@@ -655,7 +658,10 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         ),
         const SizedBox(height: 16),
         if (_pendientes.isEmpty)
-          _buildEmptyState('No hay solicitudes activas')
+          _buildEmptyState(
+            'No hay solicitudes activas',
+            onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['id']}'),
+          )
         else
           ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
 
@@ -1203,11 +1209,11 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
   }
 
   Widget _buildPesajeCard(Map<String, dynamic> p) {
-    final producto = p['producto'] ?? 'S/D';
-    final cantidad = p['cantidad'] ?? 0;
-    final kilosNetos = p['kilos_netos'] ?? 0;
-    final kilosBrutos = p['kilos_brutos'] ?? 0;
+    final producto = 'Tambor de Miel';
+    final cantidad = 1;
+    final kilosBrutos = p['peso_bruto'] ?? 0;
     final tara = p['tara'] ?? 0;
+    final kilosNetos = kilosBrutos - tara;
     final date = p['created_at'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(p['created_at'])) : '';
     
     return InkWell(
@@ -1524,8 +1530,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     );
   }
 
-  Widget _buildEmptyState(String message) {
-    return Container(
+  Widget _buildEmptyState(String message, {VoidCallback? onTap}) {
+    Widget content = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
@@ -1544,5 +1550,17 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: content,
+        ),
+      );
+    }
+    return content;
   }
 }
