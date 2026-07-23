@@ -20,6 +20,7 @@ class ApicultorDetalleWidget extends StatefulWidget {
 class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
   List<Map<String, dynamic>> _pendientes = [];
   List<Map<String, dynamic>> _recientes = [];
+  List<Map<String, dynamic>> _pesajes = [];
   Map<String, Map<String, double>> _resumenDetallado = {}; 
   Map<String, Map<String, double>> _resumenPendiente = {}; 
   Map<String, int> _statusCounts = {};
@@ -29,6 +30,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
   String? _userRole;
   String? _userEmail;
   String? _displayName;
+  String _filtroOperaciones = 'Todas';
 
   @override
   void initState() {
@@ -287,6 +289,23 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           _statusCounts = estadoCounts;
           _maxTotal = maxT;
           _maxTotalPendiente = maxTPendiente;
+        });
+      }
+
+      // 4. Fetch Pesajes
+      try {
+        final pesajesData = await client.from('pesajes')
+            .select('*, paradas(viaje_id, rutas(viajes(chofer_id)))')
+            .eq('apicultor_id', widget.apicultor['id'])
+            .order('created_at', ascending: false)
+            .limit(20);
+        _pesajes = List<Map<String, dynamic>>.from(pesajesData);
+      } catch (ep) {
+        print('Error fetching pesajes: $ep');
+      }
+
+      if (mounted) {
+        setState(() {
           _isLoading = false;
         });
       }
@@ -519,7 +538,11 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader('Solicitudes Activas', null),
+                        _buildSectionHeader(
+                          'Solicitudes Activas', 
+                          null,
+                          onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['id']}'),
+                        ),
                         const SizedBox(height: 16),
                         if (_pendientes.isEmpty)
                           _buildEmptyState('No hay solicitudes activas')
@@ -566,12 +589,43 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader('Operaciones Recientes', null, showIcons: true),
+                        _buildSectionHeader(
+                          'Operaciones Recientes', 
+                          null, 
+                          showIcons: true,
+                          onFilterTap: () {
+                            setState(() {
+                              if (_filtroOperaciones == 'Todas') _filtroOperaciones = 'Recolección';
+                              else if (_filtroOperaciones == 'Recolección') _filtroOperaciones = 'Distribución';
+                              else _filtroOperaciones = 'Todas';
+                            });
+                          },
+                        ),
                         const SizedBox(height: 16),
-                        if (_recientes.isEmpty)
+                        if (_recientes.where((s) {
+                          if (_filtroOperaciones == 'Todas') return true;
+                          final tipo = s['tipo']?.toString().toLowerCase() ?? '';
+                          if (_filtroOperaciones == 'Recolección') return tipo.contains('recolecci');
+                          if (_filtroOperaciones == 'Distribución') return tipo.contains('distribuci');
+                          return true;
+                        }).isEmpty)
                           _buildEmptyState('No hay operaciones terminadas recientemente')
                         else
-                          ..._recientes.map((s) => _buildRecienteCard(s)).toList(),
+                          ..._recientes.where((s) {
+                            if (_filtroOperaciones == 'Todas') return true;
+                            final tipo = s['tipo']?.toString().toLowerCase() ?? '';
+                            if (_filtroOperaciones == 'Recolección') return tipo.contains('recolecci');
+                            if (_filtroOperaciones == 'Distribución') return tipo.contains('distribuci');
+                            return true;
+                          }).map((s) => _buildRecienteCard(s)).toList(),
+                        const SizedBox(height: 40),
+                        _buildSectionHeader('Pesajes (Historial)', null),
+                        const SizedBox(height: 16),
+                        if (_pesajes.isEmpty)
+                          _buildEmptyState('No hay pesajes registrados para este apicultor')
+                        else
+                          ..._pesajes.map((p) => _buildPesajeCard(p)).toList(),
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -594,7 +648,11 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         _buildInfoGrid(a),
         
         const SizedBox(height: 40),
-        _buildSectionHeader('Solicitudes Activas', null),
+        _buildSectionHeader(
+          'Solicitudes Activas', 
+          null,
+          onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['id']}'),
+        ),
         const SizedBox(height: 16),
         if (_pendientes.isEmpty)
           _buildEmptyState('No hay solicitudes activas')
@@ -620,13 +678,44 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           _buildProductSummary(),
 
         const SizedBox(height: 40),
-        _buildSectionHeader('Operaciones Recientes', null, showIcons: true),
+        _buildSectionHeader(
+          'Operaciones Recientes', 
+          null, 
+          showIcons: true,
+          onFilterTap: () {
+            setState(() {
+              if (_filtroOperaciones == 'Todas') _filtroOperaciones = 'Recolección';
+              else if (_filtroOperaciones == 'Recolección') _filtroOperaciones = 'Distribución';
+              else _filtroOperaciones = 'Todas';
+            });
+          },
+        ),
         const SizedBox(height: 16),
-        if (_recientes.isEmpty)
+        if (_recientes.where((s) {
+          if (_filtroOperaciones == 'Todas') return true;
+          final tipo = s['tipo']?.toString().toLowerCase() ?? '';
+          if (_filtroOperaciones == 'Recolección') return tipo.contains('recolecci');
+          if (_filtroOperaciones == 'Distribución') return tipo.contains('distribuci');
+          return true;
+        }).isEmpty)
           _buildEmptyState('No hay operaciones terminadas recientemente')
         else
-          ..._recientes.map((s) => _buildRecienteCard(s)).toList(),
+          ..._recientes.where((s) {
+            if (_filtroOperaciones == 'Todas') return true;
+            final tipo = s['tipo']?.toString().toLowerCase() ?? '';
+            if (_filtroOperaciones == 'Recolección') return tipo.contains('recolecci');
+            if (_filtroOperaciones == 'Distribución') return tipo.contains('distribuci');
+            return true;
+          }).map((s) => _buildRecienteCard(s)).toList(),
         
+        const SizedBox(height: 40),
+        _buildSectionHeader('Pesajes (Historial)', null),
+        const SizedBox(height: 16),
+        if (_pesajes.isEmpty)
+          _buildEmptyState('No hay pesajes registrados para este apicultor')
+        else
+          ..._pesajes.map((p) => _buildPesajeCard(p)).toList(),
+
         const SizedBox(height: 80),
       ],
     );
@@ -1113,6 +1202,71 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     return Container(height: 30, width: 1, color: Colors.white10);
   }
 
+  Widget _buildPesajeCard(Map<String, dynamic> p) {
+    final producto = p['producto'] ?? 'S/D';
+    final cantidad = p['cantidad'] ?? 0;
+    final kilosNetos = p['kilos_netos'] ?? 0;
+    final kilosBrutos = p['kilos_brutos'] ?? 0;
+    final tara = p['tara'] ?? 0;
+    final date = p['created_at'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(p['created_at'])) : '';
+    
+    return InkWell(
+      onTap: () {
+        if (p['parada_id'] != null) {
+          context.push('/remito?paradaId=${p['parada_id']}');
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.scale_rounded,
+                color: Colors.black26,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Producto: $producto ($cantidad uni)', style: DesignTokens.bodyStyle().copyWith(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text('Bruto: $kilosBrutos kg | Tara: $tara kg | Neto: $kilosNetos kg', 
+                    style: DesignTokens.bodyStyle().copyWith(fontSize: 11, color: Colors.black38)
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (date.isNotEmpty)
+                  Text(date, style: DesignTokens.labelStyle().copyWith(fontSize: 10, color: Colors.black38)),
+                const SizedBox(height: 4),
+                const Icon(Icons.print_rounded, size: 16, color: DesignTokens.secondary),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildProductSummary() {
     return Column(
       children: _resumenDetallado.entries.map<Widget>((entry) {
@@ -1304,24 +1458,35 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
 
 
 
-  Widget _buildSectionHeader(String title, String? actionText, {bool showIcons = false}) {
+  Widget _buildSectionHeader(String title, String? actionText, {bool showIcons = false, VoidCallback? onTap, VoidCallback? onFilterTap, VoidCallback? onDownloadTap}) {
+    Widget titleContent = Row(
+      children: [
+        Icon(showIcons ? Icons.history_rounded : Icons.analytics_outlined, color: DesignTokens.secondary, size: 22),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(title, 
+            overflow: TextOverflow.ellipsis,
+            style: DesignTokens.headlineStyle().copyWith(fontSize: 18, fontWeight: FontWeight.w400, color: const Color(0xFF424846))
+          ),
+        ),
+      ],
+    );
+
+    if (onTap != null) {
+      titleContent = InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: titleContent,
+        ),
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Row(
-            children: [
-              Icon(showIcons ? Icons.history_rounded : Icons.analytics_outlined, color: DesignTokens.secondary, size: 22),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(title, 
-                  overflow: TextOverflow.ellipsis,
-                  style: DesignTokens.headlineStyle().copyWith(fontSize: 18, fontWeight: FontWeight.w400, color: const Color(0xFF424846))
-                ),
-              ),
-            ],
-          ),
-        ),
+        Expanded(child: titleContent),
         if (actionText != null)
           GestureDetector(
             onTap: () {
@@ -1334,24 +1499,28 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         if (showIcons)
           Row(
             children: [
-              _buildSmallIconAction(Icons.filter_list_rounded),
+              _buildSmallIconAction(Icons.filter_list_rounded, onTap: onFilterTap),
               const SizedBox(width: 12),
-              _buildSmallIconAction(Icons.file_download_outlined),
+              _buildSmallIconAction(Icons.file_download_outlined, onTap: onDownloadTap),
             ],
           ),
       ],
     );
   }
 
-  Widget _buildSmallIconAction(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black12),
+  Widget _buildSmallIconAction(IconData icon, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: Icon(icon, size: 18, color: Colors.black38),
       ),
-      child: Icon(icon, size: 18, color: Colors.black38),
     );
   }
 

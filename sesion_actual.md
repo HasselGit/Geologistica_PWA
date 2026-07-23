@@ -256,3 +256,8 @@ En esta sesión implementamos una estandarización visual premium sobre los form
 ### 💀 3. Skeleton Loaders Uniformes
 - **El Problema**: Algunas páginas, como `carga_detalle.dart`, no mostraban estado de carga estandarizado, generando parpadeos en blanco.
 - **La Solución**: Se implementó una pantalla de carga tipo esqueleto estructural básico que respeta la posición real del `GeoSidebar`, entregando un feedback visual inmediato e impecable durante el fetching de la base de datos de Supabase.
+# #   S e s i o n   2 3 / 0 7 / 2 0 2 6   -   M e j o r a s   e n   D e t a l l e   A p i c u l t o r  
+ -   S e   a c t u a l i z o   a p i c u l t o r _ d e t a l l e . d a r t   p a r a   s o p o r t a r   o n F i l t e r T a p ,   o n T a p   y   o n D o w n l o a d T a p   e n   l a s   c a b e c e r a s   d e   s e c c i o n .  
+ -   S e   a n a d i o   l a   l o g i c a   d e   f i l t r a d o   r e a c t i v o   p a r a   O p e r a c i o n e s   R e c i e n t e s .  
+ -   S e   i n c o r p o r o   l a   v i s t a   d e   H i s t o r i a l   d e   P e s a j e s   q u e   n a v e g a   h a c i a   l a   p r e v i s u a l i z a c i o n   d e l   r e m i t o   ( p d f _ i n v o i c e _ g e n e r a t o r ) .  
+ 
