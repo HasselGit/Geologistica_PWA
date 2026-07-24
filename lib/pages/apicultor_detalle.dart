@@ -188,7 +188,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         final List<String> solIds = allSols.map((s) => s['id'].toString()).toList();
         if (solIds.isNotEmpty) {
           final pData = await client.from('paradas')
-            .select('id, created_at, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad), remitos(numero_remito, pdf_url)')
+            .select('id, created_at, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad, apicultor_titular, apicultor_id), remitos(numero_remito, pdf_url, apicultor_id)')
             .filter('solicitud_id', 'in', '(${solIds.join(',')})')
             .order('created_at', ascending: false);
           allParadas = List<Map<String, dynamic>>.from(pData as List);
@@ -238,7 +238,20 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           final String tipo = tipoRaw.toLowerCase().contains('recolecci') ? 'Recolección' : 'Distribución';
           final items = p['parada_items'] as List?;
           if (items != null) {
+            final currentApicIdStr = widget.apicultor['id']?.toString() ?? '';
+            final currentApicNombre = widget.apicultor['nombre']?.toString() ?? '';
             for (var item in items) {
+              final titular = item['apicultor_titular']?.toString();
+              final apicId = item['apicultor_id']?.toString();
+              
+              bool belongsToCurrent = true;
+              if (apicId != null && apicId.isNotEmpty) {
+                 belongsToCurrent = (apicId == currentApicIdStr);
+              } else if (titular != null && titular.isNotEmpty) {
+                 belongsToCurrent = (titular.toLowerCase().trim() == currentApicNombre.toLowerCase().trim() || titular == currentApicIdStr);
+              }
+              if (!belongsToCurrent) continue;
+
               final prodCode = item['producto_codigo'] ?? 'S/D';
               final cant = double.tryParse(item['cantidad']?.toString() ?? '0') ?? 0;
               if (cant > 0) {
@@ -340,12 +353,30 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           
           _remitosHistorial = allParadas.where((p) {
             final estado = (p['estado'] ?? '').toString().toUpperCase().trim();
-            final remitos = p['remitos'] as List?;
-            final hasRemito = remitos != null && remitos.isNotEmpty;
             final bool isCompleted = estado.contains('TERMINADA') || estado.contains('TERMINADO') ||
                                      estado.contains('FINALIZADA') || estado.contains('FINALIZADO') ||
                                      estado.contains('COMPLETADA') || estado.contains('COMPLETADO');
-            return isCompleted && hasRemito;
+            if (!isCompleted) return false;
+
+            final remitos = p['remitos'] as List?;
+            if (remitos == null || remitos.isEmpty) return false;
+
+            final currentApicIdStr = widget.apicultor['id']?.toString() ?? '';
+            final hasRemitoForMe = remitos.any((r) {
+              final rId = r['apicultor_id']?.toString();
+              if (rId == null || rId.isEmpty || rId == 'null') return true; 
+              return rId == currentApicIdStr;
+            });
+            return hasRemitoForMe;
+          }).map((p) {
+            final remitos = p['remitos'] as List?;
+            final currentApicIdStr = widget.apicultor['id']?.toString() ?? '';
+            final misRemitos = remitos?.where((r) {
+              final rId = r['apicultor_id']?.toString();
+              if (rId == null || rId.isEmpty || rId == 'null') return true;
+              return rId == currentApicIdStr;
+            }).toList() ?? [];
+            return {...p, 'remitos': misRemitos};
           }).take(20).toList();
         });
       }
