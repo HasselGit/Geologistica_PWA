@@ -299,4 +299,5 @@ Las solicitudes y viajes siguen un circuito de estados estricto:
   - **Skeleton Loaders**: Toda pantalla que requiera consultas a red debe renderizar un esqueleto estructural respetando el GeoSidebar.
 # #   2 3 / 0 7 / 2 0 2 6 :   U I / U X   A p i c u l t o r e s  
  -   S e   c o n s o l i d o   e l   p a t r o n   d e   t a r j e t a s   v a c i a s   c l i c k e a b l e s   ( I n k W e l l   +   M a t e r i a l )   p a r a   r e d i r e c c i o n   p r o a c t i v a   e n   a p i c u l t o r _ d e t a l l e . d a r t .  
- 
+ ### 24/07/2026 - Cambio Arquitectura BD
+Se añadió la columna apicultor_id en la tabla parada_items (tipo TEXT) referenciando apicultores.id. La lectura de TCM se abstrajo exclusivamente a la tabla pesajes para soportar división en paradas multicliente.

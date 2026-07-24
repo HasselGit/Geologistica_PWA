@@ -264,4 +264,11 @@ En esta sesiÃ³n implementamos una estandarizaciÃ³n visual premium sobre los form
  -   S e   c o r r i g i e r o n   l a s   r e f e r e n c i a s   d e   p r o d u c t o ,   p e s o _ b r u t o ,   t a r a   y   k i l o s _ n e t o s   e n   _ b u i l d P e s a j e C a r d .  
  # #   S i n c r o n i z a c i ó n   M a n u a l  
  -   E j e c u c i ó n   e s t r i c t a   d e l   p r o t o c o l o   d e   g u a r d a d o .  
- 
+ ## Sesion 24/07/2026 - Fix TCM y Supabase
+- Se modificó agregaritem.dart para permitir la selección manual de apicultor en Paradas.
+- Se agregó el campo apicultor_id en parada_items (via Supabase SQL).
+- Se solucionó la duplicación de rutas (choferHome / perfil) en main.dart.
+- Se reparó el cálculo de TCM en apicultor_detalle.dart para leer retroactivamente de pesajes.
+- Se corrigió error SQL al consultar remitos(apicultor_id) inexistente.
+- Se arregló la vista de pesajes_page.dart para que agrupe por parada_id y apicultor_id.
+- Se actualizó el listado de fallbackApicultores.
