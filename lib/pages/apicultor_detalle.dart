@@ -21,7 +21,7 @@ class ApicultorDetalleWidget extends StatefulWidget {
 class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
   List<Map<String, dynamic>> _pendientes = [];
   List<Map<String, dynamic>> _recientes = [];
-  List<Map<String, dynamic>> _pesajes = [];
+  List<Map<String, dynamic>> _remitosHistorial = [];
   Map<String, Map<String, double>> _resumenDetallado = {}; 
   Map<String, Map<String, double>> _resumenPendiente = {}; 
   Map<String, int> _statusCounts = {};
@@ -187,8 +187,9 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         final List<String> solIds = allSols.map((s) => s['id'].toString()).toList();
         if (solIds.isNotEmpty) {
           final pData = await client.from('paradas')
-            .select('id, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad)')
-            .filter('solicitud_id', 'in', '(${solIds.join(',')})');
+            .select('id, created_at, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad), remitos(numero_remito, pdf_url)')
+            .filter('solicitud_id', 'in', '(${solIds.join(',')})')
+            .order('created_at', ascending: false);
           allParadas = List<Map<String, dynamic>>.from(pData as List);
         }
       } catch(e) {
@@ -196,31 +197,10 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       }
 
       for (var s in allSols) {
-        s['remito_codigo'] = null;
-        
         final prodRaw = s['producto'] ?? 'S/D';
         final resolved = _resolveProductInfo(prodRaw.toString());
         s['producto_display'] = resolved['descripcion'];
         s['unidad_display'] = resolved['unidad'];
- 
-        try {
-          final paradasData = await client.from('paradas')
-              .select('id')
-              .eq('solicitud_id', s['id'])
-              .limit(1);
-          if (paradasData.isNotEmpty) {
-            final paradaId = paradasData[0]['id'];
-            final remitoData = await client.from('remitos')
-                .select('numero_remito')
-                .eq('parada_id', paradaId)
-                .maybeSingle();
-            if (remitoData != null) {
-              s['remito_codigo'] = remitoData['numero_remito'] ?? 'REM-${paradaId.toString().split('-').first.toUpperCase()}';
-            }
-          }
-        } catch (e) {
-          print('Error recuperando remito para apicultor detalle: $e');
-        }
       }
  
       final List<Map<String, dynamic>> activas = allSols.where((s) {
@@ -320,22 +300,17 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           _statusCounts = estadoCounts;
           _maxTotal = maxT;
           _maxTotalPendiente = maxTPendiente;
+          
+          _remitosHistorial = allParadas.where((p) {
+            final estado = (p['estado'] ?? '').toString().toUpperCase().trim();
+            final remitos = p['remitos'] as List?;
+            final hasRemito = remitos != null && remitos.isNotEmpty;
+            final bool isCompleted = estado.contains('TERMINADA') || estado.contains('TERMINADO') ||
+                                     estado.contains('FINALIZADA') || estado.contains('FINALIZADO') ||
+                                     estado.contains('COMPLETADA') || estado.contains('COMPLETADO');
+            return isCompleted && hasRemito;
+          }).take(20).toList();
         });
-      }
-
-      try {
-        final pesajesData = await client.from('pesajes')
-            .select('*, paradas(viaje_id, rutas(viajes(chofer_id)))')
-            .eq('apicultor_id', widget.apicultor['id'])
-            .order('created_at', ascending: false)
-            .limit(50);
-        final rawPesajes = List<Map<String, dynamic>>.from(pesajesData);
-        _pesajes = rawPesajes.where((p) {
-           final double pesoBruto = (p['peso_bruto'] as num?)?.toDouble() ?? 0.0;
-           return pesoBruto > 0.0;
-        }).take(20).toList();
-      } catch (ep) {
-        print('Error fetching pesajes: $ep');
       }
 
       if (mounted) {
@@ -656,12 +631,12 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                             return true;
                           }).map((s) => _buildRecienteCard(s)).toList(),
                         const SizedBox(height: 40),
-                        _buildSectionHeader('Pesajes (Historial)', null),
+                        _buildSectionHeader('Remitos (Historial)', null),
                         const SizedBox(height: 16),
-                        if (_pesajes.isEmpty)
-                          _buildEmptyState('No hay pesajes registrados para este apicultor')
+                        if (_remitosHistorial.isEmpty)
+                          _buildEmptyState('No hay remitos registrados para este apicultor')
                         else
-                          ..._pesajes.map((p) => _buildPesajeCard(p)).toList(),
+                          ..._remitosHistorial.map((r) => _buildRemitoCard(r)).toList(),
                         const SizedBox(height: 80),
                       ],
                     ),
@@ -749,12 +724,12 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           }).map((s) => _buildRecienteCard(s)).toList(),
         
         const SizedBox(height: 40),
-        _buildSectionHeader('Pesajes (Historial)', null),
+        _buildSectionHeader('Remitos (Historial)', null),
         const SizedBox(height: 16),
-        if (_pesajes.isEmpty)
-          _buildEmptyState('No hay pesajes registrados para este apicultor')
+        if (_remitosHistorial.isEmpty)
+          _buildEmptyState('No hay remitos registrados para este apicultor')
         else
-          ..._pesajes.map((p) => _buildPesajeCard(p)).toList(),
+          ..._remitosHistorial.map((r) => _buildRemitoCard(r)).toList(),
 
         const SizedBox(height: 80),
       ],
@@ -1131,7 +1106,6 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     final tipoRaw = s['tipo'] ?? 'Operación';
     final String tipo = tipoRaw.toString().toLowerCase().contains('recolecci') ? 'Recolección' : 'Distribución';
     final isRecoleccion = tipo == 'Recolección';
-    final remito = s['remito_codigo'];
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1167,14 +1141,6 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (remito != null)
-                Text('REMITO: $remito', style: DesignTokens.labelStyle().copyWith(fontSize: 8, color: DesignTokens.secondary, fontWeight: FontWeight.w900)),
-              Text('TERMINADA', style: DesignTokens.labelStyle().copyWith(fontSize: 8, color: DesignTokens.success, fontWeight: FontWeight.w900)),
-            ],
           ),
         ],
       ),
@@ -1242,85 +1208,65 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     return Container(height: 30, width: 1, color: Colors.white10);
   }
 
-  Widget _buildPesajeCard(Map<String, dynamic> p) {
-    final producto = 'Tambor de Miel';
-    final cantidad = 1;
-    final kilosBrutos = p['peso_bruto'] ?? 0;
-    final tara = p['tara'] ?? 0;
-    final kilosNetos = kilosBrutos - tara;
-    final date = p['created_at'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(p['created_at'])) : '';
+  Widget _buildRemitoCard(Map<String, dynamic> r) {
+    final remitos = r['remitos'] as List?;
+    final remito = (remitos != null && remitos.isNotEmpty) ? remitos.first : null;
+    final numRemito = remito?['numero_remito'] ?? 'Borrador';
+    final url = remito?['pdf_url'];
     
-    return InkWell(
-      onTap: () async {
-        if (p['parada_id'] != null) {
-          try {
-            final remito = await Supabase.instance.client
-                .from('remitos')
-                .select('pdf_url')
-                .eq('parada_id', p['parada_id'])
-                .maybeSingle();
-            final url = remito?['pdf_url'];
-            if (url != null && url.toString().isNotEmpty) {
-              launchUrl(Uri.parse(url.toString()), webOnlyWindowName: '_blank');
-            } else {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este pesaje no tiene un remito PDF asociado')));
-              }
-            }
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al abrir el remito')));
-            }
-          }
-        }
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: DesignTokens.outline.withValues(alpha: 0.1)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
-        ),
-        child: Row(
+    final tipo = r['tipo'] ?? 'Operación';
+    final estado = r['estado'] ?? 'Desconocido';
+    final date = r['created_at'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(r['created_at'])) : '';
+    
+    int totalItems = 0;
+    final items = r['parada_items'] as List?;
+    if (items != null) {
+      for (var item in items) {
+         final cant = double.tryParse(item['cantidad']?.toString() ?? '0') ?? 0;
+         totalItems += cant.toInt();
+      }
+    }
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: DesignTokens.primary.withOpacity(0.1))),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        leading: const Icon(Icons.receipt_long_rounded, color: DesignTokens.secondary, size: 28),
+        title: Text(numRemito, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: DesignTokens.primary)),
+        subtitle: Text('$estado • $tipo ($totalItems items) • $date', style: TextStyle(fontSize: 12, color: DesignTokens.primary.withOpacity(0.6))),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
+            if (url != null && url.toString().isNotEmpty) ...[
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.open_in_new_rounded, size: 20, color: DesignTokens.primary),
+                onPressed: () {
+                  launchUrl(Uri.parse(url.toString()), webOnlyWindowName: '_blank');
+                },
               ),
-              child: const Icon(
-                Icons.scale_rounded,
-                color: Colors.black26,
-                size: 18,
+            ] else ...[
+               IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: Icon(Icons.error_outline, size: 20, color: Colors.grey.shade400),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
+                },
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Producto: $producto ($cantidad uni)', style: DesignTokens.bodyStyle().copyWith(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('Bruto: $kilosBrutos kg | Tara: $tara kg | Neto: $kilosNetos kg', 
-                    style: DesignTokens.bodyStyle().copyWith(fontSize: 11, color: Colors.black38)
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (date.isNotEmpty)
-                  Text(date, style: DesignTokens.labelStyle().copyWith(fontSize: 10, color: Colors.black38)),
-                const SizedBox(height: 4),
-                const Icon(Icons.print_rounded, size: 16, color: DesignTokens.secondary),
-              ],
-            ),
+            ]
           ],
         ),
+        onTap: () {
+          if (url != null && url.toString().isNotEmpty) {
+            launchUrl(Uri.parse(url.toString()), webOnlyWindowName: '_blank');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
+          }
+        },
       ),
     );
   }
