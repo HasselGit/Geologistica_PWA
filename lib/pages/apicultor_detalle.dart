@@ -188,7 +188,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         final List<String> solIds = allSols.map((s) => s['id'].toString()).toList();
         if (solIds.isNotEmpty) {
           final pData = await client.from('paradas')
-            .select('id, created_at, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad, apicultor_titular, apicultor_id), remitos(numero_remito, pdf_url, apicultor_id)')
+            .select('id, created_at, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad), remitos(numero_remito, pdf_url, apicultor_id)')
             .filter('solicitud_id', 'in', '(${solIds.join(',')})')
             .order('created_at', ascending: false);
           allParadas = List<Map<String, dynamic>>.from(pData as List);
