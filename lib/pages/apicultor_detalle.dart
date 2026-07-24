@@ -186,11 +186,30 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       List<Map<String, dynamic>> allParadas = [];
       try {
         final List<String> solIds = allSols.map((s) => s['id'].toString()).toList();
-        if (solIds.isNotEmpty) {
-          final pData = await client.from('paradas')
-            .select('id, created_at, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad), remitos(numero_remito, pdf_url, apicultor_id)')
-            .filter('solicitud_id', 'in', '(${solIds.join(',')})')
-            .order('created_at', ascending: false);
+        final Set<String> paradaIdsToFetch = {};
+        
+        try {
+          final pItems = await client.from('parada_items').select('parada_id').eq('apicultor_id', widget.apicultor['id']);
+          for (var pi in pItems) {
+            if (pi['parada_id'] != null) {
+              paradaIdsToFetch.add(pi['parada_id'].toString());
+            }
+          }
+        } catch (_) {}
+
+        if (solIds.isNotEmpty || paradaIdsToFetch.isNotEmpty) {
+          var query = client.from('paradas')
+            .select('id, created_at, tipo, estado, solicitud_id, parada_items(id, producto_codigo, cantidad, unidad, apicultor_id), remitos(numero_remito, pdf_url, apicultor_id)');
+            
+          if (solIds.isNotEmpty && paradaIdsToFetch.isNotEmpty) {
+            query = query.or('solicitud_id.in.(${solIds.join(',')}),id.in.(${paradaIdsToFetch.join(',')})');
+          } else if (solIds.isNotEmpty) {
+            query = query.filter('solicitud_id', 'in', '(${solIds.join(',')})');
+          } else {
+            query = query.filter('id', 'in', '(${paradaIdsToFetch.join(',')})');
+          }
+          
+          final pData = await query.order('created_at', ascending: false);
           allParadas = List<Map<String, dynamic>>.from(pData as List);
         }
       } catch(e) {
@@ -240,19 +259,29 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           if (items != null) {
             final currentApicIdStr = widget.apicultor['id']?.toString() ?? '';
             final currentApicNombre = widget.apicultor['nombre']?.toString() ?? '';
+            final bool isMySolicitud = allSols.any((s) => s['id'].toString() == p['solicitud_id']?.toString());
+            
             for (var item in items) {
               final titular = item['apicultor_titular']?.toString();
               final apicId = item['apicultor_id']?.toString();
               
-              bool belongsToCurrent = true;
+              bool belongsToCurrent = false;
               if (apicId != null && apicId.isNotEmpty) {
                  belongsToCurrent = (apicId == currentApicIdStr);
               } else if (titular != null && titular.isNotEmpty) {
                  belongsToCurrent = (titular.toLowerCase().trim() == currentApicNombre.toLowerCase().trim() || titular == currentApicIdStr);
+              } else {
+                 belongsToCurrent = isMySolicitud;
               }
               if (!belongsToCurrent) continue;
 
               final prodCode = item['producto_codigo'] ?? 'S/D';
+              
+              // TCM se calcula exclusivamente desde la tabla pesajes para mayor exactitud retroactiva
+              if (prodCode.toString().toUpperCase() == 'TCM' || prodCode.toString() == '1') {
+                continue;
+              }
+              
               final cant = double.tryParse(item['cantidad']?.toString() ?? '0') ?? 0;
               if (cant > 0) {
                 final resolved = _resolveProductInfo(prodCode.toString());
@@ -322,8 +351,9 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         final double pesoBruto = (p['peso_bruto'] as num?)?.toDouble() ?? 0.0;
         if (pesoBruto > 0.0) {
           final paradaId = p['parada_id']?.toString() ?? 'sin_parada';
+          final parada = p['paradas'] as Map<String, dynamic>?;
+          
           if (!grouped.containsKey(paradaId)) {
-            final parada = p['paradas'] as Map<String, dynamic>?;
             final viaje = parada?['viajes'] as Map<String, dynamic>?;
             grouped[paradaId] = {
               'parada_id': paradaId,
@@ -334,6 +364,21 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             };
           }
           (grouped[paradaId]!['items'] as List).add(p);
+          
+          // Contar TCM para el Resumen (Retroactivo y Exacto)
+          final estado = (parada?['estado'] ?? '').toString().toUpperCase().trim();
+          final bool isCompleted = estado.contains('TERMINADA') || estado.contains('TERMINADO') ||
+                                   estado.contains('FINALIZADA') || estado.contains('FINALIZADO') ||
+                                   estado.contains('COMPLETADA') || estado.contains('COMPLETADO');
+          
+          if (isCompleted) {
+             final tipoRaw = (parada?['tipo'] ?? 'Operación').toString();
+             final String tipo = tipoRaw.toLowerCase().contains('recolecci') ? 'Recolección' : 'Distribución';
+             final resolved = _resolveProductInfo('TCM');
+             final prodDisplay = resolved['descripcion'] ?? 'Tambores con Miel';
+             resumen.putIfAbsent(prodDisplay, () => {});
+             resumen[prodDisplay]![tipo] = (resumen[prodDisplay]![tipo] ?? 0) + 1;
+          }
         }
       }
 

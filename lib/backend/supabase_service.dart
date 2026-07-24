@@ -2590,8 +2590,42 @@ class SupabaseService {
       }
 
       try {
+        final String itemId = item['id']?.toString() ?? '';
         final bool isSameApicultor = originalApicultorId != null && apicultorId != null &&
             originalApicultorId.trim().toLowerCase() == apicultorId.trim().toLowerCase();
+        
+        // 1. Update/Insert in parada_items to track apicultor_id correctly for Resumen por Producto
+        if (itemId.startsWith('ADHOC')) {
+          await _client.from('parada_items').insert({
+             'parada_id': paradaId,
+             'producto_codigo': prodCode,
+             'cantidad': qty,
+             'unidad': unit,
+             'apicultor_id': apicultorId,
+          });
+        } else if (itemId.isNotEmpty && !isSameApicultor) {
+          final existingItem = await _client.from('parada_items').select('cantidad, apicultor_id').eq('id', itemId).maybeSingle();
+          if (existingItem != null) {
+             final double currentQty = (existingItem['cantidad'] as num).toDouble();
+             
+             if (currentQty <= qty) {
+               // Taken all of it
+               await _client.from('parada_items').update({'apicultor_id': apicultorId}).eq('id', itemId);
+             } else {
+               // Split it
+               await _client.from('parada_items').update({'cantidad': currentQty - qty}).eq('id', itemId);
+               await _client.from('parada_items').insert({
+                 'parada_id': paradaId,
+                 'producto_codigo': prodCode,
+                 'cantidad': qty,
+                 'unidad': unit,
+                 'apicultor_id': apicultorId,
+               });
+             }
+          }
+        }
+
+        // 2. Original Solicitud Update Logic
         if (originalSolId != null && isSameApicultor) {
           await _client.from('solicitudes').update({
             'producto': prodCode,
@@ -2612,7 +2646,7 @@ class SupabaseService {
           });
         }
       } catch (err) {
-        print('SupabaseService: Error al actualizar solicitud online: $err');
+        print('SupabaseService: Error al procesar itemToInclude online: $err');
       }
     }
 

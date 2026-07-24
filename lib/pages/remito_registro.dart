@@ -524,6 +524,7 @@ class _RemitoRegistroPageState extends State<RemitoRegistroPage> {
         final id = it['id'].toString();
         final selQty = _selectedQuantities[id] ?? 0;
         return {
+          'id': id,
           'producto_codigo': it['producto_codigo'] ?? '-',
           'cantidad': selQty,
           'unidad': it['unidad'] ?? '-',

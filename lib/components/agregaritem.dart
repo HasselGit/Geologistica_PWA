@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../backend/design_tokens.dart';
 import '../backend/supabase_service.dart';
+import '../backend/apicultores_data.dart';
 
 class AgregarItemWidget extends StatefulWidget {
   const AgregarItemWidget({super.key, required this.paradaId, this.viajeId});
@@ -15,6 +16,7 @@ class AgregarItemWidget extends StatefulWidget {
 class _AgregarItemWidgetState extends State<AgregarItemWidget> {
   final _textController = TextEditingController();
   String? _selectedProduct;
+  String? _selectedApicultorId;
   String? _selectedUnit;
   String _tipoMovimiento = 'Recolección'; // 'Recolección' (Retira) o 'Distribución' (Entrega)
   List<Map<String, dynamic>> _productos = [];
@@ -304,6 +306,35 @@ class _AgregarItemWidgetState extends State<AgregarItemWidget> {
           const SizedBox(height: 20),
           DropdownButtonFormField<String>(
             isExpanded: true,
+            value: _selectedApicultorId,
+            hint: const Text('Buscar Apicultor (Opcional)...'),
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DesignTokens.primary),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: DesignTokens.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
+            items: ApicultoresData.fallbackApicultores.map((api) => DropdownMenuItem(
+              value: api['apicultor_codigo']?.toString(),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width - 100,
+                child: Text(
+                  '${api['apicultor_codigo']} - ${api['nombre']}',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            )).toList(),
+            onChanged: (val) {
+              setState(() => _selectedApicultorId = val);
+            },
+          ),
+          
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            isExpanded: true,
             value: _selectedProduct,
             hint: const Text('Buscar Producto...'),
             icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DesignTokens.primary),
@@ -399,12 +430,19 @@ class _AgregarItemWidgetState extends State<AgregarItemWidget> {
                     // 3. Insert Item
                     final bool isTCM = _selectedProduct == 'TCM';
                     final String baseUnit = isTCM ? 'uni' : (_selectedUnit ?? 'Uni');
-                    await Supabase.instance.client.from('parada_items').insert({
+                    
+                    final Map<String, dynamic> insertData = {
                       'parada_id': widget.paradaId,
                       'producto_codigo': _selectedProduct,
                       'cantidad': qty,
                       'unidad': '$baseUnit|$_tipoMovimiento',
-                    });
+                    };
+                    
+                    if (_selectedApicultorId != null && _selectedApicultorId!.isNotEmpty) {
+                      insertData['apicultor_id'] = _selectedApicultorId;
+                    }
+                    
+                    await Supabase.instance.client.from('parada_items').insert(insertData);
 
                     // 2. Asegurar que el tipo de parada refleje la operación actual (puede convertirse en MIXTA)
                     final parada = await Supabase.instance.client.from('paradas')
