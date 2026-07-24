@@ -182,11 +182,22 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       
       final List<Map<String, dynamic>> allSols = List<Map<String, dynamic>>.from(allSolsRes as List);
  
-      // Enriquecer con remitos y datos de producto de forma ultra segura
+      List<Map<String, dynamic>> allParadas = [];
+      try {
+        final List<String> solIds = allSols.map((s) => s['id'].toString()).toList();
+        if (solIds.isNotEmpty) {
+          final pData = await client.from('paradas')
+            .select('id, tipo, estado, solicitud_id, parada_items(producto_codigo, cantidad, unidad)')
+            .filter('solicitud_id', 'in', '(${solIds.join(',')})');
+          allParadas = List<Map<String, dynamic>>.from(pData as List);
+        }
+      } catch(e) {
+        print('Error fetching paradas for resumen: $e');
+      }
+
       for (var s in allSols) {
         s['remito_codigo'] = null;
         
-        // Resolver producto
         final prodRaw = s['producto'] ?? 'S/D';
         final resolved = _resolveProductInfo(prodRaw.toString());
         s['producto_display'] = resolved['descripcion'];
@@ -236,6 +247,30 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         'TERMINADAS': 0,
       };
  
+      for (var p in allParadas) {
+        final estado = (p['estado'] ?? '').toString().toUpperCase().trim();
+        final bool isCompleted = estado.contains('TERMINADA') || estado.contains('TERMINADO') ||
+                                 estado.contains('FINALIZADA') || estado.contains('FINALIZADO') ||
+                                 estado.contains('COMPLETADA') || estado.contains('COMPLETADO');
+        if (isCompleted) {
+          final tipoRaw = (p['tipo'] ?? 'Operación').toString();
+          final String tipo = tipoRaw.toLowerCase().contains('recolecci') ? 'Recolección' : 'Distribución';
+          final items = p['parada_items'] as List?;
+          if (items != null) {
+            for (var item in items) {
+              final prodCode = item['producto_codigo'] ?? 'S/D';
+              final cant = double.tryParse(item['cantidad']?.toString() ?? '0') ?? 0;
+              if (cant > 0) {
+                final resolved = _resolveProductInfo(prodCode.toString());
+                final prodDisplay = resolved['descripcion'] ?? prodCode;
+                resumen.putIfAbsent(prodDisplay, () => {});
+                resumen[prodDisplay]![tipo] = (resumen[prodDisplay]![tipo] ?? 0) + cant;
+              }
+            }
+          }
+        }
+      }
+
       for (var s in allSols) {
         final prodDisplay = s['producto_display'] ?? s['producto'] ?? 'S/D';
         final cant = double.tryParse(s['cantidad']?.toString() ?? '0') ?? 0;
@@ -248,10 +283,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                                  estado.contains('COMPLETADA') || estado.contains('COMPLETADO');
         final bool isCanceled = estado.contains('CANCELADA') || estado.contains('CANCELADO') || estado.contains('ELIMINADA');
         
-        if (isCompleted) {
-          resumen.putIfAbsent(prodDisplay, () => {});
-          resumen[prodDisplay]![tipo] = (resumen[prodDisplay]![tipo] ?? 0) + cant;
-        } else if (!isCanceled) {
+        if (!isCompleted && !isCanceled) {
           resumenPendiente.putIfAbsent(prodDisplay, () => {});
           resumenPendiente[prodDisplay]![tipo] = (resumenPendiente[prodDisplay]![tipo] ?? 0) + cant;
         }
@@ -267,14 +299,12 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         }
       }
  
-      // Calcular maxTotal para barras de progreso histórico
       double maxT = 1.0;
       for (var prodResumen in resumen.values) {
         double prodTotal = prodResumen.values.fold(0.0, (a, b) => a + b);
         if (prodTotal > maxT) maxT = prodTotal;
       }
       
-      // Calcular maxTotalPendiente para barras de progreso pendiente
       double maxTPendiente = 1.0;
       for (var prodResumen in resumenPendiente.values) {
         double prodTotal = prodResumen.values.fold(0.0, (a, b) => a + b);
@@ -293,14 +323,17 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         });
       }
 
-      // 4. Fetch Pesajes
       try {
         final pesajesData = await client.from('pesajes')
             .select('*, paradas(viaje_id, rutas(viajes(chofer_id)))')
             .eq('apicultor_id', widget.apicultor['id'])
             .order('created_at', ascending: false)
-            .limit(20);
-        _pesajes = List<Map<String, dynamic>>.from(pesajesData);
+            .limit(50);
+        final rawPesajes = List<Map<String, dynamic>>.from(pesajesData);
+        _pesajes = rawPesajes.where((p) {
+           final double pesoBruto = (p['peso_bruto'] as num?)?.toDouble() ?? 0.0;
+           return pesoBruto > 0.0;
+        }).take(20).toList();
       } catch (ep) {
         print('Error fetching pesajes: $ep');
       }
