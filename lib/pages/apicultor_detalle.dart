@@ -4,6 +4,7 @@ import '../backend/design_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../backend/supabase_service.dart';
 import '../backend/apicultores_data.dart';
 import '../backend/productos_data.dart';
@@ -1217,9 +1218,27 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     final date = p['created_at'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(p['created_at'])) : '';
     
     return InkWell(
-      onTap: () {
+      onTap: () async {
         if (p['parada_id'] != null) {
-          context.push('/remito?paradaId=${p['parada_id']}');
+          try {
+            final remito = await Supabase.instance.client
+                .from('remitos')
+                .select('pdf_url')
+                .eq('parada_id', p['parada_id'])
+                .maybeSingle();
+            final url = remito?['pdf_url'];
+            if (url != null && url.toString().isNotEmpty) {
+              launchUrl(Uri.parse(url.toString()), webOnlyWindowName: '_blank');
+            } else {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este pesaje no tiene un remito PDF asociado')));
+              }
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al abrir el remito')));
+            }
+          }
         }
       },
       borderRadius: BorderRadius.circular(16),

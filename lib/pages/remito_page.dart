@@ -94,7 +94,7 @@ class _RemitoPageWidgetState extends State<RemitoPageWidget> {
 
       final itemsRaw = await Supabase.instance.client
           .from('parada_items')
-          .select('id, producto_codigo, cantidad, unidad, peso_kg')
+          .select('id, producto_codigo, cantidad, unidad')
           .eq('parada_id', widget.paradaId);
       
       _items = List<Map<String, dynamic>>.from(itemsRaw);
