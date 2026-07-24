@@ -22,6 +22,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
   List<Map<String, dynamic>> _pendientes = [];
   List<Map<String, dynamic>> _recientes = [];
   List<Map<String, dynamic>> _remitosHistorial = [];
+  List<Map<String, dynamic>> _pesajesAgrupados = [];
   Map<String, Map<String, double>> _resumenDetallado = {}; 
   Map<String, Map<String, double>> _resumenPendiente = {}; 
   Map<String, int> _statusCounts = {};
@@ -290,6 +291,41 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         double prodTotal = prodResumen.values.fold(0.0, (a, b) => a + b);
         if (prodTotal > maxTPendiente) maxTPendiente = prodTotal;
       }
+      
+      List<Map<String, dynamic>> pesajesRaw = [];
+      try {
+        final pesajesData = await client.from('pesajes')
+            .select('*, paradas(id, tipo, estado, viaje_id, viajes(codigo_viaje))')
+            .eq('apicultor_id', widget.apicultor['id'])
+            .order('created_at', ascending: false)
+            .limit(500);
+        pesajesRaw = List<Map<String, dynamic>>.from(pesajesData);
+      } catch (ep) {
+        print('Error fetching pesajes for grouping: $ep');
+      }
+
+      Map<String, Map<String, dynamic>> grouped = {};
+      for (var p in pesajesRaw) {
+        final double pesoBruto = (p['peso_bruto'] as num?)?.toDouble() ?? 0.0;
+        if (pesoBruto > 0.0) {
+          final paradaId = p['parada_id']?.toString() ?? 'sin_parada';
+          if (!grouped.containsKey(paradaId)) {
+            final parada = p['paradas'] as Map<String, dynamic>?;
+            final viaje = parada?['viajes'] as Map<String, dynamic>?;
+            grouped[paradaId] = {
+              'parada_id': paradaId,
+              'viaje_codigo': viaje?['codigo_viaje'],
+              'created_at': p['created_at'],
+              'apicultor_nombre': widget.apicultor['nombre'],
+              'items': <Map<String, dynamic>>[]
+            };
+          }
+          (grouped[paradaId]!['items'] as List).add(p);
+        }
+      }
+
+      final List<Map<String, dynamic>> finalAgrupados = grouped.values.toList();
+      finalAgrupados.sort((a, b) => (b['created_at']?.toString() ?? '').compareTo(a['created_at']?.toString() ?? ''));
  
       if (mounted) {
         setState(() {
@@ -300,6 +336,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           _statusCounts = estadoCounts;
           _maxTotal = maxT;
           _maxTotalPendiente = maxTPendiente;
+          _pesajesAgrupados = finalAgrupados;
           
           _remitosHistorial = allParadas.where((p) {
             final estado = (p['estado'] ?? '').toString().toUpperCase().trim();
@@ -529,6 +566,13 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
               _buildInfoGrid(a),
               const SizedBox(height: 24),
               _buildStatusOverview(),
+              const SizedBox(height: 40),
+              _buildSectionHeader('Resumen por Producto (Histórico)', null),
+              const SizedBox(height: 16),
+              if (_resumenDetallado.isEmpty)
+                _buildEmptyState('Sin operaciones registradas')
+              else
+                _buildProductSummary(),
             ],
           ),
         ),
@@ -587,12 +631,12 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader('Resumen por Producto (Histórico)', null),
+                        _buildSectionHeader('Remitos (Historial)', null),
                         const SizedBox(height: 16),
-                        if (_resumenDetallado.isEmpty)
-                          _buildEmptyState('Sin operaciones registradas')
+                        if (_remitosHistorial.isEmpty)
+                          _buildEmptyState('No hay remitos registrados para este apicultor')
                         else
-                          _buildProductSummary(),
+                          ..._remitosHistorial.map((r) => _buildRemitoCard(r)).toList(),
                       ],
                     ),
                   ),
@@ -631,12 +675,12 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                             return true;
                           }).map((s) => _buildRecienteCard(s)).toList(),
                         const SizedBox(height: 40),
-                        _buildSectionHeader('Remitos (Historial)', null),
+                        _buildSectionHeader('Pesajes (Historial)', null),
                         const SizedBox(height: 16),
-                        if (_remitosHistorial.isEmpty)
-                          _buildEmptyState('No hay remitos registrados para este apicultor')
+                        if (_pesajesAgrupados.isEmpty)
+                          _buildEmptyState('No hay pesajes registrados para este apicultor')
                         else
-                          ..._remitosHistorial.map((r) => _buildRemitoCard(r)).toList(),
+                          ..._pesajesAgrupados.map((p) => _buildPesajeAgrupadoCard(p)).toList(),
                         const SizedBox(height: 80),
                       ],
                     ),
@@ -730,6 +774,14 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           _buildEmptyState('No hay remitos registrados para este apicultor')
         else
           ..._remitosHistorial.map((r) => _buildRemitoCard(r)).toList(),
+        
+        const SizedBox(height: 40),
+        _buildSectionHeader('Pesajes (Historial)', null),
+        const SizedBox(height: 16),
+        if (_pesajesAgrupados.isEmpty)
+          _buildEmptyState('No hay pesajes registrados para este apicultor')
+        else
+          ..._pesajesAgrupados.map((p) => _buildPesajeAgrupadoCard(p)).toList(),
 
         const SizedBox(height: 80),
       ],
@@ -1267,6 +1319,138 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Este remito no tiene un PDF asociado')));
           }
         },
+      ),
+    );
+  }
+
+  Widget _totalBox(String label, double value, bool highlight) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: highlight ? DesignTokens.secondary.withOpacity(0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: highlight ? DesignTokens.secondary.withOpacity(0.2) : const Color(0xFFEEEEEE)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black38)),
+            const SizedBox(height: 4),
+            Text('${value.toStringAsFixed(0)} kg', 
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: highlight ? const Color(0xFFC68E17) : const Color(0xFF202020))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _th(String label, int flex, {bool right = false}) => Expanded(
+        flex: flex,
+        child: Text(label, textAlign: right ? TextAlign.right : TextAlign.left,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white70)),
+      );
+
+  Widget _detalleRow(int idx, Map<String, dynamic> item) {
+    final bruto = double.tryParse(item['peso_bruto']?.toString() ?? '0') ?? 0;
+    final tara = double.tryParse(item['tara']?.toString() ?? '0') ?? 0;
+    final neto = bruto - tara;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF5F5F5)))),
+      child: Row(
+        children: [
+          Expanded(flex: 1, child: Text('$idx', style: const TextStyle(fontSize: 12, color: Colors.black26))),
+          Expanded(flex: 4, child: Text(item['codigo_senasa']?.toString() ?? 'S/D', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF202020)))),
+          Expanded(flex: 2, child: Text('${bruto.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontSize: 12, color: Colors.black54))),
+          Expanded(flex: 2, child: Text('${tara.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontSize: 12, color: Colors.black54))),
+          Expanded(flex: 2, child: Text('${neto.toStringAsFixed(0)} kg', textAlign: TextAlign.right, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFC68E17)))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPesajeAgrupadoCard(Map<String, dynamic> g) {
+    final items = g['items'] as List<dynamic>? ?? [];
+    double totalBruto = 0, totalTara = 0, totalNeto = 0;
+    for (var it in items) {
+      final b = double.tryParse(it['peso_bruto']?.toString() ?? '0') ?? 0;
+      final t = double.tryParse(it['tara']?.toString() ?? '0') ?? 0;
+      totalBruto += b;
+      totalTara += t;
+      totalNeto += (b - t);
+    }
+    
+    final apicultor = g['apicultor_nombre'] ?? widget.apicultor['nombre'] ?? 'Sin apicultor';
+    final viajeCode = g['viaje_codigo']?.toString() ?? g['parada_id']?.toString() ?? 'Viaje/Parada';
+    final localidad = widget.apicultor['localidad'] ?? 'S/D';
+    final fechaStr = g['created_at'] != null 
+        ? DateFormat('dd/MM/yy').format(DateTime.tryParse(g['created_at'].toString()) ?? DateTime.now())
+        : '--/--/--';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFBFBFB),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Row(
+              children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(viajeCode, style: DesignTokens.headlineStyle().copyWith(fontSize: 20, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 4),
+                  Text('$apicultor • $localidad • $fechaStr', style: const TextStyle(fontSize: 13, color: Colors.black45)),
+                ])),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: const Color(0xFFFDF7E7), borderRadius: BorderRadius.circular(20)),
+                  child: Text('${items.length} TCM', style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFFC68E17))),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Row(children: [
+              _totalBox('BRUTO TOTAL', totalBruto, false),
+              const SizedBox(width: 10),
+              _totalBox('TARA TOTAL', totalTara, false),
+              const SizedBox(width: 10),
+              _totalBox('NETO TOTAL', totalNeto, true),
+            ]),
+          ),
+          Container(
+            margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(color: Color(0xFF1E302C), borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                  child: Row(children: [
+                    _th('#', 1), _th('CÓD. SENASA', 4), _th('BRUTO', 2, right: true), _th('TARA', 2, right: true), _th('NETO', 2, right: true),
+                  ]),
+                ),
+                if (items.isEmpty)
+                   const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('Sin registros', style: TextStyle(color: Colors.black38))))
+                else
+                   ...List.generate(items.length, (i) => _detalleRow(i + 1, items[i] as Map<String, dynamic>)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
