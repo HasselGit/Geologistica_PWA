@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../backend/design_tokens.dart';
 import '../widgets/geo_sidebar.dart';
+import '../backend/apicultores_data.dart';
 import 'agregar_pesaje.dart';
 import 'apicultor_detalle.dart';
 
@@ -135,16 +136,18 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
         return;
       }
 
-      // Agrupar por parada_id
+      // Agrupar por parada_id y apicultor_id
       final Map<String, List<Map<String, dynamic>>> porParada = {};
       for (var p in pesajes) {
         final paradaId = p['parada_id']?.toString() ?? 'sin_parada';
-        porParada.putIfAbsent(paradaId, () => []).add(p);
+        final apicId = p['apicultor_id']?.toString() ?? 'sin_apicultor';
+        final groupKey = '${paradaId}_$apicId';
+        porParada.putIfAbsent(groupKey, () => []).add(p);
       }
 
-      // Construir grupos enriquecidos
       final grupos = porParada.entries.map((entry) {
-        final paradaId = entry.key;
+        final groupKey = entry.key;
+        final paradaId = groupKey.split('_')[0];
         final items = entry.value;
         final firstItem = items[0];
         final parada = (firstItem['paradas'] as Map?) ?? (firstItem['parada'] as Map?) ?? {};
@@ -162,6 +165,18 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
         });
 
         final apicId = firstItem['apicultor_id']?.toString() ?? 'S/D';
+        
+        String apicultorName = apicId;
+        try {
+           final api = ApicultoresData.fallbackApicultores.firstWhere((a) => a['apicultor_codigo'] == apicId, orElse: () => {});
+           if (api.isNotEmpty && api['nombre'] != null) {
+              apicultorName = api['nombre'].toString();
+           } else {
+              apicultorName = parada['ubicacion'] ?? parada['localidad'] ?? apicId;
+           }
+        } catch(e) {
+           apicultorName = parada['ubicacion'] ?? parada['localidad'] ?? apicId;
+        }
 
         return {
           'parada_id': paradaId,
@@ -169,7 +184,7 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
           'viaje_codigo': viaje['viaje_codigo'] ?? 'V-S/N',
           'viaje_fecha': viaje['fecha'],
           'apicultor_id': apicId,
-          'apicultor': parada['ubicacion'] ?? parada['localidad'] ?? apicId,
+          'apicultor': apicultorName,
           'localidad': parada['localidad'] ?? 'S/D',
           'tipo': parada['tipo'] ?? 'Recolección',
           'items': items.map((it) {
