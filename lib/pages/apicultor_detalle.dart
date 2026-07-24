@@ -199,7 +199,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
 
         if (solIds.isNotEmpty || paradaIdsToFetch.isNotEmpty) {
           var query = client.from('paradas')
-            .select('id, created_at, tipo, estado, solicitud_id, parada_items(id, producto_codigo, cantidad, unidad, apicultor_id), remitos(numero_remito, pdf_url, apicultor_id)');
+            .select('id, created_at, tipo, estado, solicitud_id, parada_items(id, producto_codigo, cantidad, unidad, apicultor_id), remitos(numero_remito, pdf_url)');
             
           if (solIds.isNotEmpty && paradaIdsToFetch.isNotEmpty) {
             query = query.or('solicitud_id.in.(${solIds.join(',')}),id.in.(${paradaIdsToFetch.join(',')})');
