@@ -272,3 +272,6 @@ En esta sesiÃ³n implementamos una estandarizaciÃ³n visual premium sobre los form
 - Se corrigió error SQL al consultar remitos(apicultor_id) inexistente.
 - Se arregló la vista de pesajes_page.dart para que agrupe por parada_id y apicultor_id.
 - Se actualizó el listado de fallbackApicultores.
+## Sesion 27/07/2026 - Fix Multi-Apicultor Remito Filter
+- Se solucionó el problema en picultor_detalle.dart donde el perfil de Urrutia traía el remito de Zupan. Se restauró picultor_id en la consulta emitos a Supabase para que el filtro en Dart funcione correctamente.
+- Se solucionó el problema donde el perfil de Zupan aparecía vacío de remitos en la parada compartida. Se agregó lógica de rescate en _fetchDetailedData para que también busque la existencia de remitos y pesajes a su nombre, logrando así recuperar la información de la parada compartida correctamente.

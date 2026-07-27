@@ -197,9 +197,27 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           }
         } catch (_) {}
 
+        try {
+          final rItems = await client.from('remitos').select('parada_id').eq('apicultor_id', widget.apicultor['id']);
+          for (var ri in rItems) {
+            if (ri['parada_id'] != null) {
+              paradaIdsToFetch.add(ri['parada_id'].toString());
+            }
+          }
+        } catch (_) {}
+
+        try {
+          final wItems = await client.from('pesajes').select('parada_id').eq('apicultor_id', widget.apicultor['id']);
+          for (var wi in wItems) {
+            if (wi['parada_id'] != null) {
+              paradaIdsToFetch.add(wi['parada_id'].toString());
+            }
+          }
+        } catch (_) {}
+
         if (solIds.isNotEmpty || paradaIdsToFetch.isNotEmpty) {
           var query = client.from('paradas')
-            .select('id, created_at, tipo, estado, solicitud_id, parada_items(id, producto_codigo, cantidad, unidad, apicultor_id), remitos(numero_remito, pdf_url)');
+            .select('id, created_at, tipo, estado, solicitud_id, parada_items(id, producto_codigo, cantidad, unidad, apicultor_id), remitos(numero_remito, pdf_url, apicultor_id)');
             
           if (solIds.isNotEmpty && paradaIdsToFetch.isNotEmpty) {
             query = query.or('solicitud_id.in.(${solIds.join(',')}),id.in.(${paradaIdsToFetch.join(',')})');
