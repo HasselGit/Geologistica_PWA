@@ -189,7 +189,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         final Set<String> paradaIdsToFetch = {};
         
         try {
-          final pItems = await client.from('parada_items').select('parada_id').eq('apicultor_id', widget.apicultor['id']);
+          final pItems = await client.from('parada_items').select('parada_id').eq('apicultor_id', apiId);
           for (var pi in pItems) {
             if (pi['parada_id'] != null) {
               paradaIdsToFetch.add(pi['parada_id'].toString());
@@ -198,7 +198,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         } catch (_) {}
 
         try {
-          final rItems = await client.from('remitos').select('parada_id').eq('apicultor_id', widget.apicultor['id']);
+          final rItems = await client.from('remitos').select('parada_id').eq('apicultor_id', apiId);
           for (var ri in rItems) {
             if (ri['parada_id'] != null) {
               paradaIdsToFetch.add(ri['parada_id'].toString());
@@ -207,7 +207,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         } catch (_) {}
 
         try {
-          final wItems = await client.from('pesajes').select('parada_id').eq('apicultor_id', widget.apicultor['id']);
+          final wItems = await client.from('pesajes').select('parada_id').eq('apicultor_id', apiId);
           for (var wi in wItems) {
             if (wi['parada_id'] != null) {
               paradaIdsToFetch.add(wi['parada_id'].toString());
@@ -275,7 +275,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           final String tipo = tipoRaw.toLowerCase().contains('recolecci') ? 'Recolección' : 'Distribución';
           final items = p['parada_items'] as List?;
           if (items != null) {
-            final currentApicIdStr = widget.apicultor['id']?.toString() ?? '';
+            final currentApicIdStr = apiId;
             final currentApicNombre = widget.apicultor['nombre']?.toString() ?? '';
             final bool isMySolicitud = allSols.any((s) => s['id'].toString() == p['solicitud_id']?.toString());
             
@@ -355,8 +355,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
       List<Map<String, dynamic>> pesajesRaw = [];
       try {
         final pesajesData = await client.from('pesajes')
-            .select('*, paradas(id, tipo, estado, viaje_id, viajes(codigo_viaje))')
-            .eq('apicultor_id', widget.apicultor['id'])
+            .select('*, paradas(id, tipo, estado, viaje_id, viajes(viaje_codigo))')
+            .eq('apicultor_id', apiId)
             .order('created_at', ascending: false)
             .limit(500);
         pesajesRaw = List<Map<String, dynamic>>.from(pesajesData);
@@ -375,7 +375,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             final viaje = parada?['viajes'] as Map<String, dynamic>?;
             grouped[paradaId] = {
               'parada_id': paradaId,
-              'viaje_codigo': viaje?['codigo_viaje'],
+              'viaje_codigo': viaje?['viaje_codigo'],
               'created_at': p['created_at'],
               'apicultor_nombre': widget.apicultor['nombre'],
               'items': <Map<String, dynamic>>[]
@@ -424,7 +424,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             final remitos = p['remitos'] as List?;
             if (remitos == null || remitos.isEmpty) return false;
 
-            final currentApicIdStr = widget.apicultor['id']?.toString() ?? '';
+            final currentApicIdStr = apiId;
             final hasRemitoForMe = remitos.any((r) {
               final rId = r['apicultor_id']?.toString();
               if (rId == null || rId.isEmpty || rId == 'null') return true; 
@@ -433,7 +433,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
             return hasRemitoForMe;
           }).map((p) {
             final remitos = p['remitos'] as List?;
-            final currentApicIdStr = widget.apicultor['id']?.toString() ?? '';
+            final currentApicIdStr = apiId;
             final misRemitos = remitos?.where((r) {
               final rId = r['apicultor_id']?.toString();
               if (rId == null || rId.isEmpty || rId == 'null') return true;
@@ -688,13 +688,13 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                         _buildSectionHeader(
                           'Solicitudes Activas', 
                           null,
-                          onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['id']}'),
+                          onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['apicultor_codigo'] ?? widget.apicultor['id']}'),
                         ),
                         const SizedBox(height: 16),
                         if (_pendientes.isEmpty)
                           _buildEmptyState(
                             'No hay solicitudes activas',
-                            onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['id']}'),
+                            onTap: () => context.push('/necesidades?apicultor=${widget.apicultor['apicultor_codigo'] ?? widget.apicultor['id']}'),
                           )
                         else
                           ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
