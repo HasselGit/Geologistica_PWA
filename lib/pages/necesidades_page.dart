@@ -29,6 +29,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
   String? _error;
   String? _userRole;
   String? _userEmail;
+  String? _displayName;
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -53,6 +54,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
       final prefs = await SharedPreferences.getInstance();
       final userRole = prefs.getString('userRole');
       final userEmail = prefs.getString('userEmail');
+      final displayName = prefs.getString('displayName') ?? userEmail;
       final service = SupabaseService();
       final neceData = await service.getAllNecesidades();
       final apiData = await service.getApicultores();
@@ -75,6 +77,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
         setState(() {
           _userRole = userRole;
           _userEmail = userEmail;
+          _displayName = displayName;
           _necesidades = neceData;
           _filteredNecesidades = neceData;
           _apicultores = apiData;
@@ -513,7 +516,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
                 ),
                 Row(
                   children: [
-                    GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? ''),
+                    GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _displayName ?? _userEmail ?? ''),
                     Expanded(
                       child: Container(
                         width: double.infinity,

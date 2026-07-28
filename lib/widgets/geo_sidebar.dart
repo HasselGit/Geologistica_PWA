@@ -215,9 +215,11 @@ class _GeoSidebarState extends State<GeoSidebar> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
                   if ((_isAdmin || _isManagement) && !_isAdministrativo)
-                    _sidebarItem(Icons.dashboard_rounded, 'Dashboard', () => context.push('/gerenteHome'), active: false),
-                  if (_isAdmin || _isManagement)
+                    _sidebarItem(Icons.dashboard_rounded, 'Dashboard', () => context.push('/gerenteHome')),
+                  if (_isAdmin || _isManagement) ...[
                     _sidebarItem(Icons.alt_route_rounded, 'Gestión de Viajes', () => context.push('/viajes')),
+                    _sidebarItem(Icons.assignment_rounded, 'Gestión de Solicitudes', () => context.push('/necesidades')),
+                  ],
                   _sidebarItem(Icons.local_shipping_rounded, 'Vehículos', () => context.push('/vehiculos')),
                   if (!_isDeposito && !_isChofer && !_isCompras)
                     _sidebarItem(Icons.inventory_2_rounded, 'Productos', () => context.push('/productos')),
