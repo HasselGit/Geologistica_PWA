@@ -1776,27 +1776,27 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
 
 
   Widget _buildSectionHeader(String title, String? actionText, {bool showIcons = false, VoidCallback? onTap, VoidCallback? onFilterTap, VoidCallback? onDownloadTap}) {
-    Widget titleContent = Row(
-      children: [
-        Icon(showIcons ? Icons.history_rounded : Icons.analytics_outlined, color: DesignTokens.secondary, size: 22),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(title, 
-            overflow: TextOverflow.ellipsis,
-            style: DesignTokens.headlineStyle().copyWith(fontSize: 18, fontWeight: FontWeight.w400, color: const Color(0xFF424846))
+    Widget titleContent = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(showIcons ? Icons.history_rounded : Icons.analytics_outlined, color: DesignTokens.secondary, size: 22),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(title, 
+              overflow: TextOverflow.ellipsis,
+              style: DesignTokens.headlineStyle().copyWith(fontSize: 18, fontWeight: FontWeight.w400, color: const Color(0xFF424846))
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
 
     if (onTap != null) {
       titleContent = InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: titleContent,
-        ),
+        child: titleContent,
       );
     }
 
