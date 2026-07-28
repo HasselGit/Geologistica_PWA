@@ -685,13 +685,6 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
               _buildInfoGrid(a),
               const SizedBox(height: 24),
               _buildStatusOverview(),
-              const SizedBox(height: 40),
-              _buildSectionHeader('Resumen por Producto (Histórico)', null),
-              const SizedBox(height: 16),
-              if (_resumenDetallado.isEmpty)
-                _buildEmptyState('Sin operaciones registradas')
-              else
-                _buildProductSummary(),
             ],
           ),
         ),
@@ -723,15 +716,6 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                           )
                         else
                           ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
-                        
-                        const SizedBox(height: 40),
-                        
-                        _buildSectionHeader('Remitos (Historial)', null),
-                        const SizedBox(height: 16),
-                        if (_remitosHistorial.isEmpty)
-                          _buildEmptyState('No hay remitos registrados para este apicultor')
-                        else
-                          ..._remitosHistorial.map((r) => _buildRemitoCard(r)).toList(),
                       ],
                     ),
                   ),
@@ -746,9 +730,33 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                           _buildEmptyState('No hay solicitudes pendientes o en proceso')
                         else
                           _buildProductSummaryPendiente(),
-
-                        const SizedBox(height: 40),
-
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Remitos (Historial)', null),
+                        const SizedBox(height: 16),
+                        if (_remitosHistorial.isEmpty)
+                          _buildEmptyState('No hay remitos registrados para este apicultor')
+                        else
+                          ..._remitosHistorial.map((r) => _buildRemitoCard(r)).toList(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         _buildSectionHeader(
                           'Operaciones Recientes', 
                           null, 
@@ -778,22 +786,45 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                             if (_filtroOperaciones == 'Distribución') return tipo.contains('distribuci');
                             return true;
                           }).map((s) => _buildRecienteCard(s)).toList(),
-                        
-                        const SizedBox(height: 40),
-
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Resumen por Producto (Histórico)', null),
+                        const SizedBox(height: 16),
+                        if (_resumenDetallado.isEmpty)
+                          _buildEmptyState('Sin operaciones registradas')
+                        else
+                          _buildProductSummary(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         _buildSectionHeader('Pesajes (Historial)', null),
                         const SizedBox(height: 16),
                         if (_pesajesAgrupados.isEmpty)
                           _buildEmptyState('No hay pesajes registrados para este apicultor')
                         else
                           ..._pesajesAgrupados.map((p) => _buildPesajeAgrupadoCard(p)).toList(),
-                        
-                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 80),
             ],
           ),
         ),
