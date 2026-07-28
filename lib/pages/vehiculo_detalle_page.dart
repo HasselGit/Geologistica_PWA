@@ -166,30 +166,24 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
           child: _buildHeroCard(),
         ),
         const SizedBox(width: 32),
-        // Right Panel: Bento Grid (Wrap para que las tarjetas no sean muy largas)
+        // Right Panel: Bento Grid (Column with ConstrainedBox to avoid 'tarjetas largas')
         Expanded(
-          child: Wrap(
-            spacing: 32,
-            runSpacing: 32,
-            crossAxisAlignment: WrapCrossAlignment.start,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 550),
-                child: _buildFichaTecnicaCard(true),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFichaTecnicaCard(true),
+                  const SizedBox(height: 32),
+                  const Text('ESTADO OPERATIVO', 
+                    style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
+                  const SizedBox(height: 16),
+                  _buildEstadoCard(),
+                ],
               ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 550),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('ESTADO OPERATIVO', 
-                      style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
-                    const SizedBox(height: 16),
-                    _buildEstadoCard(),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ],
