@@ -208,7 +208,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                       SizedBox(
                         height: 48,
                         child: ElevatedButton.icon(
-                          onPressed: _addVehiculo,
+                          onPressed: () => _showVehiculoForm(),
                           style: DesignTokens.primaryButtonStyle.copyWith(
                             shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                             padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 24)),
@@ -290,7 +290,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
         builder: (context, constraints) {
           if (constraints.maxWidth >= 900) return const SizedBox.shrink();
           return FloatingActionButton(
-            onPressed: _addVehiculo,
+            onPressed: () => _showVehiculoForm(),
             backgroundColor: DesignTokens.secondary,
             child: const Icon(Icons.add, color: DesignTokens.primary),
           );
@@ -382,14 +382,25 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                         )),
                         DataCell(Text('$capKg kg', style: const TextStyle(fontFamily: 'Inter', color: DesignTokens.onSurfaceVariant))),
                         DataCell(
-                          TextButton.icon(
-                            icon: const Icon(Icons.visibility_rounded, size: 18),
-                            label: const Text('Ver Detalles', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
-                            style: TextButton.styleFrom(
-                              foregroundColor: DesignTokens.secondary,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            onPressed: () => context.push('/vehiculoDetalle?id=${v['id']}'),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.visibility_rounded, size: 20, color: DesignTokens.secondary),
+                                onPressed: () => context.push('/vehiculoDetalle?id=${v['id']}'),
+                                tooltip: 'Ver Detalles',
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_rounded, size: 20, color: DesignTokens.primary),
+                                onPressed: () => _showVehiculoForm(vehiculo: v),
+                                tooltip: 'Editar',
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.red),
+                                onPressed: () => _deleteVehiculo(v['id'], codigo),
+                                tooltip: 'Eliminar',
+                              ),
+                            ],
                           )
                         ),
                       ],
@@ -471,9 +482,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
     final capKg = v['capacidad_kg']?.toString() ?? '0';
     final capTamb = v['capacidad_tambores']?.toString() ?? '0';
 
-    return GestureDetector(
-      onTap: () => context.push('/vehiculoDetalle?id=${v['id']}'),
-      child: Container(
+    return Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -502,20 +511,28 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          codigo,
-                          style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: DesignTokens.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
-                          child: Text(patente, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.w700, color: DesignTokens.primary)),
-                        ),
-                      ],
-                    ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(codigo, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(color: DesignTokens.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
+                                child: Text(patente, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.w700, color: DesignTokens.primary)),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _showVehiculoForm(vehiculo: v)),
+                              IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => _deleteVehiculo(v['id'], codigo)),
+                            ],
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: 6),
                     Text(modelo, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
                     const SizedBox(height: 16),
@@ -532,15 +549,15 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
-  void _addVehiculo() {
-    final codigoController = TextEditingController();
-    final patenteController = TextEditingController();
-    final modeloController = TextEditingController();
-    final capKgController = TextEditingController();
+  void _showVehiculoForm({Map<String, dynamic>? vehiculo}) {
+    final codigoController = TextEditingController(text: vehiculo?['vehiculo_codigo'] ?? vehiculo?['codigo'] ?? '');
+    final patenteController = TextEditingController(text: vehiculo?['patente'] ?? '');
+    final modeloController = TextEditingController(text: vehiculo?['modelo'] ?? '');
+    final capKgController = TextEditingController(text: vehiculo?['capacidad_kg']?.toString() ?? '');
+    final isEdit = vehiculo != null;
 
     showModalBottomSheet(
       context: context,
@@ -553,7 +570,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
             if (event.logicalKey == LogicalKeyboardKey.escape) {
               Navigator.pop(context);
             } else if (event.logicalKey == LogicalKeyboardKey.enter && HardwareKeyboard.instance.isControlPressed) {
-              _saveVehiculo(codigoController, patenteController, modeloController, capKgController);
+              _saveVehiculo(codigoController, patenteController, modeloController, capKgController, id: vehiculo?['id']);
             }
           }
         },
@@ -567,7 +584,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Nuevo Vehículo', style: TextStyle(fontFamily: 'Manrope', fontSize: 22, fontWeight: FontWeight.w800, color: DesignTokens.primary)),
+                  Text(isEdit ? 'Editar Vehículo' : 'Nuevo Vehículo', style: const TextStyle(fontFamily: 'Manrope', fontSize: 22, fontWeight: FontWeight.w800, color: DesignTokens.primary)),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
@@ -588,9 +605,9 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () => _saveVehiculo(codigoController, patenteController, modeloController, capKgController),
+                  onPressed: () => _saveVehiculo(codigoController, patenteController, modeloController, capKgController, id: vehiculo?['id']),
                   style: DesignTokens.primaryButtonStyle,
-                  child: const Text('GUARDAR VEHÍCULO', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                  child: Text(isEdit ? 'ACTUALIZAR VEHÍCULO' : 'GUARDAR VEHÍCULO', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, letterSpacing: 1.2)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -608,18 +625,45 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
       TextEditingController codigoController, 
       TextEditingController patenteController, 
       TextEditingController modeloController, 
-      TextEditingController capKgController) async {
+      TextEditingController capKgController,
+      {String? id}) async {
     if (codigoController.text.isEmpty) return;
     
-    await Supabase.instance.client.from('vehiculos').insert({
+    final data = {
       'vehiculo_codigo': codigoController.text,
       'patente': patenteController.text,
       'modelo': modeloController.text,
       'capacidad_kg': double.tryParse(capKgController.text) ?? 0,
-    });
+    };
+
+    if (id != null) {
+      await Supabase.instance.client.from('vehiculos').update(data).eq('id', id);
+    } else {
+      await Supabase.instance.client.from('vehiculos').insert(data);
+    }
+
     if (mounted) {
       Navigator.pop(context);
       _fetchData();
+    }
+  }
+
+  Future<void> _deleteVehiculo(String id, String codigo) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Vehículo'),
+        content: Text('¿Estás seguro que deseas eliminar el vehículo $codigo?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      await Supabase.instance.client.from('vehiculos').delete().eq('id', id);
+      if (mounted) _fetchData();
     }
   }
 
