@@ -6,6 +6,8 @@ import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/geo_sidebar.dart';
 
 class VehiculosPageWidget extends StatefulWidget {
   const VehiculosPageWidget({super.key});
@@ -23,11 +25,26 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
 
   int _currentPage = 0;
   final int _itemsPerPage = 10;
+  
+  String? _userRole;
+  String? _userEmail;
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     _fetchData();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('user_email') ?? Supabase.instance.client.auth.currentUser?.email ?? '';
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_puesto');
+        _userEmail = email;
+      });
+    }
   }
 
   @override
@@ -132,72 +149,152 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DesignTokens.surface,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: DesignTokens.primary),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Gestión de Vehículos',
-          style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
-        ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 900;
+          
+          Widget content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header Premium
               Padding(
-                padding: const EdgeInsets.all(24),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  style: const TextStyle(fontFamily: 'Inter'),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar por código, patente o modelo...',
-                    hintStyle: const TextStyle(color: Colors.black45),
-                    prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12), 
-                      borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
+                padding: const EdgeInsets.only(top: 40, bottom: 32),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () { if (context.canPop()) context.pop(); },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)]),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                      ),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12), 
-                      borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => context.go('/home'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)]),
+                        child: const Icon(Icons.home_rounded, size: 18, color: DesignTokens.primary),
+                      ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12), 
-                      borderSide: const BorderSide(color: DesignTokens.primary, width: 2)
+                    const SizedBox(width: 24),
+                    const Text('Gestión de Vehículos', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary)),
+                    const Spacer(),
+                    if (isDesktop) ...[
+                      SizedBox(
+                        width: 300,
+                        height: 48,
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                          decoration: InputDecoration(
+                            hintText: 'Buscar por código, patente...',
+                            hintStyle: const TextStyle(color: Colors.black45),
+                            prefixIcon: const Icon(Icons.search, color: DesignTokens.primary, size: 18),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: _addVehiculo,
+                          style: DesignTokens.primaryButtonStyle.copyWith(
+                            shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 24)),
+                          ),
+                          icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                          label: const Text('NUEVO VEHÍCULO', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (!isDesktop) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    style: const TextStyle(fontFamily: 'Inter'),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por código, patente...',
+                      hintStyle: const TextStyle(color: Colors.black45),
+                      prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
                     ),
                   ),
                 ),
-              ),
+              ],
               Expanded(
                 child: _loading && _filtered.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth >= 900) {
-                          return _buildWebTable();
-                        } else {
-                          return _buildMobileList();
-                        }
-                      },
-                    ),
+                  : (isDesktop ? _buildWebTable() : _buildMobileList()),
               ),
             ],
-          ),
-        ),
+          );
+
+          if (isDesktop) {
+            content = Padding(
+              padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+              child: content,
+            );
+          } else {
+            content = Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              child: content,
+            );
+          }
+
+          return Stack(
+            children: [
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(painter: HoneycombPainter()),
+                ),
+              ),
+              if (isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GeoSidebar(
+                      userRole: _userRole ?? '',
+                      userEmail: _userEmail ?? '',
+                      displayName: _userEmail ?? '',
+                    ),
+                    Expanded(child: content),
+                  ],
+                )
+              else
+                content,
+            ],
+          );
+        },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addVehiculo,
-        backgroundColor: DesignTokens.secondary,
-        child: const Icon(Icons.add, color: DesignTokens.primary),
+      floatingActionButton: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 900) return const SizedBox.shrink();
+          return FloatingActionButton(
+            onPressed: _addVehiculo,
+            backgroundColor: DesignTokens.secondary,
+            child: const Icon(Icons.add, color: DesignTokens.primary),
+          );
+        }
       ),
     );
   }
