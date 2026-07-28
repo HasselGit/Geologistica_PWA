@@ -1,0 +1,1 @@
+Se detectó código incompleto. Abortando auto-push para proteger el repositorio

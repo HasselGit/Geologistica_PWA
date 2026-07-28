@@ -14,7 +14,7 @@ void main() async {
         .limit(500);
     print('SUCCESS: \ pesajes');
   } catch (e) {
-    print('ERROR: \');
+    print('ERROR: e');
   }
   exit(0);
 }
