@@ -160,24 +160,35 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Left Panel: Hero Card
-        Expanded(
-          flex: 3,
+        // Left Panel: Hero Card (Fixed width para que no sea muy grande)
+        SizedBox(
+          width: 380,
           child: _buildHeroCard(),
         ),
         const SizedBox(width: 32),
-        // Right Panel: Bento Grid
+        // Right Panel: Bento Grid (Wrap para que las tarjetas no sean muy largas)
         Expanded(
-          flex: 7,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Wrap(
+            spacing: 32,
+            runSpacing: 32,
+            crossAxisAlignment: WrapCrossAlignment.start,
             children: [
-              _buildFichaTecnicaCard(true),
-              const SizedBox(height: 32),
-              const Text('ESTADO OPERATIVO', 
-                style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
-              const SizedBox(height: 16),
-              _buildEstadoCard(),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 550),
+                child: _buildFichaTecnicaCard(true),
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 550),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('ESTADO OPERATIVO', 
+                      style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, color: DesignTokens.onSurfaceVariant, letterSpacing: 1.5)),
+                    const SizedBox(height: 16),
+                    _buildEstadoCard(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
