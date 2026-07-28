@@ -723,33 +723,9 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                           )
                         else
                           ..._pendientes.map((s) => _buildPendienteCard(s)).toList(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 32),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionHeader('Total Estimado Pendiente', null),
-                        const SizedBox(height: 16),
-                        if (_resumenPendiente.isEmpty)
-                          _buildEmptyState('No hay solicitudes pendientes o en proceso')
-                        else
-                          _buildProductSummaryPendiente(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                        
+                        const SizedBox(height: 40),
+                        
                         _buildSectionHeader('Remitos (Historial)', null),
                         const SizedBox(height: 16),
                         if (_remitosHistorial.isEmpty)
@@ -764,6 +740,15 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _buildSectionHeader('Total Estimado Pendiente', null),
+                        const SizedBox(height: 16),
+                        if (_resumenPendiente.isEmpty)
+                          _buildEmptyState('No hay solicitudes pendientes o en proceso')
+                        else
+                          _buildProductSummaryPendiente(),
+
+                        const SizedBox(height: 40),
+
                         _buildSectionHeader(
                           'Operaciones Recientes', 
                           null, 
@@ -793,20 +778,22 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
                             if (_filtroOperaciones == 'Distribución') return tipo.contains('distribuci');
                             return true;
                           }).map((s) => _buildRecienteCard(s)).toList(),
+                        
                         const SizedBox(height: 40),
+
                         _buildSectionHeader('Pesajes (Historial)', null),
                         const SizedBox(height: 16),
                         if (_pesajesAgrupados.isEmpty)
                           _buildEmptyState('No hay pesajes registrados para este apicultor')
                         else
                           ..._pesajesAgrupados.map((p) => _buildPesajeAgrupadoCard(p)).toList(),
+                        
                         const SizedBox(height: 80),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 80),
             ],
           ),
         ),
