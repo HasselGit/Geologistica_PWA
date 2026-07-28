@@ -26,6 +26,7 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
   Map<String, Map<String, double>> _resumenDetallado = {}; 
   Map<String, Map<String, double>> _resumenPendiente = {}; 
   Map<String, int> _statusCounts = {};
+  Set<String> _expandedPesajes = {};
   bool _isLoading = true;
   double _maxTotal = 1.0;
   double _maxTotalPendiente = 1.0;
@@ -312,7 +313,10 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         }
       }
 
+      Set<String> countedSolIds = {};
+
       for (var s in allSols) {
+        if (s['id'] != null) countedSolIds.add(s['id'].toString());
         final prodDisplay = s['producto_display'] ?? s['producto'] ?? 'S/D';
         final cant = double.tryParse(s['cantidad']?.toString() ?? '0') ?? 0;
         final tipoRaw = (s['tipo'] ?? 'Operación').toString();
@@ -329,6 +333,27 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
           resumenPendiente[prodDisplay]![tipo] = (resumenPendiente[prodDisplay]![tipo] ?? 0) + cant;
         }
  
+        if (estado.contains('PENDIENTE')) {
+          estadoCounts['PENDIENTES'] = (estadoCounts['PENDIENTES'] ?? 0) + 1;
+        } else if (estado.contains('ASIGNADA')) {
+          estadoCounts['ASIGNADAS'] = (estadoCounts['ASIGNADAS'] ?? 0) + 1;
+        } else if (estado.contains('CURSO') || estado.contains('PROCESO')) {
+          estadoCounts['EN CURSO'] = (estadoCounts['EN CURSO'] ?? 0) + 1;
+        } else if (isCompleted) {
+          estadoCounts['TERMINADAS'] = (estadoCounts['TERMINADAS'] ?? 0) + 1;
+        }
+      }
+
+      for (var p in allParadas) {
+        if (p['solicitud_id'] != null && countedSolIds.contains(p['solicitud_id'].toString())) {
+          continue;
+        }
+        
+        final estado = (p['estado'] ?? 'Pendiente').toString().toUpperCase().trim();
+        final bool isCompleted = estado.contains('TERMINADA') || estado.contains('TERMINADO') ||
+                                 estado.contains('FINALIZADA') || estado.contains('FINALIZADO') ||
+                                 estado.contains('COMPLETADA') || estado.contains('COMPLETADO');
+                                 
         if (estado.contains('PENDIENTE')) {
           estadoCounts['PENDIENTES'] = (estadoCounts['PENDIENTES'] ?? 0) + 1;
         } else if (estado.contains('ASIGNADA')) {
@@ -1478,6 +1503,8 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
     final apicultor = g['apicultor_nombre'] ?? widget.apicultor['nombre'] ?? 'Sin apicultor';
     final viajeCode = g['viaje_codigo']?.toString() ?? g['parada_id']?.toString() ?? 'Viaje/Parada';
     final localidad = widget.apicultor['localidad'] ?? 'S/D';
+    final String paradaId = g['parada_id']?.toString() ?? 'unknown';
+    final bool isExpanded = _expandedPesajes.contains(paradaId);
     final fechaStr = g['created_at'] != null 
         ? DateFormat('dd/MM/yy').format(DateTime.tryParse(g['created_at'].toString()) ?? DateTime.now())
         : '--/--/--';
@@ -1489,62 +1516,83 @@ class _ApicultorDetalleWidgetState extends State<ApicultorDetalleWidget> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black.withOpacity(0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: Row(
-              children: [
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(viajeCode, style: DesignTokens.headlineStyle().copyWith(fontSize: 20, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 4),
-                  Text('$apicultor • $localidad • $fechaStr', style: const TextStyle(fontSize: 13, color: Colors.black45)),
-                ])),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFFFDF7E7), borderRadius: BorderRadius.circular(20)),
-                  child: Text('${items.length} TCM', style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFFC68E17))),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () {
+            setState(() {
+              if (isExpanded) {
+                _expandedPesajes.remove(paradaId);
+              } else {
+                _expandedPesajes.add(paradaId);
+              }
+            });
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(viajeCode, style: DesignTokens.headlineStyle().copyWith(fontSize: 20, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 4),
+                      Text('$apicultor • $localidad • $fechaStr', style: const TextStyle(fontSize: 13, color: Colors.black45)),
+                    ])),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(color: const Color(0xFFFDF7E7), borderRadius: BorderRadius.circular(20)),
+                      child: Text('${items.length} TCM', style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFFC68E17))),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: DesignTokens.primary,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-            child: Row(children: [
-              _totalBox('BRUTO TOTAL', totalBruto, false),
-              const SizedBox(width: 10),
-              _totalBox('TARA TOTAL', totalTara, false),
-              const SizedBox(width: 10),
-              _totalBox('NETO TOTAL', totalNeto, true),
-            ]),
-          ),
-          Container(
-            margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
-              ],
-            ),
-            child: Column(
-              children: [
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                child: Row(children: [
+                  _totalBox('BRUTO TOTAL', totalBruto, false),
+                  const SizedBox(width: 10),
+                  _totalBox('TARA TOTAL', totalTara, false),
+                  const SizedBox(width: 10),
+                  _totalBox('NETO TOTAL', totalNeto, true),
+                ]),
+              ),
+              if (isExpanded)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: const BoxDecoration(color: Color(0xFF1E302C), borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-                  child: Row(children: [
-                    _th('#', 1), _th('CÓD. SENASA', 4), _th('BRUTO', 2, right: true), _th('TARA', 2, right: true), _th('NETO', 2, right: true),
-                  ]),
+                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 30, offset: const Offset(0, 8)),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: const BoxDecoration(color: Color(0xFF1E302C), borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                        child: Row(children: [
+                          _th('#', 1), _th('CÓD. SENASA', 4), _th('BRUTO', 2, right: true), _th('TARA', 2, right: true), _th('NETO', 2, right: true),
+                        ]),
+                      ),
+                      if (items.isEmpty)
+                         const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('Sin registros', style: TextStyle(color: Colors.black38))))
+                      else
+                         ...List.generate(items.length, (i) => _detalleRow(i + 1, items[i] as Map<String, dynamic>)),
+                    ],
+                  ),
                 ),
-                if (items.isEmpty)
-                   const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('Sin registros', style: TextStyle(color: Colors.black38))))
-                else
-                   ...List.generate(items.length, (i) => _detalleRow(i + 1, items[i] as Map<String, dynamic>)),
-              ],
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
