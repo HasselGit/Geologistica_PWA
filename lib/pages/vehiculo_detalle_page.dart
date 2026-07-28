@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
+import '../widgets/geo_sidebar.dart';
 
 class VehiculoDetalleWidget extends StatefulWidget {
   final String? vehiculoId;
@@ -17,11 +18,26 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
   Map<String, dynamic>? _vehiculo;
   bool _loading = true;
   String? _error;
+  
+  String? _userRole;
+  String? _userEmail;
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     _fetchData();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('user_email') ?? Supabase.instance.client.auth.currentUser?.email ?? '';
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_puesto');
+        _userEmail = email;
+      });
+    }
   }
 
   Future<void> _fetchData() async {
@@ -51,51 +67,92 @@ class _VehiculoDetalleWidgetState extends State<VehiculoDetalleWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DesignTokens.surface,
-      appBar: AppBar(
-        backgroundColor: DesignTokens.surface,
-        elevation: 0,
-        title: Text(_vehiculo?['vehiculo_codigo'] ?? 'Detalle Vehículo', 
-          style: const TextStyle(
-            fontFamily: 'Manrope',
-            color: DesignTokens.primary, 
-            fontWeight: FontWeight.bold
-          )),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: DesignTokens.primary), 
-          onPressed: () => context.pop()
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_rounded, color: DesignTokens.primary),
-            onPressed: () => context.go('/home'),
-            tooltip: 'Volver al Inicio',
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: _loading 
-        ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-        : _error != null
-          ? Center(child: Text('Error: $_error'))
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final isWeb = constraints.maxWidth >= 900;
-                final content = SingleChildScrollView(
-                  padding: EdgeInsets.all(isWeb ? 32 : 24),
-                  child: isWeb ? _buildWebSplitLayout() : _buildMobileLayout(),
-                );
-
-                if (isWeb) {
-                  return Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                      child: content,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWeb = constraints.maxWidth >= 900;
+          
+          Widget content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Premium
+              Padding(
+                padding: const EdgeInsets.only(top: 40, bottom: 32),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () { if (context.canPop()) context.pop(); },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)]),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                      ),
                     ),
-                  );
-                }
-                return content;
-              },
-            ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => context.go('/home'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)]),
+                        child: const Icon(Icons.home_rounded, size: 18, color: DesignTokens.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    Text(_vehiculo?['vehiculo_codigo'] ?? 'Detalle Vehículo', style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _loading 
+                  ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                  : _error != null
+                    ? Center(child: Text('Error: $_error'))
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: 40),
+                        child: isWeb ? _buildWebSplitLayout() : _buildMobileLayout(),
+                      ),
+              ),
+            ],
+          );
+
+          if (isWeb) {
+            content = Padding(
+              padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+              child: content,
+            );
+          } else {
+            content = Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              child: content,
+            );
+          }
+
+          return Stack(
+            children: [
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(painter: HoneycombPainter()),
+                ),
+              ),
+              if (isWeb)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GeoSidebar(
+                      userRole: _userRole ?? '',
+                      userEmail: _userEmail ?? '',
+                      displayName: _userEmail ?? '',
+                    ),
+                    Expanded(child: content),
+                  ],
+                )
+              else
+                content,
+            ],
+          );
+        },
+      ),
     );
   }
 
