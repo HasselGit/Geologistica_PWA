@@ -144,7 +144,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
       width: double.infinity,
       height: double.infinity,
       padding: isDesktop
-          ? const EdgeInsets.fromLTRB(120, 32, 40, 32)
+          ? const EdgeInsets.fromLTRB(120, 48, 40, 32)
           : const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +293,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
     final currentItems = _filteredProductos.sublist(startIndex, endIndex);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
