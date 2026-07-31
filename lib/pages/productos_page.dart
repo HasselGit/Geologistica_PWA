@@ -25,6 +25,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
   bool _loading = true;
   String? _userRole;
   String? _userEmail;
+  String? _displayName;
   Timer? _debounce;
 
   int _currentPage = 0;
@@ -50,6 +51,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
       setState(() {
         _userRole = prefs.getString('user_puesto');
         _userEmail = prefs.getString('user_email');
+        _displayName = prefs.getString('user_name');
       });
     }
   }
@@ -138,6 +140,117 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width >= 900;
     
+    final mainLayout = Container(
+      width: double.infinity,
+      height: double.infinity,
+      padding: isDesktop
+          ? const EdgeInsets.fromLTRB(120, 32, 40, 32)
+          : const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              InkWell(
+                onTap: () => context.canPop() ? context.pop() : null,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: DesignTokens.primary.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 16, color: DesignTokens.primary),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () => context.go('/home'),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: DesignTokens.primary.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: const Icon(Icons.home_rounded,
+                      size: 18, color: DesignTokens.primary),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'Inventario de Productos',
+                style: DesignTokens.headlineStyle(color: DesignTokens.primary)
+                    .copyWith(fontSize: 24),
+              ),
+              const Spacer(),
+              if (isDesktop &&
+                  (_userRole == 'CEO' ||
+                      _userRole == 'Gerente' ||
+                      _userRole == 'Compras'))
+                ElevatedButton.icon(
+                  onPressed: _addProduct,
+                  style: DesignTokens.primaryButtonStyle,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('NUEVO PRODUCTO'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _searchController,
+            onChanged: _filterProducts,
+            style: DesignTokens.bodyStyle(color: DesignTokens.onSurface),
+            decoration: InputDecoration(
+              hintText: 'Buscar producto o código...',
+              hintStyle:
+                  DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
+              prefixIcon:
+                  const Icon(Icons.search, color: DesignTokens.primary),
+              filled: true,
+              fillColor: Colors.white,
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                      color: DesignTokens.outline.withValues(alpha: 0.3))),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                      color: DesignTokens.primary, width: 2)),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: _loading && _filteredProductos.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(
+                        color: DesignTokens.secondary))
+                : (isDesktop
+                    ? RepaintBoundary(child: _buildWebTable())
+                    : RepaintBoundary(child: _buildMobileList())),
+          ),
+        ],
+      ),
+    );
+
     final content = Stack(
       children: [
         Positioned.fill(
@@ -145,86 +258,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
             child: CustomPaint(painter: const HoneycombPainter()),
           ),
         ),
-        Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-              child: Row(
-                children: [
-                  InkWell(
-                    onTap: () => context.canPop() ? context.pop() : null,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))
-                        ],
-                      ),
-                      child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => context.go('/home'),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))
-                        ],
-                      ),
-                      child: const Icon(Icons.home_rounded, size: 18, color: DesignTokens.primary),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text('Inventario de Productos', style: DesignTokens.headlineStyle(color: DesignTokens.primary).copyWith(fontSize: 24)),
-                  const Spacer(),
-                  if (isDesktop && (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras'))
-                    ElevatedButton.icon(
-                      onPressed: _addProduct,
-                      style: DesignTokens.primaryButtonStyle,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('NUEVO PRODUCTO'),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _filterProducts,
-                style: DesignTokens.bodyStyle(color: DesignTokens.onSurface),
-                decoration: InputDecoration(
-                  hintText: 'Buscar producto o código...',
-                  hintStyle: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
-                  prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
-                  filled: true,
-                  fillColor: Colors.white,
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.3))),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: isDesktop ? const EdgeInsets.fromLTRB(120, 0, 40, 0) : EdgeInsets.zero,
-                child: _loading && _filteredProductos.isEmpty
-                    ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                    : (isDesktop ? RepaintBoundary(child: _buildWebTable()) : RepaintBoundary(child: _buildMobileList())),
-              ),
-            ),
-          ],
-        ),
+        mainLayout,
       ],
     );
 
@@ -236,7 +270,7 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
                 GeoSidebar(
                   userRole: _userRole ?? '',
                   userEmail: _userEmail ?? '',
-                  displayName: _userEmail ?? '',
+                  displayName: _displayName ?? _userEmail ?? '',
                 ),
                 Expanded(child: content),
               ],

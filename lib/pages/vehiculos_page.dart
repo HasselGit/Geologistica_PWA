@@ -28,6 +28,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
   
   String? _userRole;
   String? _userEmail;
+  String? _displayName;
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
       setState(() {
         _userRole = prefs.getString('user_puesto');
         _userEmail = email;
+        _displayName = prefs.getString('user_name') ?? '';
       });
     }
   }
@@ -275,9 +277,18 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                     GeoSidebar(
                       userRole: _userRole ?? '',
                       userEmail: _userEmail ?? '',
-                      displayName: _userEmail ?? '',
+                      displayName: _displayName ?? '',
                     ),
-                    Expanded(child: content),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                          child: content,
+                        ),
+                      ),
+                    ),
                   ],
                 )
               else
