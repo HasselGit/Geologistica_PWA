@@ -105,6 +105,50 @@ class _ComprasHomeWidgetState extends State<ComprasHomeWidget> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: DesignTokens.primary.withOpacity(0.05)),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: DesignTokens.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.inventory_2_rounded, size: 40, color: DesignTokens.primary),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Inventario de Productos',
+                        style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Consulte y administre el catálogo maestro de productos e insumos apícolas.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: DesignTokens.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () => context.push('/productos'),
+                          style: DesignTokens.primaryButtonStyle,
+                          child: const Text('VER INVENTARIO DE PRODUCTOS'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

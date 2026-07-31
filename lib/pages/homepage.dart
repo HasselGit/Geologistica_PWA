@@ -1450,7 +1450,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                 if (_isAdmin || _isManagement)
                   _drawerItem(Icons.alt_route_rounded, 'Gestión de Viajes', () => context.push('/viajes')),
                 _drawerItem(Icons.local_shipping_rounded, 'Vehículos', () => context.push('/vehiculos')),
-                if (!_isDeposito && !_isChofer && !_isCompras) ...[
+                if (!_isDeposito && !_isChofer) ...[
                   _drawerItem(Icons.inventory_2_rounded, 'Productos', () => context.push('/productos')),
                 ],
                 if (!_isChofer) ...[

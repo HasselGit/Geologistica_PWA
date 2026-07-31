@@ -221,7 +221,7 @@ class _GeoSidebarState extends State<GeoSidebar> {
                     _sidebarItem(Icons.assignment_rounded, 'Gestión de Solicitudes', () => context.push('/necesidades')),
                   ],
                   _sidebarItem(Icons.local_shipping_rounded, 'Vehículos', () => context.push('/vehiculos')),
-                  if (!_isDeposito && !_isChofer && !_isCompras)
+                  if (!_isDeposito && !_isChofer)
                     _sidebarItem(Icons.inventory_2_rounded, 'Productos', () => context.push('/productos')),
                   if (!_isChofer) ...[
                     if (!_isCompras)
