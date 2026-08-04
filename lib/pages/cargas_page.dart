@@ -601,18 +601,15 @@ class _CargasPageWidgetState extends State<CargasPageWidget>
     final borderColor = Color(AppStates.stateBorderColor(estado));
 
     double totalKg = 0;
-    int totalTamb = 0;
     for (final item in items) {
       final qty = (item['cantidad'] as num?)?.toDouble() ?? 0;
       final prod = (item['producto_codigo'] ?? '').toString().toUpperCase();
       if (prod == 'TCM' || prod.contains('TAMBOR')) {
         totalKg += qty * 300;
-        totalTamb += qty.round();
       } else if ((prod.startsWith('T') && prod != 'TV' && prod != 'TE') ||
           prod.contains('VACIO') ||
           prod.contains('VACÍO')) {
         totalKg += qty * 20;
-        totalTamb += qty.round();
       } else if (prod == 'AZ') {
         totalKg += qty * 50;
       } else {
@@ -741,43 +738,60 @@ class _CargasPageWidgetState extends State<CargasPageWidget>
                           ],
                         ),
                         if (items.isNotEmpty) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Wrap(
-                            spacing: 4, runSpacing: 4,
-                            children: items.take(3).map((it) => Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                  color: DesignTokens.primary.withValues(alpha: 0.04),
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: Text(
-                                '${it['producto_codigo']} • ${it['cantidad']}',
-                                style: const TextStyle(fontFamily: 'Work Sans',
-                                    fontWeight: FontWeight.w700, fontSize: 9,
-                                    color: DesignTokens.onSurfaceVariant),
-                              ),
-                            )).toList(),
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: items.take(4).map((it) {
+                              final pCode = (it['producto_codigo'] ?? '').toString();
+                              final cant = it['cantidad'] ?? 0;
+                              final unidad = (it['unidad'] ?? 'un.').toString();
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF3C7),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.inventory_2_rounded,
+                                        size: 13, color: Color(0xFFB45309)),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      '$pCode • $cant $unidad',
+                                      style: const TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                        color: Color(0xFF78350F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ],
                         const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                           decoration: BoxDecoration(
                               color: DesignTokens.surfaceLow,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.04))),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _metricCol('PESO EST.', '${totalKg.round()} kg',
+                              _metricCol('PESO ESTIMADO', '${totalKg.round()} kg',
                                   Icons.monitor_weight_outlined),
-                              Container(width: 1, height: 22,
+                              Container(width: 1, height: 24,
                                   color: DesignTokens.primary.withValues(alpha: 0.08)),
-                              _metricCol('TAMBORES', '$totalTamb un.',
-                                  Icons.inventory_2_outlined),
-                              Container(width: 1, height: 22,
-                                  color: DesignTokens.primary.withValues(alpha: 0.08)),
-                              _metricCol('ÍTEMS', '${items.length}',
-                                  Icons.list_alt_rounded),
+                              _metricCol('VARIEDAD ÍTEMS', '${items.length} ${items.length == 1 ? "tipo" : "tipos"}',
+                                  Icons.category_outlined),
                             ],
                           ),
                         ),
