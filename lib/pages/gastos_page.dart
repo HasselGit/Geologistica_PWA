@@ -1018,16 +1018,21 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
         const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
-          height: 56,
+          height: 50,
           child: ElevatedButton(
             onPressed: _savingForm ? null : _saveGastoWeb,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: DesignTokens.accent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            style: DesignTokens.primaryButtonStyle.copyWith(
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
             child: _savingForm 
-              ? const CircularProgressIndicator(color: DesignTokens.primary)
-              : const Text('GUARDAR GASTO', style: TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.bold, fontFamily: 'Manrope')),
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                )
+              : const Text('GUARDAR GASTO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Manrope', fontSize: 15)),
           ),
         ),
       ],
