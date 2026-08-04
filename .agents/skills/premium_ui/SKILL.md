@@ -1,34 +1,72 @@
 ---
 name: premium_ui
 description: >
-  Aplica el manifiesto de DiseÃ±o Premium a una pÃ¡gina de la PWA. Incluye mÃ¡rgenes asimÃ©tricos, 
-  GeoSidebar, botÃ³n de volver unificado y ajustes de tipografÃ­a/layout segÃºn las reglas establecidas.
+  Aplica el manifiesto de Diseño Premium a una página de la PWA. Incluye márgenes asimétricos, 
+  GeoSidebar, patrón de panales, botón de volver dobles (Atrás y Home), formato de botones principales 
+  y el Estándar Móvil PWA basado en Gestión de Viajes.
 ---
 
 # Skill: premium_ui
 
-Esta habilidad se encarga de estandarizar visual y arquitectÃ³nicamente las pantallas de GeoLogÃ­stica PWA.
+Esta habilidad se encarga de estandarizar visual y arquitectónicamente las pantallas de GeoLogística PWA tanto en Escritorio como en Celulares (PWA).
 
-## CuÃ¡ndo usar esta habilidad
-Se activa cuando el usuario solicita aplicar el "diseÃ±o premium", "estandarizar diseÃ±o", "skill premium" o "aplica premium ui" a una pÃ¡gina especÃ­fica.
+## Cuándo usar esta habilidad
+Se activa cuando el usuario solicita aplicar el "diseño premium", "estandarizar diseño", "skill premium", "aplica premium_ui" o "adaptar a móvil pwa" a una página específica.
 
-## Instrucciones de EjecuciÃ³n (Para el Agente)
+---
 
-1. **Lectura Obligatoria:** Si aÃºn no lo has hecho en esta sesiÃ³n, debes leer el archivo de manifiesto ubicado en los artefactos de la conversaciÃ³n actual: `premium_design_standard.md`.
-2. **AnÃ¡lisis de la PÃ¡gina:** Lee el cÃ³digo fuente del archivo solicitado (ej. `lib/pages/rutas_page.dart`).
-3. **ValidaciÃ³n de Complejidad (Failsafe):** 
-   - Analiza la estructura actual del archivo. Si el layout es extremadamente atÃ­pico o complejo y al inyectar un `Row` con `GeoSidebar` corres un alto riesgo de romper la vista por completo, **DETENTE**.
-   - No modifiques el archivo. Notifica al usuario del problema arquitectÃ³nico y ofrÃ©cele opciones sobre cÃ³mo proceder.
-4. **AplicaciÃ³n Directa:** Si la vista es manejable, aplica directamente las reglas del manifiesto editando el cÃ³digo fuente:
-   - **Regla 1:** Inyectar `GeoSidebar` en un `Row` principal para Desktop y el contenido en un `Expanded`.
-   - **Regla 2:** Padding asimÃ©trico `EdgeInsets.fromLTRB(120, 0, 40, 0)` en el contenido. Remover `maxWidth` y `Center`.
-   - **Regla 3:** Control de proporciones con `LayoutBuilder`.
-   - **Regla 4:** La cabecera debe incluir SIEMPRE dos botones de navegaciÃ³n (`InkWell` + Contenedor 36x36 blanco + sombra): 
-     1. Un botÃ³n de "AtrÃ¡s" (`Icons.arrow_back_ios_new_rounded`) con la lÃ³gica `context.canPop() ? context.pop() : null` (si se puede volver, vuelve).
-     2. Un botÃ³n de "Home" (`Icons.home_rounded`) con la lÃ³gica `context.go('/home')` ubicado justo al lado del botÃ³n de atrÃ¡s. Toda pÃ¡gina debe garantizar que existe el logo/botÃ³n "Home" visible en todo momento para regresar al inicio de manera segura.
-   - **Regla 5:** Todos los botones principales de acciÃ³n (tipo `ElevatedButton`, "NUEVO VIAJE", "NUEVA SOLICITUD") deben tener un `BorderRadius.circular(8)` para mantener la consistencia con el diseÃ±o de Login y Sidebar. 
-     - **MUY IMPORTANTE (Escritorio):** En la versiÃ³n de Escritorio (Desktop), los botones principales NUNCA deben ser botones flotantes (`FloatingActionButton`) en la esquina inferior. DEBEN renderizarse como `ElevatedButton` ubicados en la esquina superior derecha de la cabecera (junto a los filtros o buscador) utilizando siempre `DesignTokens.primaryButtonStyle` (el cual debe usar el color verde oscuro y la tipografÃ­a Manrope FontWeight.w700 tamaÃ±o 15, idÃ©ntico al botÃ³n INICIAR). En mÃ³viles, sÃ­ pueden ser botones flotantes.
-   - **Regla 8:** Fondo de Panales (Honeycomb). SIEMPRE debe estar presente el fondo de panales de abejas (`HoneycombPainter`). El `Scaffold` debe tener como `body` un `Stack` cuyo primer hijo sea `Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: const HoneycombPainter())))`. El resto del contenido debe ir encima en la pila. No olvides importar `../backend/design_tokens.dart` si no estÃ¡ importado.
-5. **Sin Excepciones:** No existe lista negra de pÃ¡ginas.
-6. **Reporte:** Una vez hecho el cambio con replace_file_content, avÃ­sale al usuario que has completado el proceso resumiendo quÃ© cambios especÃ­ficos lograste aplicar. **No pidas permiso, edita el cÃ³digo directamente**.
-7. **Despliegue AutomÃ¡tico (Git Push):** Al finalizar los cambios en el cÃ³digo, DEBES ejecutar obligatoriamente los comandos para subir a producciÃ³n: `git add .`, seguido de `git commit -m "style: aplicar premium_ui a [nombre_de_la_pagina]"` y por Ãºltimo `git push origin HEAD`. Notifica al usuario que los cambios se desplegarÃ¡n en Vercel en 2 minutos.
+## 🎨 REGLAS ESENCIALES DE DISEÑO Y ARQUITECTURA
+
+### 1. Botones Principales (Primary Action Buttons) - ¡ESTRICTO!
+- **Color de Fondo:** **SIEMPRE Verde Esmeralda Profundo (`DesignTokens.primary` / `#08201A`)**.
+- ⛔ **PROHIBIDO:** Usar dorado (`#C68E17`) para botones principales (Guardar, Confirmar, Nuevo Viaje, Nueva Carga, etc.). El dorado es solo para acentos, badges o pestañas activas.
+- **Color de Texto/Ícono:** Blanco puro (`#FFFFFF`).
+- **Geometría:** `BorderRadius.circular(8)` con `elevation: 0`.
+- **Tipografía:** `Manrope`, `fontWeight: FontWeight.w700` (o `w800`), `fontSize: 14-15`, `letterSpacing: 1`.
+- **Estilo Base:** `DesignTokens.primaryButtonStyle`.
+
+---
+
+### 2. Estándar PWA Móvil (Referencia: `viajes_page.dart`)
+
+En pantallas móviles (`MediaQuery.of(context).size.width < 900`):
+
+1. **Estructura Base & Drawer**:
+   - `Scaffold` con fondo neutro `DesignTokens.surface` (`#FBF9F8`).
+   - Menú lateral `GeoSidebar` asignado a `drawer: MediaQuery.of(context).size.width < 900 ? const GeoSidebar(currentRoute: '/ruta') : null`.
+   - `HoneycombPainter` en segundo plano con `Stack` y `RepaintBoundary`.
+
+2. **Encabezado Móvil (Header)**:
+   - **Botones Dobles de Navegación:** Tarjetas blancas de 36x36px con `BorderRadius.circular(10)` y borde sutil:
+     1. Botón Atrás (`<`): `context.canPop() ? context.pop() : null`
+     2. Botón Home (`🏠`): `context.go('/home')`
+   - **Título Principal:** `Text('...', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 22-24, color: DesignTokens.primary))`.
+   - **Acciones Rápidas:** Botón circular de refresco de datos (`Icons.refresh_rounded`) y conmutador de vista (Tarjetas vs Tabla si aplica).
+
+3. **Buscador & Filtros (TabBar)**:
+   - Buscador full-width posicionado directamente debajo de la cabecera con `Padding(16, 0, 16, 16)`.
+   - `TabBar` horizontal deslizable para filtrar por estado/categoría con `indicatorColor: DesignTokens.secondary` (`#C68E17`), `labelColor: DesignTokens.primary` (`#08201A`) y fuentes en mayúsculas `Work Sans w800`.
+
+4. **Tarjetas Bento Móviles (Mobile Bento Cards)**:
+   - Reemplazar DataGrid/Tablas pesadas en móviles por tarjetas Bento compactas (padding interno 14px/12px, márgenes reducidos 12px).
+   - Código/ID en `JetBrains Mono` con píldora/badge de estado de bajo contraste.
+   - Metadatos visuales (fechas, peso, apicultor, localidad) organizados claramente con íconos vectoriales.
+   - Enlaces interactivos (Apicultores, Viajes) con subrayado discreto y navegación al perfil/detalle correspondiente.
+
+---
+
+### 3. Estándar Escritorio (Desktop)
+- Layout con `Row`: `GeoSidebar` a la izquierda y `Expanded` con el contenido a la derecha.
+- Margen asimétrico: `EdgeInsets.fromLTRB(120, 0, 40, 0)` o contenedor responsivo sin `maxWidth` estático.
+- Botones de acción principal en la **esquina superior derecha de la cabecera** (`ElevatedButton.icon` en `#08201A`), NUNCA flotantes abajo.
+
+---
+
+## 🛠️ Instrucciones de Ejecución (Para el Agente)
+
+1. **Lectura y Análisis del Archivo:** Lee el código fuente del archivo solicitado (ej. `lib/pages/cargas_page.dart`).
+2. **Validación de Seguridad:** Analiza la arquitectura. Asegura no romper lógica de negocio o manejadores de estado.
+3. **Aplicación Directa:** Usa `replace_file_content` para inyectar el estándar en el archivo.
+4. **Verificación Estática:** Ejecuta `flutter analyze` sobre el archivo editado.
+5. **Git Commit & Push:** Ejecuta `git add .`, `git commit -m "style: aplicar premium_ui a [nombre_pagina]"` y `git push origin master`.
+6. **Despliegue Vercel:** Compila y despliega a Vercel Producción.
