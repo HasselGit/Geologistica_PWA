@@ -1,29 +1,37 @@
-## Sesión del 31 de Julio de 2026
+# Resumen de Sesión Actual - GeoLogística PWA
 
-**Tareas Realizadas:**
-1. **Sincronización del Entorno y Verificación Vercel**:
-   - Sincronización completa de directrices, skills locales y contexto tras inicio de nueva sesión.
-   - Verificación de la cuenta activa en Vercel CLI (`hasselgit`) y actualización de la URL limpia oficial del proyecto a `https://geologistica-pwa-tau.vercel.app` en `.agents/AGENTS.md`.
-   - Normalización de la codificación a UTF-8 sin BOM en las skills locales (`.agents/skills/**/SKILL.md`).
-2. **Acceso de Rol Compras (`lcastellanos`) a Inventario de Productos**:
-   - Eliminación de la restricción `!_isCompras` en `geo_sidebar.dart` y `homepage.dart`, otorgando visibilidad completa al rol **Compras** al módulo de Productos.
-   - Adición de la tarjeta interactiva *"Inventario de Productos"* en `comprashome.dart`.
-3. **Estandarización Premium UI en Inventario de Productos (`productos_page.dart`)**:
-   - Corrección del margen superior (respiración de 48px en escritorio).
-   - Eliminación de insets horizontales asimétricos en `_buildWebTable()`, alineando la cabecera, la barra de búsqueda y la tarjeta de la tabla exactamente en el margen vertical de 120px a la izquierda.
-4. **Automatización de Purga de Caché PWA**:
-   - Integración obligatoria de `python generate_sw.py` en la cadena de despliegue a Vercel para forzar la actualización del Service Worker (`geologistica-pwa-cache-${timestamp}`) y evitar caché estancada en navegadores de usuario.
+**Fecha**: 4 de Agosto, 2026
 
-**Estado:** Todos los componentes probados, pusheados a GitHub y desplegados exitosamente en Vercel Producción.
+## 🎯 Tareas Realizadas y Logros
+
+1. **Optimización y Diseño Premium en Cargas (`cargas_page.dart`)**:
+   - Ajuste de padding en tarjetas (14px/12px) y espaciado vertical.
+   - Incremento del tamaño de fuente del producto a 12pt (`Manrope w800`) con contenedor soft amber y texto dorado oscuro.
+   - Inclusión de fecha de creación (`created_at`) en formato `dd/MM/yyyy HH:mm` con ícono de calendario.
+   - Remoción de contadores de tambores duplicados en el pie de la tarjeta.
+
+2. **Diseño Premium e Interacciones en Histórico Remitos (`remitos_lista_page.dart`)**:
+   - Integración completa de `GeoSidebar`, `HoneycombPainter`, botones de navegación dobles (`<` atrás y `🏠` inicio) y tarjeta de búsqueda Bento de 320px.
+   - **Apertura de PDF**: Al hacer clic en el botón `PDF` (escritorio y móvil), se abre en una nueva pestaña del navegador (`_blank`).
+   - **Navegación por ID de Remito**: El código de remito redirige a la vista detallada de la operación de viaje (`/viajedetalle`).
+   - **Navegación por Apicultor**: El nombre del apicultor abre directamente el perfil individual del apicultor (`ApicultorDetalleWidget`).
+   - **Eliminación de Botón Redundante**: Se eliminó el botón "Aplicar Filtros", manteniendo la búsqueda filtrada en tiempo real.
+
+3. **Corrección de Mapeo de Apicultores en Remitos de Paradas Compartidas**:
+   - En `getRemitos()` (`supabase_service.dart`), se priorizó la lectura del `apicultor_id` propio de cada remito sobre el `solicitud_id` de la parada.
+   - Corrige el caso donde Urrutia entrega tambores suyos y de Zupan en una misma parada, garantizando que el remito de Zupan muestre a Zupan en la tabla y navegue a su perfil individual sin contradicciones.
+
+4. **Optimización PWA y Barra de Estado Móvil**:
+   - Corrección de `"theme_color": "#08201A"` en `web/manifest.json`, `index.html` y `SystemChrome` en Flutter.
+   - Elimina la franja miel/marrón (`#C68E17`) en la parte superior del celular al instalar la PWA, integrándola limpiamente con el fondo Verde Esmeralda Profundo.
+   - Conservación del flujo de inicio nativo de la aplicación Web sin alterar la pantalla de bienvenida original.
+
+5. **Formalización de la Skill `premium_ui`**:
+   - Actualización de `.agents/skills/premium_ui/SKILL.md` con el **Estándar PWA Móvil** basado en `viajes_page.dart`.
+   - Definición estricta del formato de Botones Principales (Verde Esmeralda `#08201A` + Texto Blanco + `BorderRadius.circular(8)`, cero dorado).
 
 ---
 
-## Sesión del 28 de Julio de 2026
-
-**Tareas Realizadas:**
-1. Se aplicó el Premium UI Standard a la página vehiculo_detalle_page.dart. Se organizó la vista web usando un Bento Grid alineado a la izquierda con tarjetas de Ficha Técnica y Estado Operativo apiladas verticalmente con un ancho máximo de 800px para no comprometer el diseño en monitores anchos.
-2. Se completó el sistema CRUD para vehiculos_page.dart, agregando botones de Edición (abre el modal pre-cargado) y Eliminación (con confirmación de diálogo) en las vistas de escritorio y móvil.
-3. Se corrigió un error en GeoSidebar para que incluyera correctamente la página 'Necesidades'.
-4. Se arregló un bug de visualización de nombre de usuario en el drawer.
-
-**Estado:** Listo para la siguiente fase. Todo pusheado a producción.
+## 🚀 Estado de Despliegue
+- **GitHub Master**: Commit `668afa7` (al día).
+- **Vercel Producción**: Publicado y verificado en `https://geologistica-pwa-tau.vercel.app`.
