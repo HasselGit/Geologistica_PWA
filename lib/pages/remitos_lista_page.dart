@@ -1,12 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../widgets/geo_sidebar.dart';
 import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 
@@ -19,6 +18,9 @@ class RemitosListaPageWidget extends StatefulWidget {
 
 class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
   bool _loading = true;
+  String? _userRole;
+  String? _userEmail;
+  String? _displayName;
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _remitos = [];
   List<Map<String, dynamic>> _filtered = [];
@@ -33,7 +35,14 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
   Future<void> _fetchData() async {
     setState(() => _loading = true);
     try {
-      // Mock data for UI representation if DB is empty
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _userRole = prefs.getString('user_puesto');
+          _userEmail = prefs.getString('user_email');
+          _displayName = prefs.getString('user_name') ?? _userEmail;
+        });
+      }
       final data = await SupabaseService().getRemitos();
       if (mounted) {
         setState(() {
@@ -47,7 +56,6 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
     }
   }
 
-  @override
   Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -432,223 +440,337 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
     );
   }
 
-
-
+  @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isDesktop = constraints.maxWidth >= 900;
-        return Scaffold(
-          backgroundColor: isDesktop ? const Color(0xFFFBF9F8) : const Color(0xFFF5F3F3),
-          body: isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(context),
-        );
-      },
-    );
-  }
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
 
-  Widget _buildDesktopLayout(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Row(
+    final mainLayout = isDesktop
+        ? Container(
+            width: double.infinity,
+            height: double.infinity,
+            padding: const EdgeInsets.fromLTRB(120, 48, 40, 32),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Filtros Laterales (Fijos)
-                SizedBox(
-                  width: 280,
-                  child: Column(
+                // Header Premium
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => context.canPop() ? context.pop() : null,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: DesignTokens.primary.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded,
+                            size: 16, color: DesignTokens.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => context.go('/home'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: DesignTokens.primary.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.home_rounded,
+                            size: 18, color: DesignTokens.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      'Histórico Remitos',
+                      style: DesignTokens.headlineStyle(color: DesignTokens.primary)
+                          .copyWith(fontSize: 24),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Main Content (Left Search Filter + Right Table)
+                Expanded(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
-                            onPressed: () async {
-                              final prefs = await SharedPreferences.getInstance();
-                              final rol = prefs.getString('user_puesto') ?? '';
-                              if (rol == 'Gerente') {
-                                context.go('/gerenteHome');
-                              } else {
-                                if (context.canPop()) context.pop();
-                                else context.go('/home');
-                              }
-                            },
-                          ),
-                          const SizedBox(width: 8),
-                          const Expanded(
-                            child: Text(
-                              'Histórico Remitos',
-                              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF08201A)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
+                      // Left Filter Box (Width 320px)
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        width: 320,
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
+                          border: Border.all(
+                              color: DesignTokens.outline.withValues(alpha: 0.15)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: DesignTokens.primary.withValues(alpha: 0.04),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            )
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('BÚSQUEDA', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 12, color: Colors.black54)),
+                            const Text('BÚSQUEDA',
+                                style: TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                    color: DesignTokens.onSurfaceVariant)),
                             const SizedBox(height: 16),
                             TextField(
                               controller: _searchController,
+                              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
                               decoration: InputDecoration(
                                 hintText: 'ID, Nombre...',
-                                prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                                prefixIcon: const Icon(Icons.search_rounded, size: 18, color: DesignTokens.primary),
                                 filled: true,
-                                fillColor: const Color(0xFFFBF9F8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                                fillColor: DesignTokens.surfaceLow,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none),
                               ),
                               onChanged: (_) => _applyFilters(),
                             ),
                             const SizedBox(height: 24),
                             SizedBox(
                               width: double.infinity,
+                              height: 48,
                               child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFC68E17),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                style: DesignTokens.primaryButtonStyle.copyWith(
+                                  shape: WidgetStateProperty.all(
+                                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
                                 ),
                                 icon: const Icon(Icons.filter_list_rounded, size: 16),
-                                label: const Text('Aplicar Filtros', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.bold)),
-                                onPressed: () {},
+                                label: const Text('Aplicar Filtros',
+                                    style: TextStyle(
+                                        fontFamily: 'Work Sans',
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14)),
+                                onPressed: () => _applyFilters(),
                               ),
                             )
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 32),
-                // DataGrid Corporativo
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF08201A).withOpacity(0.05)),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFF08201A).withOpacity(0.03), blurRadius: 40, offset: const Offset(0, 10)),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Stack(
-                        children: [
-                          // Textura de Fondo Translucido (2%)
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color(0xFF08201A).withOpacity(0.02),
-                                    const Color(0xFFC68E17).withOpacity(0.02),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Icono Vectorizado Absoluto (3%)
-                          Positioned(
-                            bottom: -20,
-                            right: -20,
-                            child: Icon(Icons.receipt_long_rounded, size: 120, color: const Color(0xFF08201A).withOpacity(0.03)),
-                          ),
-                          // Tabla de Datos Densa
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: const Color(0xFF08201A).withOpacity(0.05)))),
-                                child: const Text(
-                                  'REMITOS PDF GENERADOS',
-                                  style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 1.2, color: Color(0xFF08201A)),
-                                ),
-                              ),
-                              Expanded(
-                                child: _loading 
-                                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFC68E17)))
-                                  : SingleChildScrollView(
-                                      child: DataTable(
-                                        headingRowColor: MaterialStateProperty.all(const Color(0xFFFBF9F8)),
-                                        dataRowMinHeight: 50,
-                                        dataRowMaxHeight: 50,
-                                        horizontalMargin: 20,
-                                        columnSpacing: 20,
-                                        columns: const [
-                                          DataColumn(label: Text('ID REMITO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
-                                          DataColumn(label: Text('APICULTOR / LOC', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
-                                          DataColumn(label: Text('ESTADO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
-                                          DataColumn(label: Text('ACCIÓN', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 11))),
-                                        ],
-                                        rows: _filtered.map((r) {
-                                          final statusRaw = r['estado'] ?? 'FIRMADO';
-                                          final status = statusRaw == 'PENDIENTE' ? 'FIRMADO' : statusRaw;
-                                          final isSigned = status == 'FIRMADO' || status == 'Emitido' || status == 'FIRMADA';
-                                          
-                                          final apicultorNombre = r['apicultor_nombre'] ?? 'Apicultor S/D';
-                                          final apicultorLocalidad = r['apicultor_localidad'] ?? 'Sin localidad';
-
-                                          return DataRow(
-                                            cells: [
-                                              DataCell(Text(r['remito_codigo'] ?? '-', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: Color(0xFF08201A)))),
-                                              DataCell(Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  Text(apicultorNombre, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF08201A))),
-                                                  Text(apicultorLocalidad, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: const Color(0xFF08201A).withOpacity(0.5))),
-                                                ],
-                                              )),
-                                              DataCell(
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: isSigned ? const Color(0xFF4CAF50).withOpacity(0.1) : const Color(0xFFFFC107).withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(4),
-                                                  ),
-                                                  child: Text(status, style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, color: isSigned ? const Color(0xFF4CAF50) : const Color(0xFFC68E17))),
-                                                )
-                                              ),
-                                              DataCell(
-                                                TextButton(
-                                                  onPressed: () {},
-                                                  child: const Text('PDF', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, color: Color(0xFF08201A))),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ),
-                              ),
+                      const SizedBox(width: 24),
+                      // Right DataGrid
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: DesignTokens.outline.withValues(alpha: 0.1)),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4)),
                             ],
                           ),
-                        ],
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  bottom: -20,
+                                  right: -20,
+                                  child: Icon(Icons.receipt_long_rounded,
+                                      size: 120,
+                                      color: DesignTokens.primary.withValues(alpha: 0.03)),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                          border: Border(
+                                              bottom: BorderSide(
+                                                  color: DesignTokens.primary
+                                                      .withValues(alpha: 0.05)))),
+                                      child: const Text(
+                                        'REMITOS PDF GENERADOS',
+                                        style: TextStyle(
+                                            fontFamily: 'Manrope',
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 13,
+                                            letterSpacing: 1.2,
+                                            color: DesignTokens.primary),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: _loading
+                                          ? const Center(
+                                              child: CircularProgressIndicator(
+                                                  color: DesignTokens.secondary))
+                                          : SingleChildScrollView(
+                                              child: DataTable(
+                                                headingRowColor: WidgetStateProperty.all(
+                                                    DesignTokens.surfaceLow.withValues(alpha: 0.5)),
+                                                dataRowMinHeight: 50,
+                                                dataRowMaxHeight: 50,
+                                                horizontalMargin: 20,
+                                                columnSpacing: 20,
+                                                columns: const [
+                                                  DataColumn(
+                                                      label: Text('ID REMITO',
+                                                          style: TextStyle(
+                                                              fontFamily: 'Work Sans',
+                                                              fontWeight: FontWeight.w700,
+                                                              fontSize: 11,
+                                                              color: DesignTokens.primary))),
+                                                  DataColumn(
+                                                      label: Text('APICULTOR / LOC',
+                                                          style: TextStyle(
+                                                              fontFamily: 'Work Sans',
+                                                              fontWeight: FontWeight.w700,
+                                                              fontSize: 11,
+                                                              color: DesignTokens.primary))),
+                                                  DataColumn(
+                                                      label: Text('ESTADO',
+                                                          style: TextStyle(
+                                                              fontFamily: 'Work Sans',
+                                                              fontWeight: FontWeight.w700,
+                                                              fontSize: 11,
+                                                              color: DesignTokens.primary))),
+                                                  DataColumn(
+                                                      label: Text('ACCIÓN',
+                                                          style: TextStyle(
+                                                              fontFamily: 'Work Sans',
+                                                              fontWeight: FontWeight.w700,
+                                                              fontSize: 11,
+                                                              color: DesignTokens.primary))),
+                                                ],
+                                                rows: _filtered.map((r) {
+                                                  final statusRaw = r['estado'] ?? 'FIRMADO';
+                                                  final status = statusRaw == 'PENDIENTE' ? 'FIRMADO' : statusRaw;
+                                                  final isSigned = status == 'FIRMADO' || status == 'Emitido' || status == 'FIRMADA';
+                                                  
+                                                  final apicultorNombre = r['apicultor_nombre'] ?? 'Apicultor S/D';
+                                                  final apicultorLocalidad = r['apicultor_localidad'] ?? 'Sin localidad';
+
+                                                  return DataRow(
+                                                    cells: [
+                                                      DataCell(Text(r['remito_codigo'] ?? '-', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: DesignTokens.primary))),
+                                                      DataCell(Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: [
+                                                          Text(apicultorNombre, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: DesignTokens.primary)),
+                                                          Text(apicultorLocalidad, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.onSurfaceVariant)),
+                                                        ],
+                                                      )),
+                                                      DataCell(
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                          decoration: BoxDecoration(
+                                                            color: isSigned ? const Color(0xFF4CAF50).withValues(alpha: 0.1) : const Color(0xFFFFC107).withValues(alpha: 0.1),
+                                                            borderRadius: BorderRadius.circular(4),
+                                                          ),
+                                                          child: Text(status, style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, color: isSigned ? const Color(0xFF4CAF50) : const Color(0xFFC68E17))),
+                                                        )
+                                                      ),
+                                                      DataCell(
+                                                        TextButton.icon(
+                                                          icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
+                                                          label: const Text('PDF', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700)),
+                                                          style: TextButton.styleFrom(foregroundColor: DesignTokens.primary),
+                                                          onPressed: () {},
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }).toList(),
+                                              ),
+                                            ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
+          )
+        : Column(
+            children: [
+              AppBar(
+                backgroundColor: DesignTokens.surface,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: DesignTokens.primary, size: 18),
+                  onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+                ),
+                title: const Text(
+                  'Histórico Remitos',
+                  style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.home_rounded, color: DesignTokens.primary),
+                    onPressed: () => context.go('/home'),
+                  ),
+                ],
+              ),
+              Expanded(child: _buildMobileLayout(context)),
+            ],
+          );
+
+    final content = Stack(
+      children: [
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: CustomPaint(painter: const HoneycombPainter()),
           ),
         ),
-      ),
+        mainLayout,
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: DesignTokens.surfaceLow,
+      body: isDesktop
+          ? Row(
+              children: [
+                GeoSidebar(
+                  userRole: _userRole ?? '',
+                  userEmail: _userEmail ?? '',
+                  displayName: _displayName ?? _userEmail ?? '',
+                ),
+                Expanded(child: content),
+              ],
+            )
+          : content,
     );
   }
 }
