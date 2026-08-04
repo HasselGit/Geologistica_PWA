@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/geo_sidebar.dart';
 import 'gastos_detalle.dart';
 
 class SaveIntent extends Intent { const SaveIntent(); }
@@ -25,6 +26,10 @@ class GastosPageWidget extends StatefulWidget {
 }
 
 class _GastosPageWidgetState extends State<GastosPageWidget> {
+  String? _userRole;
+  String? _userEmail;
+  String? _displayName;
+
   // Web Form state
   final _amountController = TextEditingController();
   final _descController = TextEditingController();
@@ -84,6 +89,14 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
     final userId = prefs.getString('user_id');
     final userRole = (prefs.getString('user_puesto') ?? '').toLowerCase();
     final userEmail = (prefs.getString('user_email') ?? '').toLowerCase();
+
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('user_puesto');
+        _userEmail = prefs.getString('user_email');
+        _displayName = prefs.getString('user_name') ?? _userEmail;
+      });
+    }
     final isChofer = userRole.contains('chofer') ||
         userEmail.contains('mperez') || userEmail.contains('cmuse') ||
         userEmail.contains('agomez') || userEmail.contains('efernandez');
@@ -376,6 +389,139 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+
+    final mainLayout = isDesktop
+        ? Container(
+            width: double.infinity,
+            height: double.infinity,
+            padding: const EdgeInsets.fromLTRB(120, 48, 40, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Premium
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => context.canPop() ? context.pop() : null,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: DesignTokens.primary.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded,
+                            size: 16, color: DesignTokens.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => context.go('/home'),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: DesignTokens.primary.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.home_rounded,
+                            size: 18, color: DesignTokens.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      'Gestión de Gastos',
+                      style: DesignTokens.headlineStyle(color: DesignTokens.primary)
+                          .copyWith(fontSize: 24),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Main 2-Column Content Area
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 380,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: DesignTokens.outline.withValues(alpha: 0.15)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: DesignTokens.primary.withValues(alpha: 0.04),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            )
+                          ],
+                        ),
+                        child: _buildWebForm(),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: _buildWebRightPanel(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          )
+        : Column(
+            children: [
+              AppBar(
+                backgroundColor: DesignTokens.surface,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: DesignTokens.primary, size: 18),
+                  onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+                ),
+                title: const Text(
+                  'Gestión de Gastos',
+                  style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.home_rounded, color: DesignTokens.primary),
+                    onPressed: () => context.go('/home'),
+                  ),
+                ],
+              ),
+              Expanded(child: _buildMobileLayout()),
+            ],
+          );
+
+    final content = Stack(
+      children: [
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: CustomPaint(painter: const HoneycombPainter()),
+          ),
+        ),
+        mainLayout,
+      ],
+    );
+
     return Shortcuts(
       shortcuts: {
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.enter): const SaveIntent(),
@@ -388,26 +534,18 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
         },
         child: Scaffold(
           backgroundColor: DesignTokens.surface,
-          appBar: AppBar(
-            backgroundColor: DesignTokens.surface,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: DesignTokens.primary),
-              onPressed: () => context.go('/home'),
-            ),
-            title: const Text(
-              'Gestión de Gastos',
-              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.bold, color: DesignTokens.primary),
-            ),
-          ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth >= 900) {
-                return _buildWebLayout();
-              }
-              return _buildMobileLayout();
-            },
-          ),
+          body: isDesktop
+              ? Row(
+                  children: [
+                    GeoSidebar(
+                      userRole: _userRole ?? '',
+                      userEmail: _userEmail ?? '',
+                      displayName: _displayName ?? _userEmail ?? '',
+                    ),
+                    Expanded(child: content),
+                  ],
+                )
+              : content,
         ),
       ),
     );
@@ -473,29 +611,6 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
     );
   }
 
-  Widget _buildWebLayout() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 1,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(right: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.1))),
-            ),
-            child: _buildWebForm(),
-          ),
-        ),
-        Expanded(
-          flex: 2,
-          child: _buildWebRightPanel(),
-        ),
-      ],
-    );
-  }
-
   Widget _buildWebRightPanel() {
     final startIndex = _currentPageWeb * _rowsPerPageWeb;
     final endIndex = min(startIndex + _rowsPerPageWeb, _filteredGastos.length);
@@ -505,12 +620,9 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildKPIPanel(),
         Padding(
-          padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
-          child: _buildKPIPanel(),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -520,7 +632,7 @@ class _GastosPageWidgetState extends State<GastosPageWidget> {
         ),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: const EdgeInsets.only(top: 8, bottom: 24),
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
