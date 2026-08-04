@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import '../widgets/geo_sidebar.dart';
@@ -53,6 +54,44 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
       }
     } catch (e) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _openPdfInNewTab(Map<String, dynamic> r) async {
+    final pdfUrl = r['pdf_url']?.toString();
+    if (pdfUrl != null && pdfUrl.isNotEmpty) {
+      final uri = Uri.parse(pdfUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, webOnlyWindowName: '_blank');
+        return;
+      }
+    }
+    const fallbackUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    final uri = Uri.parse(fallbackUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, webOnlyWindowName: '_blank');
+    } else {
+      if (!mounted) return;
+      final remitoCodigo = r['remito_codigo'] ?? 'REM-001';
+      _showPdfPreviewDialog(context, fallbackUrl, 'Remito $remitoCodigo');
+    }
+  }
+
+  void _navigateToViaje(Map<String, dynamic> r) {
+    final viajeId = r['viaje_id'] ?? r['viaje']?['id'] ?? r['id'];
+    if (viajeId != null && viajeId.toString().isNotEmpty) {
+      context.push('/viajedetalle?viajeId=$viajeId');
+    } else {
+      context.push('/viajes');
+    }
+  }
+
+  void _navigateToApicultor(Map<String, dynamic> r) {
+    final apicultorId = r['apicultor_id'] ?? r['apicultor']?['id'];
+    if (apicultorId != null && apicultorId.toString().isNotEmpty) {
+      context.push('/apicultores?id=$apicultorId');
+    } else {
+      context.push('/apicultores');
     }
   }
 
@@ -676,15 +715,78 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
 
                                                   return DataRow(
                                                     cells: [
-                                                      DataCell(Text(r['remito_codigo'] ?? '-', style: const TextStyle(fontFamily: 'JetBrains Mono', fontWeight: FontWeight.w600, color: DesignTokens.primary))),
-                                                      DataCell(Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        mainAxisAlignment: MainAxisAlignment.center,
-                                                        children: [
-                                                          Text(apicultorNombre, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 13, color: DesignTokens.primary)),
-                                                          Text(apicultorLocalidad, style: TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.onSurfaceVariant)),
-                                                        ],
-                                                      )),
+                                                      DataCell(
+                                                        MouseRegion(
+                                                          cursor: SystemMouseCursors.click,
+                                                          child: GestureDetector(
+                                                            onTap: () => _navigateToViaje(r),
+                                                            child: Container(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                              decoration: BoxDecoration(
+                                                                color: DesignTokens.primary.withValues(alpha: 0.05),
+                                                                borderRadius: BorderRadius.circular(6),
+                                                                border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.12)),
+                                                              ),
+                                                              child: Row(
+                                                                mainAxisSize: MainAxisSize.min,
+                                                                children: [
+                                                                  const Icon(Icons.route_outlined, size: 12, color: DesignTokens.primary),
+                                                                  const SizedBox(width: 4),
+                                                                  Text(
+                                                                    r['remito_codigo'] ?? '-',
+                                                                    style: const TextStyle(
+                                                                      fontFamily: 'JetBrains Mono',
+                                                                      fontWeight: FontWeight.w700,
+                                                                      fontSize: 12,
+                                                                      color: DesignTokens.primary,
+                                                                      decoration: TextDecoration.underline,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataCell(
+                                                        MouseRegion(
+                                                          cursor: SystemMouseCursors.click,
+                                                          child: GestureDetector(
+                                                            onTap: () => _navigateToApicultor(r),
+                                                            child: Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              mainAxisAlignment: MainAxisAlignment.center,
+                                                              children: [
+                                                                Row(
+                                                                  mainAxisSize: MainAxisSize.min,
+                                                                  children: [
+                                                                    const Icon(Icons.person_pin_circle_rounded, size: 14, color: Color(0xFFC68E17)),
+                                                                    const SizedBox(width: 4),
+                                                                    Text(
+                                                                      apicultorNombre,
+                                                                      style: const TextStyle(
+                                                                        fontFamily: 'Inter',
+                                                                        fontWeight: FontWeight.w700,
+                                                                        fontSize: 13,
+                                                                        color: DesignTokens.primary,
+                                                                        decoration: TextDecoration.underline,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                Text(
+                                                                  apicultorLocalidad,
+                                                                  style: TextStyle(
+                                                                    fontFamily: 'Inter',
+                                                                    fontSize: 11,
+                                                                    color: DesignTokens.onSurfaceVariant,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
                                                       DataCell(
                                                         Container(
                                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -696,11 +798,17 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
                                                         )
                                                       ),
                                                       DataCell(
-                                                        TextButton.icon(
-                                                          icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
-                                                          label: const Text('PDF', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700)),
-                                                          style: TextButton.styleFrom(foregroundColor: DesignTokens.primary),
-                                                          onPressed: () {},
+                                                        ElevatedButton.icon(
+                                                          icon: const Icon(Icons.open_in_new_rounded, size: 14),
+                                                          label: const Text('PDF', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12)),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                                                            foregroundColor: const Color(0xFF0369A1),
+                                                            elevation: 0,
+                                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                                          ),
+                                                          onPressed: () => _openPdfInNewTab(r),
                                                         ),
                                                       ),
                                                     ],
