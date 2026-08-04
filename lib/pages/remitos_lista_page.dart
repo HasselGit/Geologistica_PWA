@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import '../widgets/geo_sidebar.dart';
+import 'apicultor_detalle.dart';
 import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 
@@ -87,12 +88,20 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
   }
 
   void _navigateToApicultor(Map<String, dynamic> r) {
-    final apicultorId = r['apicultor_id'] ?? r['apicultor']?['id'];
-    if (apicultorId != null && apicultorId.toString().isNotEmpty) {
-      context.push('/apicultores?id=$apicultorId');
-    } else {
-      context.push('/apicultores');
-    }
+    final apicultorData = {
+      'id': r['apicultor_id'] ?? r['apicultor']?['id'] ?? r['id'],
+      'nombre': r['apicultor_nombre'] ?? r['apicultor']?['nombre'] ?? 'Apicultor S/D',
+      'localidad': r['apicultor_localidad'] ?? r['apicultor']?['localidad'] ?? 'Sin localidad',
+      'cuit': r['apicultor_cuit'] ?? r['cuit'] ?? '',
+      'renapa': r['apicultor_renapa'] ?? r['renapa'] ?? '',
+      'telefono': r['apicultor_telefono'] ?? r['telefono'] ?? '',
+    };
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ApicultorDetalleWidget(apicultor: apicultorData),
+      ),
+    );
   }
 
   Widget _buildMobileLayout(BuildContext context) {
@@ -593,25 +602,6 @@ class _RemitosListaPageWidgetState extends State<RemitosListaPageWidget> {
                               ),
                               onChanged: (_) => _applyFilters(),
                             ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton.icon(
-                                style: DesignTokens.primaryButtonStyle.copyWith(
-                                  shape: WidgetStateProperty.all(
-                                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.filter_list_rounded, size: 16),
-                                label: const Text('Aplicar Filtros',
-                                    style: TextStyle(
-                                        fontFamily: 'Work Sans',
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14)),
-                                onPressed: () => _applyFilters(),
-                              ),
-                            )
                           ],
                         ),
                       ),
