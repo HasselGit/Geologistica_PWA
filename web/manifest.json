@@ -4,7 +4,7 @@
     "start_url": "/",
     "display": "standalone",
     "background_color": "#08201A",
-    "theme_color": "#C68E17",
+    "theme_color": "#08201A",
     "description": "GeoLogística - Sistema de Gestión y Trazabilidad Apícola",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
