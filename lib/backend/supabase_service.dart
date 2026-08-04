@@ -1441,9 +1441,14 @@ class SupabaseService {
           .order('created_at', ascending: false);
       final remitos = List<Map<String, dynamic>>.from(data as List);
       
-      // 1. Gather all unique non-null solicitud_ids
+      // 1. Gather all unique non-null apicultor_ids and solicitud_ids
+      final List<String> apicIds = [];
       final List<String> solIds = [];
       for (var r in remitos) {
+        if (r['apicultor_id'] != null && r['apicultor_id'].toString().isNotEmpty) {
+          final id = r['apicultor_id'].toString();
+          if (!apicIds.contains(id)) apicIds.add(id);
+        }
         if (r['paradas'] != null && r['paradas']['solicitud_id'] != null) {
           final id = r['paradas']['solicitud_id'].toString();
           if (!solIds.contains(id)) {
@@ -1452,7 +1457,24 @@ class SupabaseService {
         }
       }
 
-      // 2. Query all solicitudes in batch
+      // 2. Query all apicultores directly by apicultor_id in batch
+      final Map<String, Map<String, dynamic>> apicMap = {};
+      if (apicIds.isNotEmpty) {
+        try {
+          final List<dynamic> apicsData = await _client.from('apicultores')
+              .select('id, nombre, localidad, cuit, renapa, telefono')
+              .filter('id', 'in', apicIds);
+          for (var a in apicsData) {
+            if (a['id'] != null) {
+              apicMap[a['id'].toString()] = Map<String, dynamic>.from(a as Map);
+            }
+          }
+        } catch (ae) {
+          print('SupabaseService: Error in getRemitos batch apicultores fetch: $ae');
+        }
+      }
+
+      // 3. Query all solicitudes in batch
       final Map<String, Map<String, dynamic>> solMap = {};
       if (solIds.isNotEmpty) {
         try {
@@ -1508,7 +1530,18 @@ class SupabaseService {
               hasDistribucion = true;
             }
           }
-          
+        }
+
+        // Priority 1: Check remito's own apicultor_id
+        final apicId = r['apicultor_id']?.toString();
+        if (apicId != null && apicMap.containsKey(apicId)) {
+          final apic = apicMap[apicId]!;
+          r['apicultor_nombre'] = apic['nombre'];
+          r['apicultor_localidad'] = apic['localidad'];
+          r['apicultor_cuit'] = apic['cuit'];
+          r['apicultor_renapa'] = apic['renapa'];
+        } else if (r['paradas'] != null) {
+          // Priority 2: Fallback to parada's solicitud owner
           final solId = r['paradas']['solicitud_id'];
           if (solId != null && solMap.containsKey(solId.toString())) {
             final sol = solMap[solId.toString()]!;
@@ -1520,7 +1553,7 @@ class SupabaseService {
         }
 
         // Fallbacks for apicultor
-        r['apicultor_nombre'] = r['apicultor_nombre'] ?? r['ubicacion'] ?? r['persona_nombre'] ?? 'Apicultor S/D';
+        r['apicultor_nombre'] = r['apicultor_nombre'] ?? r['persona_nombre'] ?? r['ubicacion'] ?? 'Apicultor S/D';
         r['apicultor_localidad'] = r['apicultor_localidad'] ?? r['localidad'] ?? 'Sin localidad';
 
         // Determine type display and category
