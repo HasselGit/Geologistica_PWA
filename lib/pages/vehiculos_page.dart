@@ -160,7 +160,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
             children: [
               // Header Premium
               Padding(
-                padding: const EdgeInsets.only(top: 40, bottom: 32),
+                padding: const EdgeInsets.only(top: 48, bottom: 32),
                 child: Row(
                   children: [
                     InkWell(
@@ -251,12 +251,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
             ],
           );
 
-          if (isDesktop) {
-            content = Padding(
-              padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-              child: content,
-            );
-          } else {
+          if (!isDesktop) {
             content = Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
               child: content,

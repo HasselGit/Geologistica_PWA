@@ -52,9 +52,9 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
     setState(() { _loading = true; _error = null; });
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userRole = prefs.getString('userRole');
-      final userEmail = prefs.getString('userEmail');
-      final displayName = prefs.getString('displayName') ?? userEmail;
+      final userRole = prefs.getString('user_puesto') ?? prefs.getString('userRole');
+      final userEmail = prefs.getString('user_email') ?? prefs.getString('userEmail');
+      final displayName = prefs.getString('user_name') ?? prefs.getString('displayName') ?? userEmail;
       final service = SupabaseService();
       final neceData = await service.getAllNecesidades();
       final apiData = await service.getApicultores();
@@ -581,7 +581,7 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 16, isDesktop ? 0 : 16, 16),
+            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 48 : 16, isDesktop ? 0 : 16, 16),
             child: Row(
               children: [
                 if (context.canPop()) ...[
