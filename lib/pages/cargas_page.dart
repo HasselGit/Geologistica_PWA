@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../backend/supabase_service.dart';
@@ -588,6 +589,15 @@ class _CargasPageWidgetState extends State<CargasPageWidget>
         ? '${chofer['nombre'] ?? ''} ${chofer['apellido'] ?? ''}'.trim()
         : 'Sin chofer';
 
+    final rawFecha = c['created_at'] ?? c['fecha_carga'] ?? c['fecha'];
+    String fechaStr = 'S/F';
+    if (rawFecha != null) {
+      final parsed = DateTime.tryParse(rawFecha.toString());
+      if (parsed != null) {
+        fechaStr = DateFormat('dd/MM/yyyy HH:mm').format(parsed.toLocal());
+      }
+    }
+
     final borderColor = Color(AppStates.stateBorderColor(estado));
 
     double totalKg = 0;
@@ -615,16 +625,16 @@ class _CargasPageWidgetState extends State<CargasPageWidget>
       child: GestureDetector(
         onTap: () => context.push('/cargaDetalle?id=${c['id']}').then((_) => _fetchCargas()),
         child: Container(
-          margin: isDesktop ? EdgeInsets.zero : const EdgeInsets.only(bottom: 16),
+          margin: isDesktop ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.06)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               )
             ],
           ),
@@ -636,82 +646,93 @@ class _CargasPageWidgetState extends State<CargasPageWidget>
                   decoration: BoxDecoration(
                     color: borderColor,
                     borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(20), bottomLeft: Radius.circular(20)),
+                        topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
                   ),
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    vehiculo.toUpperCase(),
-                                    style: TextStyle(
-                                      fontFamily: 'Work Sans',
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 10,
-                                      color: DesignTokens.primary.withValues(alpha: 0.5),
-                                      letterSpacing: 0.8,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
                                     codigo,
                                     style: const TextStyle(
                                       fontFamily: 'Manrope',
                                       fontWeight: FontWeight.w800,
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       color: DesignTokens.primary,
                                     ),
                                     overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today_rounded,
+                                          size: 11, color: DesignTokens.onSurfaceVariant),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        fechaStr,
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 11,
+                                          color: DesignTokens.onSurfaceVariant.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
                             _buildStatusBadge(estado),
                             if (isDesktop) ...[
-                              const SizedBox(width: 8),
-                              const Icon(Icons.chevron_right_rounded, color: DesignTokens.primary, size: 20),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.chevron_right_rounded, color: DesignTokens.primary, size: 18),
                             ],
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Divider(height: 1, color: DesignTokens.primary.withValues(alpha: 0.06)),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.local_shipping_outlined, size: 14,
+                            Icon(Icons.local_shipping_outlined, size: 13,
                                 color: DesignTokens.onSurfaceVariant.withValues(alpha: 0.6)),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                'Viaje: $viajeCode',
+                                'Viaje: $viajeCode ${vehiculo != "S/V" ? "($vehiculo)" : ""}',
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   color: DesignTokens.onSurfaceVariant,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Icon(Icons.person_outline_rounded, size: 14,
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline_rounded, size: 13,
                                 color: DesignTokens.onSurfaceVariant.withValues(alpha: 0.6)),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 choferNombre,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   color: DesignTokens.onSurfaceVariant,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -720,14 +741,14 @@ class _CargasPageWidgetState extends State<CargasPageWidget>
                           ],
                         ),
                         if (items.isNotEmpty) ...[
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           Wrap(
-                            spacing: 6, runSpacing: 4,
+                            spacing: 4, runSpacing: 4,
                             children: items.take(3).map((it) => Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                   color: DesignTokens.primary.withValues(alpha: 0.04),
-                                  borderRadius: BorderRadius.circular(6)),
+                                  borderRadius: BorderRadius.circular(4)),
                               child: Text(
                                 '${it['producto_codigo']} • ${it['cantidad']}',
                                 style: const TextStyle(fontFamily: 'Work Sans',
@@ -737,23 +758,23 @@ class _CargasPageWidgetState extends State<CargasPageWidget>
                             )).toList(),
                           ),
                         ],
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                           decoration: BoxDecoration(
                               color: DesignTokens.surfaceLow,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.04))),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               _metricCol('PESO EST.', '${totalKg.round()} kg',
                                   Icons.monitor_weight_outlined),
-                              Container(width: 1, height: 28,
+                              Container(width: 1, height: 22,
                                   color: DesignTokens.primary.withValues(alpha: 0.08)),
                               _metricCol('TAMBORES', '$totalTamb un.',
                                   Icons.inventory_2_outlined),
-                              Container(width: 1, height: 28,
+                              Container(width: 1, height: 22,
                                   color: DesignTokens.primary.withValues(alpha: 0.08)),
                               _metricCol('ÍTEMS', '${items.length}',
                                   Icons.list_alt_rounded),
