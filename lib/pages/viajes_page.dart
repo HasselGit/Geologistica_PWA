@@ -205,18 +205,20 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
 
         return Scaffold(
           backgroundColor: DesignTokens.surfaceLow,
-          body: Column(
-            children: [
-              _buildHeader(isDesktop),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                    : TabBarView(
-                        controller: _tabController,
-                        children: _tabs.map((estado) => _buildViajesList(estado)).toList(),
-                      ),
-              ),
-            ],
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(isDesktop),
+                Expanded(
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                      : TabBarView(
+                          controller: _tabController,
+                          children: _tabs.map((estado) => _buildViajesList(estado)).toList(),
+                        ),
+                ),
+              ],
+            ),
           ),
           floatingActionButton: _canCreate && !isDesktop
               ? FloatingActionButton.extended(
@@ -237,7 +239,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 16, isDesktop ? 0 : 16, 16),
+            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 10, isDesktop ? 0 : 16, 8),
             child: Row(
               children: [
                 if (context.canPop()) ...[
@@ -277,42 +279,10 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                const Expanded(
+                const SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     'Control de Viajes',
-                    style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary, letterSpacing: -0.5),
-                  ),
-                ),
-                // Buscador
-                if (isDesktop) _buildSearchBar(),
-                const SizedBox(width: 16),
-                // Toggle View
-                Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withOpacity(0.05))),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.grid_view_rounded, color: _isCardView ? DesignTokens.secondary : Colors.black26),
-                        onPressed: () => setState(() => _isCardView = true),
-                        tooltip: 'Vista Tarjetas',
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.table_rows_rounded, color: !_isCardView ? DesignTokens.secondary : Colors.black26),
-                        onPressed: () => setState(() => _isCardView = false),
-                        tooltip: 'Vista Tabla',
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.black.withOpacity(0.05))),
-                  child: IconButton(
-                    onPressed: _fetchViajes,
-                    icon: const Icon(Icons.refresh_rounded, color: Colors.black45),
-                    tooltip: 'Actualizar',
                   ),
                 ),
                 if (isDesktop && _canCreate) ...[

@@ -35,6 +35,8 @@ class GeoBentoCardState extends State<GeoBentoCard> {
     Color valueColor = const Color(0xFF08201A);
     Color accent = widget.accentColor ?? DesignTokens.secondary;
     
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -46,7 +48,7 @@ class GeoBentoCardState extends State<GeoBentoCard> {
           transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
           decoration: BoxDecoration(
             color: cardBg.withOpacity(0.9), // Glassmorphism hint
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(isMobile ? 16 : 24),
             border: Border.all(
               color: accent.withOpacity(_isHovered ? 0.3 : 0.05),
               width: 1.5,
@@ -82,14 +84,17 @@ class GeoBentoCardState extends State<GeoBentoCard> {
                   right: 0,
                   height: 80,
                   child: Opacity(
-                    opacity: 0.25, // Mucho más visible
+                    opacity: 0.25,
                     child: CustomPaint(
                       painter: SparklinePainter(widget.sparklineData!, accent),
                     ),
                   ),
                 ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 12 : 24,
+                  vertical: isMobile ? 16 : 24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -97,45 +102,52 @@ class GeoBentoCardState extends State<GeoBentoCard> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          widget.title,
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                            letterSpacing: 1.2,
-                            color: subColor,
+                        Expanded(
+                          child: Text(
+                            widget.title,
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontWeight: FontWeight.w800,
+                              fontSize: isMobile ? 11 : 12,
+                              letterSpacing: isMobile ? 0.5 : 1.2,
+                              color: subColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (widget.iconWidget != null) widget.iconWidget!,
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isMobile ? 8 : 16),
                     Text(
                       widget.value,
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontWeight: FontWeight.w900,
-                        fontSize: 48,
+                        fontSize: isMobile ? 32 : 48,
                         color: valueColor,
                         height: 1.0,
                         letterSpacing: -1.5,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: isMobile ? 6 : 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: accent.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(
-                        widget.trend,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11,
-                          color: accent.withOpacity(0.8),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          widget.trend,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w600,
+                            fontSize: isMobile ? 10 : 11,
+                            color: accent.withOpacity(0.8),
+                          ),
                         ),
                       ),
                     ),
