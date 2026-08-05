@@ -3,7 +3,7 @@
     "short_name": "GeoLogística",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#08201A",
+    "background_color": "#FBF9F8",
     "theme_color": "#08201A",
     "description": "GeoLogística - Sistema de Gestión y Trazabilidad Apícola",
     "orientation": "portrait-primary",
