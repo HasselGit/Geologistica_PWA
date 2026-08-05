@@ -668,7 +668,7 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
       crossAxisCount: 2,
       crossAxisSpacing: 14,
       mainAxisSpacing: 14,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.15,
       children: [
         _statBox('CARGA TOTAL EN VIAJE', '${_totalKg.toStringAsFixed(0)} Kg', Icons.scale_rounded, DesignTokens.primary, const Color(0xFFE8F5E9)),
         _statBox('STOCK TAMBORES', _tamboresStock.toString(), Icons.inventory_2_rounded, DesignTokens.secondary, const Color(0xFFFFFDE7)),
@@ -678,7 +678,7 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
 
   Widget _statBox(String label, String value, IconData icon, Color color, Color bg) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
@@ -692,7 +692,7 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, size: 20, color: color),
               ),
@@ -704,7 +704,7 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
                  )
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
