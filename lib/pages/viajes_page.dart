@@ -335,8 +335,8 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
               indicatorWeight: 3,
               labelColor: DesignTokens.primary,
               unselectedLabelColor: Colors.black38,
-              labelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
-              unselectedLabelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w600, fontSize: 11, letterSpacing: 0.5),
+              labelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 1),
+              unselectedLabelStyle: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.5),
               tabs: _tabLabels.map((l) => Tab(text: l)).toList(),
             ),
         ],
@@ -345,20 +345,21 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
   }
 
   Widget _buildSearchBar() {
+    final isMobile = MediaQuery.of(context).size.width < 900;
     return Container(
-      width: 350,
-      height: 40,
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black.withOpacity(0.05))),
+      width: isMobile ? double.infinity : 350,
+      height: isMobile ? 48 : 42,
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.black.withOpacity(0.06))),
       child: TextField(
         onChanged: _onSearchChanged,
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           hintText: 'Buscar viaje, chofer...',
-          hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black38),
-          prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Colors.black38),
+          hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, color: Colors.black38),
+          prefixIcon: Icon(Icons.search_rounded, size: 20, color: Colors.black38),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black87),
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Colors.black87),
       ),
     );
   }
