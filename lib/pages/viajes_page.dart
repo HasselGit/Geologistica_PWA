@@ -205,6 +205,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
 
         return Scaffold(
           backgroundColor: DesignTokens.surfaceLow,
+          drawer: !isDesktop ? Drawer(child: GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? '')) : null,
           body: SafeArea(
             child: Column(
               children: [
