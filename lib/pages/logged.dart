@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,19 +26,7 @@ class _LoggedWidgetState extends State<LoggedWidget> {
       if (mounted) context.go('/');
       return;
     }
-
-    final role = (prefs.getString('user_puesto') ?? '').toLowerCase().trim();
-    if (role.contains('chofer')) {
-      if (mounted) context.go('/choferHome');
-    } else if (role.contains('gerente') || role.contains('ceo') || role.contains('operaciones') || role.contains('director')) {
-      if (mounted) context.go('/gerenteHome');
-    } else if (role.contains('deposito')) {
-      if (mounted) context.go('/depositoHome');
-    } else if (role.contains('compras')) {
-      if (mounted) context.go('/comprasHome');
-    } else {
-      if (mounted) context.go('/home');
-    }
+    if (mounted) context.go('/home');
   }
 
   @override

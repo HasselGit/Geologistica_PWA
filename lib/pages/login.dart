@@ -50,7 +50,7 @@ class _LoginWidgetState extends State<LoginWidget> {
       final isGerente = roleL.contains('ceo') || roleL.contains('gerente') || roleL.contains('gerencia') || roleL.contains('compras') || roleL.contains('admin');
       
       if (mounted) {
-        context.go('/logged');
+        context.go('/home');
       }
     }
   }
@@ -88,7 +88,7 @@ class _LoginWidgetState extends State<LoginWidget> {
       final isGerente = roleL.contains('ceo') || roleL.contains('gerente') || roleL.contains('gerencia') || roleL.contains('compras') || roleL.contains('admin');
       
       if (mounted) {
-        context.go('/logged');
+        context.go('/home');
       }
     } catch (error) {
       if (mounted) {
