@@ -11,6 +11,9 @@ import '../backend/supabase_service.dart';
 import '../backend/design_tokens.dart';
 import '../widgets/geo_sidebar.dart';
 import '../widgets/geo_bento_card.dart';
+import 'gerentehome.dart';
+import 'choferhome.dart';
+import 'depositohome.dart';
 
 class HomePageWidget extends StatefulWidget {
   const HomePageWidget({super.key});
@@ -1246,6 +1249,16 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 900;
         final bool isGerenteAdminDesktop = isDesktop && (_isManagement || _isAdmin);
+        
+        if (!isDesktop) {
+          if (_isChofer) {
+            return const ChoferHomeWidget();
+          } else if (_isManagement || _isAdmin) {
+            return const GerenteHomeWidget();
+          } else if (_isDeposito) {
+            return const DepositohomeWidget();
+          }
+        }
         
         return Scaffold(
           backgroundColor: const Color(0xFFFBF9F8),

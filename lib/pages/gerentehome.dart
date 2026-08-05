@@ -94,25 +94,36 @@ class _GerenteHomeWidgetState extends State<GerenteHomeWidget> {
       final isWeb = constraints.maxWidth >= 900;
       Widget scaffold = Scaffold(
         backgroundColor: isWeb ? Colors.transparent : DesignTokens.surfaceLow,
+        drawer: !isWeb ? Drawer(child: GeoSidebar(userRole: _userRole, userEmail: _userEmail, displayName: _displayName)) : null,
         appBar: isWeb ? null : AppBar(
           backgroundColor: DesignTokens.surface,
           elevation: 0,
           scrolledUnderElevation: 0,
-          leading: Center(
-            child: InkWell(
-              onTap: () => context.go('/home'),
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.black.withOpacity(0.05)),
-                ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
-              ),
-            ),
+          leading: Builder(
+            builder: (context) {
+              if (context.canPop()) {
+                return Center(
+                  child: InkWell(
+                    onTap: () => context.pop(),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.black.withOpacity(0.05)),
+                      ),
+                      child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                    ),
+                  ),
+                );
+              }
+              return IconButton(
+                icon: const Icon(Icons.menu_rounded, color: DesignTokens.primary),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              );
+            },
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
