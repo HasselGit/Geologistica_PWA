@@ -92,8 +92,8 @@ class GeoBentoCardState extends State<GeoBentoCard> {
                 ),
               Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 12 : 24,
-                  vertical: isMobile ? 16 : 24,
+                  horizontal: isMobile ? 10 : 24,
+                  vertical: isMobile ? 12 : 24,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,31 +103,37 @@ class GeoBentoCardState extends State<GeoBentoCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(
-                            widget.title,
-                            style: TextStyle(
-                              fontFamily: 'Manrope',
-                              fontWeight: FontWeight.w800,
-                              fontSize: isMobile ? 11 : 12,
-                              letterSpacing: isMobile ? 0.5 : 1.2,
-                              color: subColor,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              widget.title,
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontWeight: FontWeight.w800,
+                                fontSize: isMobile ? 11 : 12,
+                                letterSpacing: isMobile ? 0.3 : 1.2,
+                                color: subColor,
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (widget.iconWidget != null) widget.iconWidget!,
+                        if (widget.iconWidget != null) ...[
+                          const SizedBox(width: 4),
+                          widget.iconWidget!,
+                        ],
                       ],
                     ),
-                    SizedBox(height: isMobile ? 8 : 16),
+                    SizedBox(height: isMobile ? 6 : 14),
                     Text(
                       widget.value,
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontWeight: FontWeight.w900,
-                        fontSize: isMobile ? 32 : 48,
+                        fontSize: isMobile ? 30 : 48,
                         color: valueColor,
                         height: 1.0,
-                        letterSpacing: -1.5,
+                        letterSpacing: -1.0,
                       ),
                     ),
                     SizedBox(height: isMobile ? 6 : 8),

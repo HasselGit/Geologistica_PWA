@@ -1093,25 +1093,6 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
             Expanded(
               child: Text('OPERACIONES EN CURSO', style: TextStyle(fontFamily: 'Work Sans', fontSize: isDesktop ? 14 : 12, fontWeight: FontWeight.w800, color: DesignTokens.primary.withOpacity(0.5), letterSpacing: 1), overflow: TextOverflow.ellipsis),
             ),
-            if (!isDesktop && (_isManagement || _isAdmin)) ...[
-              InkWell(
-                onTap: () {
-                  if (context.canPop()) context.pop();
-                  else context.go('/gerenteHome');
-                },
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.black.withOpacity(0.05)),
-                  ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
-                ),
-              ),
-            ],
           ],
         ),
         const SizedBox(height: 24),
