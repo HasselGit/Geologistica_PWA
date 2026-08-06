@@ -59,26 +59,44 @@ self.addEventListener('activate', function(event) {{
 }});
 
 self.addEventListener('fetch', function(event) {{
-  // Only intercept GET requests
   if (event.request.method !== 'GET') return;
   
+  var url = new URL(event.request.url);
+  var isCoreBundle = url.pathname === '/' || 
+                     url.pathname.endsWith('/index.html') || 
+                     url.pathname.endsWith('/main.dart.js') || 
+                     url.pathname.endsWith('/flutter_service_worker.js') ||
+                     url.pathname.endsWith('/version.json');
+
+  if (isCoreBundle) {{
+    event.respondWith(
+      fetch(event.request).then(function(networkResponse) {{
+        if (networkResponse && networkResponse.status === 200) {{
+          var responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(function(cache) {{
+            cache.put(event.request, responseToCache);
+          }});
+        }}
+        return networkResponse;
+      }}).catch(function() {{
+        return caches.match(event.request, {{ ignoreSearch: true }});
+      }})
+    );
+    return;
+  }}
+
   event.respondWith(
     caches.match(event.request, {{ ignoreSearch: true }})
       .then(function(response) {{
-        // Cache hit - return response (CACHE-FIRST)
         if (response) {{
           return response;
         }}
-        
-        // Not in cache, try network
         return fetch(event.request).then(function(networkResponse) {{
           if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {{
             return networkResponse;
           }}
           return networkResponse;
         }}).catch(function(error) {{
-          // NO PINTAR HTML DE ERROR AQUÍ.
-          // Lanzar la excepción para que Dart / Supabase lo ataje.
           throw error;
         }});
       }})
