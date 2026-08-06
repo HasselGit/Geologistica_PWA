@@ -102,14 +102,8 @@ class _ChoferHomeWidgetState extends State<ChoferHomeWidget> {
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF08201A)),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/home');
-            }
-          },
+          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF08201A)),
+          onPressed: _fetchData,
         ),
       ],
     );
