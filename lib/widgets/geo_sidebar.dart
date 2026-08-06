@@ -82,7 +82,7 @@ class _GeoSidebarState extends State<GeoSidebar> {
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
-  Widget _sidebarItem(IconData icon, String title, VoidCallback onTap, {bool active = false, Color? color}) {
+  Widget _sidebarItem(IconData icon, String title, VoidCallback onTap, {bool active = false, Color? color, bool showLabel = true}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
@@ -92,7 +92,7 @@ class _GeoSidebarState extends State<GeoSidebar> {
       child: ListTile(
         visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
         leading: Icon(icon, color: active ? DesignTokens.secondary : (color ?? Colors.white70), size: 20),
-        title: _isSidebarHovered
+        title: showLabel
             ? Text(
                 title,
                 style: TextStyle(
@@ -111,7 +111,10 @@ class _GeoSidebarState extends State<GeoSidebar> {
 
   @override
   Widget build(BuildContext context) {
-    final double sidebarWidth = _isSidebarHovered ? 260 : 80;
+    final bool isMobile = MediaQuery.of(context).size.width < 900;
+    final bool showExpanded = isMobile || _isSidebarHovered;
+    final double sidebarWidth = isMobile ? double.infinity : (showExpanded ? 260 : 80);
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isSidebarHovered = true),
       onExit: (_) => setState(() => _isSidebarHovered = false),
@@ -119,144 +122,179 @@ class _GeoSidebarState extends State<GeoSidebar> {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         width: sidebarWidth,
-        margin: const EdgeInsets.only(left: 16, top: 16, bottom: 16, right: 0),
+        margin: EdgeInsets.only(left: isMobile ? 0 : 16, top: isMobile ? 0 : 16, bottom: isMobile ? 0 : 16, right: 0),
         decoration: BoxDecoration(
           color: DesignTokens.primary,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(isMobile ? 0 : 16),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 40, 20, 30),
-              child: Row(
-                mainAxisAlignment: _isSidebarHovered ? MainAxisAlignment.start : MainAxisAlignment.center,
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/images/logo_Geologistica_Verde.png',
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  if (_isSidebarHovered) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'GeoLogística',
-                            style: TextStyle(
-                              fontFamily: 'Manrope',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Container(
-                padding: EdgeInsets.all(_isSidebarHovered ? 12 : 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
                 child: Row(
-                  mainAxisAlignment: _isSidebarHovered ? MainAxisAlignment.start : MainAxisAlignment.center,
+                  mainAxisAlignment: showExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: DesignTokens.secondary,
-                      ),
-                      child: Text(
-                        _initials,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                    ClipOval(
+                      child: Image.asset(
+                        'assets/images/logo_Geologistica_Verde.png',
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    if (_isSidebarHovered) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.displayName,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              widget.userRole,
-                              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                    if (showExpanded) ...[
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'GeoLogística',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  if ((_isAdmin || _isManagement) && !_isAdministrativo)
-                    _sidebarItem(Icons.dashboard_rounded, 'Dashboard', () => context.push('/gerenteHome')),
-                  if (_isAdmin || _isManagement) ...[
-                    _sidebarItem(Icons.alt_route_rounded, 'Gestión de Viajes', () => context.push('/viajes')),
-                    _sidebarItem(Icons.assignment_rounded, 'Gestión de Solicitudes', () => context.push('/necesidades')),
-                  ],
-                  _sidebarItem(Icons.local_shipping_rounded, 'Vehículos', () => context.push('/vehiculos')),
-                  if (!_isDeposito && !_isChofer)
-                    _sidebarItem(Icons.inventory_2_rounded, 'Productos', () => context.push('/productos')),
-                  if (!_isChofer) ...[
-                    if (!_isCompras)
-                      _sidebarItem(Icons.payments_rounded, 'Gestión de Gastos', () => context.push('/gastos')),
-                    _sidebarItem(Icons.scale_rounded, 'Control de Pesajes', () => context.push('/pesajes')),
-                  ],
-                  if (_isDeposito || _isManagement || _isChofer)
-                    _sidebarItem(Icons.warehouse_rounded, (_isDeposito || _isManagement) ? 'Cargas Depósito' : 'Depósito Huinca', () => context.push('/depositoHome')),
-                  if ((_isAdmin || _isManagement) && !_isDeposito)
-                    _sidebarItem(Icons.inventory_2_rounded, 'Gestión de Cargas', () => context.push('/cargas')),
-                  const Divider(color: Colors.white10, height: 20),
-                  if (!_isDeposito)
-                    _sidebarItem(Icons.group_rounded, 'Apicultores', () => context.push('/apicultores')),
-                  _sidebarItem(Icons.receipt_long_rounded, 'Remitos Digitales', () => context.push('/remitosLista')),
-                ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Container(
+                  padding: EdgeInsets.all(showExpanded ? 12 : 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: showExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: DesignTokens.secondary,
+                        ),
+                        child: Text(
+                          _initials,
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+                        ),
+                      ),
+                      if (showExpanded) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.displayName.isEmpty ? 'Usuario' : widget.displayName,
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                widget.userRole.isEmpty ? 'Operador' : widget.userRole,
+                                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const Divider(color: Colors.white10, height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-              child: Column(
-                children: [
-                  _sidebarItem(Icons.logout_rounded, 'Cerrar Sesión', () async {
-                    await Supabase.instance.client.auth.signOut();
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.remove('keep_session'); 
-                    if (context.mounted) context.go('/');
-                  }),
-                  _sidebarItem(Icons.power_settings_new_rounded, 'Salir', () {
-                    SystemNavigator.pop();
-                  }, color: Colors.redAccent.shade100),
-                ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    _sidebarItem(Icons.home_rounded, 'Inicio', () {
+                      if (isMobile && Scaffold.of(context).isDrawerOpen) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/home');
+                    }, showLabel: showExpanded),
+                    if ((_isAdmin || _isManagement) && !_isAdministrativo)
+                      _sidebarItem(Icons.dashboard_rounded, 'Dashboard', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/gerenteHome');
+                      }, showLabel: showExpanded),
+                    if (_isAdmin || _isManagement) ...[
+                      _sidebarItem(Icons.alt_route_rounded, 'Gestión de Viajes', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/viajes');
+                      }, showLabel: showExpanded),
+                      _sidebarItem(Icons.assignment_rounded, 'Gestión de Solicitudes', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/necesidades');
+                      }, showLabel: showExpanded),
+                    ],
+                    _sidebarItem(Icons.local_shipping_rounded, 'Vehículos', () {
+                      if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                      context.push('/vehiculos');
+                    }, showLabel: showExpanded),
+                    if (!_isDeposito && !_isChofer)
+                      _sidebarItem(Icons.inventory_2_rounded, 'Productos', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/productos');
+                      }, showLabel: showExpanded),
+                    if (!_isChofer) ...[
+                      if (!_isCompras)
+                        _sidebarItem(Icons.payments_rounded, 'Gestión de Gastos', () {
+                          if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                          context.push('/gastos');
+                        }, showLabel: showExpanded),
+                      _sidebarItem(Icons.scale_rounded, 'Control de Pesajes', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/pesajes');
+                      }, showLabel: showExpanded),
+                    ],
+                    if (_isDeposito || _isManagement || _isChofer)
+                      _sidebarItem(Icons.warehouse_rounded, (_isDeposito || _isManagement) ? 'Cargas Depósito' : 'Depósito Huinca', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/depositoHome');
+                      }, showLabel: showExpanded),
+                    if ((_isAdmin || _isManagement) && !_isDeposito)
+                      _sidebarItem(Icons.inventory_2_rounded, 'Gestión de Cargas', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/cargas');
+                      }, showLabel: showExpanded),
+                    const Divider(color: Colors.white10, height: 20),
+                    if (!_isDeposito)
+                      _sidebarItem(Icons.group_rounded, 'Apicultores', () {
+                        if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                        context.push('/apicultores');
+                      }, showLabel: showExpanded),
+                    _sidebarItem(Icons.receipt_long_rounded, 'Remitos Digitales', () {
+                      if (isMobile && Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                      context.push('/remitosLista');
+                    }, showLabel: showExpanded),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const Divider(color: Colors.white10, height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+                child: Column(
+                  children: [
+                    _sidebarItem(Icons.logout_rounded, 'Cerrar Sesión', () async {
+                      await Supabase.instance.client.auth.signOut();
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('keep_session'); 
+                      if (context.mounted) context.go('/');
+                    }, showLabel: showExpanded),
+                    _sidebarItem(Icons.power_settings_new_rounded, 'Salir', () {
+                      SystemNavigator.pop();
+                    }, color: Colors.redAccent.shade100, showLabel: showExpanded),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

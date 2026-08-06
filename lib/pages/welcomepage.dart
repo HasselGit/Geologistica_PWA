@@ -50,27 +50,34 @@ class _WelcomePageWidgetState extends State<WelcomePageWidget> with TickerProvid
           _breathingController.forward();
         }
       });
-    _breathingController.forward();
 
+    // Immediate session check to eliminate redundant splash wait
+    _checkImmediateSession();
+  }
+
+  Future<void> _checkImmediateSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keep = prefs.getBool('keep_session') ?? false;
+    final userId = prefs.getString('user_id');
+
+    if (keep && userId != null && userId.isNotEmpty) {
+      if (mounted) {
+        context.go('/home');
+        return;
+      }
+    }
+
+    _breathingController.forward();
     _animateProgress();
 
     supabaseReady.future.then((_) async {
       if (mounted) {
         setState(() => _supabaseReady = true);
-        final prefs = await SharedPreferences.getInstance();
-        final keep = prefs.getBool('keep_session') ?? false;
-        final userId = prefs.getString('user_id');
-        final role = prefs.getString('user_puesto') ?? '';
-        
-        if (keep && userId != null && userId.isNotEmpty) {
-          print('WelcomePage: Sesión activa detectada. Rol: $role. Redirigiendo...');
-          if (mounted) {
-            if (role.toLowerCase().contains('chofer')) {
-              context.go('/choferHome');
-            } else {
-              context.go('/home');
-            }
-          }
+        final freshPrefs = await SharedPreferences.getInstance();
+        final freshKeep = freshPrefs.getBool('keep_session') ?? false;
+        final freshUserId = freshPrefs.getString('user_id');
+        if (freshKeep && freshUserId != null && freshUserId.isNotEmpty) {
+          if (mounted) context.go('/home');
         }
       }
     });
