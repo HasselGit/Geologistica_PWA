@@ -281,19 +281,29 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
+                const Expanded(
                   child: Text(
                     'Control de Viajes',
+                    style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary, letterSpacing: -0.5),
                   ),
                 ),
-                if (isDesktop && _canCreate) ...[
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/planificarViaje').then((_) => _fetchViajes()),
-                    style: DesignTokens.primaryButtonStyle,
-                    icon: const Icon(Icons.add_rounded, size: 20),
-                    label: const Text('NUEVO VIAJE'),
+                if (isDesktop) ...[
+                  IconButton(
+                    onPressed: () => setState(() => _isCardView = !_isCardView),
+                    icon: Icon(_isCardView ? Icons.table_chart_rounded : Icons.dashboard_rounded, color: DesignTokens.primary, size: 22),
+                    tooltip: 'Cambiar vista',
                   ),
+                  const SizedBox(width: 16),
+                  _buildSearchBar(),
+                  if (_canCreate) ...[
+                    const SizedBox(width: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => context.push('/planificarViaje').then((_) => _fetchViajes()),
+                      style: DesignTokens.primaryButtonStyle,
+                      icon: const Icon(Icons.add_rounded, size: 20),
+                      label: const Text('NUEVO VIAJE'),
+                    ),
+                  ],
                 ],
               ],
             ),
