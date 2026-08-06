@@ -1213,9 +1213,25 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                         }),
                       );
                     },
-                  ) : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [...leftModules, if (rightModules.isNotEmpty) const SizedBox(height: 16), ...rightModules],
+                  ) : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: leftModules,
+                        ),
+                      ),
+                      if (rightModules.isNotEmpty) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: rightModules,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -1252,16 +1268,6 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 900;
         final bool isGerenteAdminDesktop = isDesktop && (_isManagement || _isAdmin);
-        
-        if (!isDesktop) {
-          if (_isChofer) {
-            return const ChoferHomeWidget();
-          } else if (_isDeposito) {
-            return const DepositohomeWidget();
-          } else {
-            return const GerenteHomeWidget();
-          }
-        }
 
         return Scaffold(
           backgroundColor: const Color(0xFFFBF9F8),
