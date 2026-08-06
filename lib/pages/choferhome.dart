@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../backend/supabase_service.dart';
 import '../backend/app_states.dart';
+import '../widgets/geo_sidebar.dart';
 import 'package:go_router/go_router.dart';
 
 class ChoferHomeWidget extends StatefulWidget {
@@ -81,7 +82,7 @@ class _ChoferHomeWidgetState extends State<ChoferHomeWidget> {
     return Scaffold(
       backgroundColor: const Color(0xFFFBF9F8),
       appBar: !isDesktop ? _buildMobileAppBar() : null,
-      drawer: !isDesktop ? Drawer(child: GeoSidebar(userRole: 'Chofer', userEmail: _userEmail, displayName: nombre)) : null,
+      drawer: !isDesktop ? Drawer(child: GeoSidebar(userRole: 'Chofer', userEmail: '', displayName: nombre)) : null,
       body: RepaintBoundary(
         child: isDesktop 
             ? _buildDesktopLayout(iniciales, nombre, theme)
