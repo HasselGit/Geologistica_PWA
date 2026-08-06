@@ -264,6 +264,9 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
         return ValueListenableBuilder<int>(
           valueListenable: _errorsLengthNotifier,
           builder: (context, errorCount, _) {
+            if (pendingCount == 0 && errorCount == 0) {
+              return const SizedBox.shrink();
+            }
             final bool isOnline = _isOnlineForSyncMonitor;
             
             return Container(
@@ -1153,7 +1156,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
               children: [
                 Expanded(child: _bentoCard(title: 'PENDIENTES', value: _loadingStats ? '—' : '${_stats['planificados'] ?? 0}', trend: 'Viajes planificados', accentColor: Colors.blueAccent, iconWidget: const Icon(Icons.pending_actions_rounded, color: Colors.blueAccent, size: 20), onTap: () => context.push('/viajes?estado=Pendiente'))),
                 const SizedBox(width: 16),
-                Expanded(child: _bentoCard(title: 'EN CURSO', value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}', trend: 'Viajes activos', accentColor: DesignTokens.secondary, iconWidget: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 20), sparklineData: const [5.0, 8.0, 4.0, 7.0, 10.0, 8.0, 12.0], onTap: () => context.push('/viajes?estado=En%20Curso'))),
+                Expanded(child: _bentoCard(title: 'EN CURSO', value: _loadingStats ? '—' : '${_stats['en_curso'] ?? 0}', trend: 'Viajes activos', accentColor: DesignTokens.secondary, iconWidget: const Icon(Icons.local_shipping_rounded, color: DesignTokens.secondary, size: 20), onTap: () => context.push('/viajes?estado=En%20Curso'))),
               ]
             ),
             const SizedBox(height: 16),
