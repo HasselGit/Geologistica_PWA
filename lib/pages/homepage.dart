@@ -986,15 +986,383 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
 
   Widget _buildMainContent(BuildContext context, bool isDesktop) {
     if (!isDesktop) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: _buildMosaicoBento(context, isDesktop),
-      );
+      return _buildStitchMobileDashboard(context);
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
       child: _buildMosaicoBento(context, isDesktop),
+    );
+  }
+
+  Widget _buildStitchMobileDashboard(BuildContext context) {
+    final int pend = _stats['planificados'] ?? 0;
+    final int curs = _stats['en_curso'] ?? 0;
+    final int term = _stats['terminados'] ?? 0;
+    final int carg = (_cargasStats['planificadas'] ?? 0) + (_cargasStats['en_curso'] ?? 0) + (_cargasStats['terminadas'] ?? 0);
+
+    return RefreshIndicator(
+      color: DesignTokens.secondary,
+      onRefresh: _fetchData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header / Saludo
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _displayName.isNotEmpty ? 'Hola, $_displayName' : 'Bienvenido de nuevo',
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: DesignTokens.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Control Logístico Apícola',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          color: DesignTokens.primary.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: _fetchData,
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.black.withOpacity(0.06)),
+                    ),
+                    child: const Icon(Icons.refresh_rounded, size: 18, color: DesignTokens.primary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Tarjeta de Ruta Activa / Destacada (Stitch home_dashboard/code.html)
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: DesignTokens.primary.withOpacity(0.08), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: DesignTokens.primary.withOpacity(0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'RUTA ACTIVA #RT-8092',
+                        style: TextStyle(
+                          fontFamily: 'Work Sans',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                          letterSpacing: 1,
+                          color: DesignTokens.primary.withOpacity(0.6),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: DesignTokens.secondary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'EN TRÁNSITO',
+                          style: TextStyle(
+                            fontFamily: 'Work Sans',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                            color: DesignTokens.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Timeline Origen -> Destino
+                  Row(
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              color: DesignTokens.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.location_on_rounded, size: 16, color: Colors.white),
+                          ),
+                          Container(
+                            width: 2,
+                            height: 24,
+                            color: DesignTokens.secondary.withOpacity(0.5),
+                          ),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: DesignTokens.secondary.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: DesignTokens.secondary, width: 1.5),
+                            ),
+                            child: const Icon(Icons.warehouse_rounded, size: 16, color: DesignTokens.primary),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('ORIGEN', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 9, color: Colors.black45, letterSpacing: 0.5)),
+                            const Text('Planta Central A-12', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 13, color: DesignTokens.primary)),
+                            const SizedBox(height: 16),
+                            const Text('DESTINO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 9, color: Colors.black45, letterSpacing: 0.5)),
+                            const Text("Apiario 'El Valle' (CampoSur)", style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 13, color: DesignTokens.primary)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Cargas asignadas progress indicators
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: DesignTokens.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _stitchProgressRow('Viajes Planificados', '$pend/10', (pend / 10).clamp(0.0, 1.0)),
+                        const SizedBox(height: 8),
+                        _stitchProgressRow('Viajes En Curso', '$curs/5', (curs / 5).clamp(0.0, 1.0)),
+                        const SizedBox(height: 8),
+                        _stitchProgressRow('Cargas Depósito', '$carg/20', (carg / 20).clamp(0.0, 1.0)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => context.push('/viajes'),
+                      icon: const Icon(Icons.local_shipping_rounded, size: 18, color: Colors.white),
+                      label: const Text(
+                        'INICIAR / VER CONTROL DE RUTA',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: Colors.white,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DesignTokens.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Tarjetas Rápidas de Métricas (3 columnas)
+            Text(
+              'RESUMEN OPERATIVO',
+              style: TextStyle(
+                fontFamily: 'Work Sans',
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: DesignTokens.primary.withOpacity(0.5),
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _stitchMetricBox('PENDIENTES', '$pend', Icons.pending_actions_rounded, Colors.blueAccent, () => context.push('/viajes?estado=Pendiente')),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _stitchMetricBox('EN CURSO', '$curs', Icons.local_shipping_rounded, DesignTokens.secondary, () => context.push('/viajes?estado=En%20Curso')),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _stitchMetricBox('TERMINADOS', '$term', Icons.check_circle_outline_rounded, Colors.green, () => context.push('/viajes?estado=Terminado')),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Módulos de Operación Grid
+            Text(
+              'MÓDULOS DE OPERACIÓN',
+              style: TextStyle(
+                fontFamily: 'Work Sans',
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: DesignTokens.primary.withOpacity(0.5),
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildStitchOperationsGrid(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _stitchProgressRow(String label, String valueStr, double progress) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: DesignTokens.primary)),
+            Text(valueStr, style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: 11, color: DesignTokens.primary)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 5,
+            backgroundColor: DesignTokens.primary.withOpacity(0.08),
+            valueColor: AlwaysStoppedAnimation<Color>(DesignTokens.secondary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stitchMetricBox(String title, String count, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: DesignTokens.primary.withOpacity(0.06)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 6),
+            Text(
+              count,
+              style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w900, fontSize: 22, color: DesignTokens.primary),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: const TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 8, color: Colors.black54, letterSpacing: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStitchOperationsGrid(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _moduleCard(
+                icon: Icons.alt_route_rounded,
+                title: 'Gestión de Viajes',
+                subtitle: 'Rutas y envíos',
+                bgColor: Colors.white,
+                accentColor: DesignTokens.secondary,
+                onTap: () => context.push('/viajes'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _moduleCard(
+                icon: Icons.scale_rounded,
+                title: 'Control Pesajes',
+                subtitle: 'Báscula',
+                bgColor: Colors.white,
+                accentColor: DesignTokens.secondary,
+                onTap: () => context.push('/pesajes'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _moduleCard(
+                icon: Icons.list_alt_rounded,
+                title: 'Solicitudes',
+                subtitle: 'Recolección',
+                bgColor: Colors.white,
+                accentColor: DesignTokens.secondary,
+                onTap: () => context.push('/necesidades'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _moduleCard(
+                icon: Icons.group_rounded,
+                title: 'Apicultores',
+                subtitle: 'Productores',
+                bgColor: Colors.white,
+                accentColor: DesignTokens.secondary,
+                onTap: () => context.push('/apicultores'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1338,7 +1706,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Container(
-                        padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
+                        padding: isDesktop ? const EdgeInsets.fromLTRB(120, 0, 40, 0) : EdgeInsets.zero,
                         child: _buildMainContent(context, isDesktop),
                       ),
                     ),
