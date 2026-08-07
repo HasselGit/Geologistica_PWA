@@ -375,6 +375,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                   padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 24)),
                 ),
                 icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: const Text('NUEVO VEHÍCULO', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
               ),
             ),
           ],
