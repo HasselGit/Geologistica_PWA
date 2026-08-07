@@ -209,7 +209,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
             child: GeoSidebar(
               userRole: _userRole ?? '',
               userEmail: _userEmail ?? '',
-              displayName: _displayName ?? _userEmail ?? '',
+              displayName: _userEmail ?? '',
             ),
           ),
           body: Stack(
