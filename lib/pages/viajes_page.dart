@@ -204,22 +204,37 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
         }
 
         return Scaffold(
-          backgroundColor: DesignTokens.surfaceLow,
-          drawer: !isDesktop ? Drawer(child: GeoSidebar(userRole: _userRole ?? '', userEmail: _userEmail ?? '', displayName: _userEmail ?? '')) : null,
-          body: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(isDesktop),
-                Expanded(
-                  child: _loading
-                      ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                      : TabBarView(
-                          controller: _tabController,
-                          children: _tabs.map((estado) => _buildViajesList(estado)).toList(),
-                        ),
-                ),
-              ],
+          backgroundColor: const Color(0xFFFBF9F8),
+          drawer: Drawer(
+            child: GeoSidebar(
+              userRole: _userRole ?? '',
+              userEmail: _userEmail ?? '',
+              displayName: _displayName ?? _userEmail ?? '',
             ),
+          ),
+          body: Stack(
+            children: [
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: HoneycombPainter(),
+                  ),
+                ),
+              ),
+              Column(
+                children: [
+                  _buildHeader(isDesktop),
+                  Expanded(
+                    child: _loading
+                        ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                        : TabBarView(
+                            controller: _tabController,
+                            children: _tabs.map((estado) => _buildViajesList(estado)).toList(),
+                          ),
+                  ),
+                ],
+              ),
+            ],
           ),
           floatingActionButton: _canCreate && !isDesktop
               ? FloatingActionButton.extended(
