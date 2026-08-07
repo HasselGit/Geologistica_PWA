@@ -547,20 +547,38 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
         }
 
         return Scaffold(
-          backgroundColor: DesignTokens.surfaceLow,
-          body: Column(
+          backgroundColor: const Color(0xFFFBF9F8),
+          drawer: Drawer(
+            child: GeoSidebar(
+              userRole: _userRole ?? '',
+              userEmail: _userEmail ?? '',
+              displayName: _displayName ?? _userEmail ?? '',
+            ),
+          ),
+          body: Stack(
             children: [
-              _buildHeader(isDesktop),
-              Expanded(
-                child: _loading 
-                  ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildList('Recolección', isDesktop),
-                        _buildList('Distribución', isDesktop),
-                      ],
-                    ),
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: HoneycombPainter(),
+                  ),
+                ),
+              ),
+              Column(
+                children: [
+                  _buildHeader(isDesktop),
+                  Expanded(
+                    child: _loading 
+                      ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                      : TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildList('Recolección', isDesktop),
+                            _buildList('Distribución', isDesktop),
+                          ],
+                        ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -584,6 +602,15 @@ class _NecesidadesPageWidgetState extends State<NecesidadesPageWidget> with Sing
             padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 48 : 16, isDesktop ? 0 : 16, 16),
             child: Row(
               children: [
+                if (!isDesktop) ...[
+                  Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu_rounded, color: DesignTokens.primary),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 if (context.canPop()) ...[
                   InkWell(
                     onTap: () => context.pop(),
