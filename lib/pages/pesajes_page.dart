@@ -256,20 +256,76 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
 
   @override
   Widget _buildMobileLayout(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 8;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3F3),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header bar
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              color: const Color(0xFFFBF9F8),
-              child: Row(
-                children: [
-                  if (context.canPop()) ...[
-                    GestureDetector(
-                      onTap: () => context.pop(),
+      backgroundColor: const Color(0xFFFBF9F8),
+      drawer: Drawer(
+        child: GeoSidebar(
+          userRole: _userRole ?? '',
+          userEmail: _userEmail ?? '',
+          displayName: _userEmail ?? '',
+        ),
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: HoneycombPainter(),
+              ),
+            ),
+          ),
+          Column(
+            children: [
+              // Header bar
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, topPadding, 16, 8),
+                child: Row(
+                  children: [
+                    Builder(
+                      builder: (context) => InkWell(
+                        onTap: () => Scaffold.of(context).openDrawer(),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.black.withOpacity(0.05)),
+                          ),
+                          child: const Tooltip(
+                            message: 'Menú',
+                            child: Icon(Icons.menu_rounded, size: 20, color: DesignTokens.primary),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    if (context.canPop()) ...[
+                      InkWell(
+                        onTap: () => context.pop(),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.black.withOpacity(0.05)),
+                          ),
+                          child: const Tooltip(
+                            message: 'Atrás',
+                            child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    InkWell(
+                      onTap: () => context.go('/home'),
+                      borderRadius: BorderRadius.circular(10),
                       child: Container(
                         width: 36,
                         height: 36,
@@ -278,106 +334,123 @@ class _PesajesPageWidgetState extends State<PesajesPageWidget> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.black.withOpacity(0.05)),
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                        child: const Tooltip(
+                          message: 'Volver al Inicio',
+                          child: Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Registro de Pesajes',
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            color: DesignTokens.primary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh_rounded, color: DesignTokens.primary),
+                      onPressed: _fetchData,
+                      tooltip: 'Actualizar',
+                    ),
                   ],
-                  GestureDetector(
-                    onTap: () => context.go('/home'),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.black.withOpacity(0.05)),
-                      ),
-                      child: const Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Registro de Pesajes',
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                      color: Color(0xFF08201A),
-                    ),
-                  ),
-                  const Spacer(),
-                  // Search field
-                  SizedBox(
-                    width: 220,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Viaje, Apicultor o Fecha...',
-                        prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                        filled: true,
-                        fillColor: const Color(0xFFF5F3F3),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFC2C8C4)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFC2C8C4)),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onChanged: (val) {
-                        setState(() {
-                          _searchQuery = val;
-                          _applyFilters();
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: Color(0xFF08201A)),
-                    onPressed: _fetchData,
-                  ),
-                ],
+                ),
               ),
-            ),
-            // Content
-            Expanded(
-              child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Color(0xFFFDBE49)),
-                    )
-                  : _filteredGrupos.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.scale_rounded, size: 56, color: Color(0x33424846)),
-                              SizedBox(height: 16),
-                              Text(
-                                'Sin pesajes registrados',
-                                style: TextStyle(
-                                  fontFamily: 'Manrope',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                  color: Color(0xFF424846),
+              // Search bar full width
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                child: TextField(
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar viaje, apicultor o fecha...',
+                    hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black38),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Colors.black38),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.black.withOpacity(0.05)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.black.withOpacity(0.05)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: DesignTokens.primary, width: 1.5),
+                    ),
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val;
+                      _applyFilters();
+                    });
+                  },
+                ),
+              ),
+              // Content
+              Expanded(
+                child: _loading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: DesignTokens.secondary),
+                      )
+                    : _filteredGrupos.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.scale_rounded, size: 56, color: Color(0x33424846)),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Sin pesajes registrados',
+                                  style: TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                    color: Color(0xFF424846),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _fetchData,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                              itemCount: _filteredGrupos.length,
+                              itemBuilder: (context, index) =>
+                                  _buildCard(_filteredGrupos[index]),
+                            ),
                           ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _fetchData,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(20),
-                            itemCount: _filteredGrupos.length,
-                            itemBuilder: (context, index) =>
-                                _buildGrupoCard(_filteredGrupos[index]),
-                          ),
-                        ),
-            ),
-          ],
+              ),
+            ],
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/agregarPesaje').then((_) => _fetchData()),
+        backgroundColor: DesignTokens.primary,
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'NUEVO PESAJE',
+          style: TextStyle(
+            fontFamily: 'Work Sans',
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            fontSize: 12,
+            letterSpacing: 1,
+          ),
         ),
       ),
     );

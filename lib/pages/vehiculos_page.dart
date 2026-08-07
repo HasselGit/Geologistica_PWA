@@ -149,123 +149,20 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DesignTokens.surface,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 900;
-          
-          Widget content = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Premium
-              Padding(
-                padding: const EdgeInsets.only(top: 48, bottom: 32),
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () { if (context.canPop()) context.pop(); },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)]),
-                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () => context.go('/home'),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8)]),
-                        child: const Icon(Icons.home_rounded, size: 18, color: DesignTokens.primary),
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    const Text('Gestión de Vehículos', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary)),
-                    const Spacer(),
-                    if (isDesktop) ...[
-                      SizedBox(
-                        width: 300,
-                        height: 48,
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: _onSearchChanged,
-                          style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Buscar por código, patente...',
-                            hintStyle: const TextStyle(color: Colors.black45),
-                            prefixIcon: const Icon(Icons.search, color: DesignTokens.primary, size: 18),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      SizedBox(
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showVehiculoForm(),
-                          style: DesignTokens.primaryButtonStyle.copyWith(
-                            shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 24)),
-                          ),
-                          icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                          label: const Text('NUEVO VEHÍCULO', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (!isDesktop) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    style: const TextStyle(fontFamily: 'Inter'),
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por código, patente...',
-                      hintStyle: const TextStyle(color: Colors.black45),
-                      prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
-                    ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        if (isDesktop) {
+          return Scaffold(
+            backgroundColor: DesignTokens.surface,
+            body: Stack(
+              children: [
+                const Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(painter: HoneycombPainter()),
                   ),
                 ),
-              ],
-              Expanded(
-                child: _loading && _filtered.isEmpty
-                  ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
-                  : (isDesktop ? _buildWebTable() : _buildMobileList()),
-              ),
-            ],
-          );
-
-          if (!isDesktop) {
-            content = Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-              child: content,
-            );
-          }
-
-          return Stack(
-            children: [
-              const Positioned.fill(
-                child: RepaintBoundary(
-                  child: CustomPaint(painter: HoneycombPainter()),
-                ),
-              ),
-              if (isDesktop)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -280,29 +177,208 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.fromLTRB(120, 0, 40, 0),
-                          child: content,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildHeader(isDesktop),
+                              Expanded(
+                                child: _loading && _filtered.isEmpty
+                                  ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                                  : _buildWebTable(),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ],
-                )
-              else
-                content,
-            ],
-          );
-        },
-      ),
-      floatingActionButton: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth >= 900) return const SizedBox.shrink();
-          return FloatingActionButton(
-            onPressed: () => _showVehiculoForm(),
-            backgroundColor: DesignTokens.secondary,
-            child: const Icon(Icons.add, color: DesignTokens.primary),
+                ),
+              ],
+            ),
           );
         }
-      ),
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFFBF9F8),
+          drawer: Drawer(
+            child: GeoSidebar(
+              userRole: _userRole ?? '',
+              userEmail: _userEmail ?? '',
+              displayName: _displayName ?? '',
+            ),
+          ),
+          body: Stack(
+            children: [
+              const Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(painter: HoneycombPainter()),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(isDesktop),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por código, patente...',
+                        hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black38),
+                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.black38, size: 18),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.black.withOpacity(0.05))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.black.withOpacity(0.05))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: DesignTokens.primary, width: 1.5)),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: _loading && _filtered.isEmpty
+                      ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                      : _buildMobileList(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _showVehiculoForm(),
+            backgroundColor: DesignTokens.primary,
+            icon: const Icon(Icons.add_rounded, color: Colors.white),
+            label: const Text(
+              'NUEVO VEHÍCULO',
+              style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, color: Colors.white, fontSize: 12, letterSpacing: 1),
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  Widget _buildHeader(bool isDesktop) {
+    final double topPadding = isDesktop ? 48 : (MediaQuery.of(context).padding.top + 8);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, topPadding, isDesktop ? 0 : 16, isDesktop ? 32 : 12),
+      child: Row(
+        children: [
+          if (!isDesktop) ...[
+            Builder(
+              builder: (context) => InkWell(
+                onTap: () => Scaffold.of(context).openDrawer(),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  ),
+                  child: const Tooltip(
+                    message: 'Menú',
+                    child: Icon(Icons.menu_rounded, size: 20, color: DesignTokens.primary),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+          if (context.canPop()) ...[
+            InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                ),
+                child: const Tooltip(
+                  message: 'Atrás',
+                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+          InkWell(
+            onTap: () => context.go('/home'),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.black.withOpacity(0.05)),
+              ),
+              child: const Tooltip(
+                message: 'Volver al Inicio',
+                child: Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Gestión de Vehículos',
+                maxLines: 1,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w800,
+                  fontSize: isDesktop ? 24 : 18,
+                  color: DesignTokens.primary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+          ),
+          if (isDesktop) ...[
+            SizedBox(
+              width: 300,
+              height: 48,
+              child: TextField(
+                controller: _searchController,
+                onChanged: _onSearchChanged,
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por código, patente...',
+                  hintStyle: const TextStyle(color: Colors.black45),
+                  prefixIcon: const Icon(Icons.search, color: DesignTokens.primary, size: 18),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: DesignTokens.surfaceLow, width: 1.5)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: DesignTokens.primary, width: 2)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () => _showVehiculoForm(),
+                style: DesignTokens.primaryButtonStyle.copyWith(
+                  shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 24)),
+                ),
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: const Text('NUEVO VEHÍCULO', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
+              ),
+            ),
+          ],
   }
 
   Widget _buildWebTable() {
