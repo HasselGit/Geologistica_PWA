@@ -568,73 +568,95 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
     final capTamb = v['capacidad_tambores']?.toString() ?? '0';
 
     return Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: DesignTokens.surfaceLow, width: 1.5),
-          boxShadow: [
-            BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 100,
-              height: 120,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F3F3),
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
-              ),
-              child: const Center(
-                child: Icon(Icons.local_shipping_rounded, size: 40, color: DesignTokens.primary),
-              ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.06), width: 1.5),
+        boxShadow: [
+          BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 76,
+            height: 120,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF5F3F3),
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Text(codigo, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 18, color: DesignTokens.primary)),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: DesignTokens.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
-                                child: Text(patente, style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.w700, color: DesignTokens.primary)),
+            child: const Center(
+              child: Icon(Icons.local_shipping_rounded, size: 36, color: DesignTokens.primary),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Text(
+                              codigo,
+                              style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 16, color: DesignTokens.primary),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(color: DesignTokens.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
+                              child: Text(
+                                patente,
+                                style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.w700, color: DesignTokens.primary),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.edit_rounded, size: 18, color: DesignTokens.primary),
+                            onPressed: () => _showVehiculoForm(vehiculo: v),
+                            tooltip: 'Editar',
                           ),
-                          Row(
-                            children: [
-                              IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _showVehiculoForm(vehiculo: v)),
-                              IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => _deleteVehiculo(v['id'], codigo)),
-                            ],
+                          IconButton(
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
+                            onPressed: () => _deleteVehiculo(v['id'], codigo),
+                            tooltip: 'Eliminar',
                           ),
                         ],
                       ),
-                    const SizedBox(height: 6),
-                    Text(modelo, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: DesignTokens.onSurfaceVariant)),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _specItem(Icons.scale_rounded, '$capKg kg'),
-                        const SizedBox(width: 16),
-                        _specItem(Icons.inventory_2_rounded, '$capTamb tamb'),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(modelo, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: DesignTokens.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _specItem(Icons.scale_rounded, '$capKg kg'),
+                      const SizedBox(width: 12),
+                      _specItem(Icons.inventory_2_rounded, '$capTamb tamb'),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
   void _showVehiculoForm({Map<String, dynamic>? vehiculo}) {

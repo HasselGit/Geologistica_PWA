@@ -140,150 +140,242 @@ class _ProductosPageWidgetState extends State<ProductosPageWidget> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width >= 900;
     
-    final mainLayout = Container(
-      width: double.infinity,
-      height: double.infinity,
-      padding: isDesktop
-          ? const EdgeInsets.fromLTRB(120, 48, 40, 32)
-          : const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              InkWell(
-                onTap: () => context.canPop() ? context.pop() : null,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: DesignTokens.primary.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded,
-                      size: 16, color: DesignTokens.primary),
-                ),
+    if (isDesktop) {
+      return Scaffold(
+        backgroundColor: DesignTokens.surface,
+        body: Stack(
+          children: [
+            const Positioned.fill(
+              child: RepaintBoundary(
+                child: CustomPaint(painter: HoneycombPainter()),
               ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () => context.go('/home'),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: DesignTokens.primary.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: const Icon(Icons.home_rounded,
-                      size: 18, color: DesignTokens.primary),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                'Inventario de Productos',
-                style: DesignTokens.headlineStyle(color: DesignTokens.primary)
-                    .copyWith(fontSize: 24),
-              ),
-              const Spacer(),
-              if (isDesktop &&
-                  (_userRole == 'CEO' ||
-                      _userRole == 'Gerente' ||
-                      _userRole == 'Compras'))
-                ElevatedButton.icon(
-                  onPressed: _addProduct,
-                  style: DesignTokens.primaryButtonStyle,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('NUEVO PRODUCTO'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _searchController,
-            onChanged: _filterProducts,
-            style: DesignTokens.bodyStyle(color: DesignTokens.onSurface),
-            decoration: InputDecoration(
-              hintText: 'Buscar producto o código...',
-              hintStyle:
-                  DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
-              prefixIcon:
-                  const Icon(Icons.search, color: DesignTokens.primary),
-              filled: true,
-              fillColor: Colors.white,
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                      color: DesignTokens.outline.withValues(alpha: 0.3))),
-              focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: DesignTokens.primary, width: 2)),
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: _loading && _filteredProductos.isEmpty
-                ? const Center(
-                    child: CircularProgressIndicator(
-                        color: DesignTokens.secondary))
-                : (isDesktop
-                    ? RepaintBoundary(child: _buildWebTable())
-                    : RepaintBoundary(child: _buildMobileList())),
-          ),
-        ],
-      ),
-    );
-
-    final content = Stack(
-      children: [
-        Positioned.fill(
-          child: RepaintBoundary(
-            child: CustomPaint(painter: const HoneycombPainter()),
-          ),
-        ),
-        mainLayout,
-      ],
-    );
-
-    return Scaffold(
-      backgroundColor: DesignTokens.surface,
-      body: isDesktop
-          ? Row(
+            Row(
               children: [
                 GeoSidebar(
                   userRole: _userRole ?? '',
                   userEmail: _userEmail ?? '',
                   displayName: _displayName ?? _userEmail ?? '',
                 ),
-                Expanded(child: content),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(120, 48, 40, 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(isDesktop),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _searchController,
+                          onChanged: _filterProducts,
+                          style: DesignTokens.bodyStyle(color: DesignTokens.onSurface),
+                          decoration: InputDecoration(
+                            hintText: 'Buscar producto o código...',
+                            hintStyle: DesignTokens.bodyStyle(color: DesignTokens.onSurfaceVariant),
+                            prefixIcon: const Icon(Icons.search, color: DesignTokens.primary),
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: DesignTokens.outline.withValues(alpha: 0.3)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: DesignTokens.primary, width: 2),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: _loading && _filteredProductos.isEmpty
+                              ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                              : RepaintBoundary(child: _buildWebTable()),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFBF9F8),
+      drawer: Drawer(
+        child: GeoSidebar(
+          userRole: _userRole ?? '',
+          userEmail: _userEmail ?? '',
+          displayName: _displayName ?? _userEmail ?? '',
+        ),
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(painter: HoneycombPainter()),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(isDesktop),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterProducts,
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar producto o código...',
+                    hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: Colors.black38),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Colors.black38),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.black.withOpacity(0.05)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.black.withOpacity(0.05)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: DesignTokens.primary, width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _loading && _filteredProductos.isEmpty
+                    ? const Center(child: CircularProgressIndicator(color: DesignTokens.secondary))
+                    : RepaintBoundary(child: _buildMobileList()),
+              ),
+            ],
+          ),
+        ],
+      ),
+      floatingActionButton: (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras')
+          ? FloatingActionButton.extended(
+              onPressed: _addProduct,
+              backgroundColor: DesignTokens.primary,
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: const Text(
+                'NUEVO PRODUCTO',
+                style: TextStyle(
+                  fontFamily: 'Work Sans',
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  fontSize: 12,
+                  letterSpacing: 1,
+                ),
+              ),
             )
-          : content,
-      floatingActionButton: (!isDesktop && (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras')) 
-        ? FloatingActionButton.extended(
-            onPressed: _addProduct,
-            backgroundColor: DesignTokens.primary,
-            icon: const Icon(Icons.add, color: DesignTokens.accent),
-            label: Text('Nuevo Producto', style: DesignTokens.labelStyle(color: DesignTokens.accent)),
-          )
-        : null,
+          : null,
+    );
+  }
+
+  Widget _buildHeader(bool isDesktop) {
+    final double topPadding = isDesktop ? 48 : (MediaQuery.of(context).padding.top + 8);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, topPadding, isDesktop ? 0 : 16, isDesktop ? 20 : 12),
+      child: Row(
+        children: [
+          if (!isDesktop) ...[
+            Builder(
+              builder: (context) => InkWell(
+                onTap: () => Scaffold.of(context).openDrawer(),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  ),
+                  child: const Tooltip(
+                    message: 'Menú',
+                    child: Icon(Icons.menu_rounded, size: 20, color: DesignTokens.primary),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+          if (context.canPop()) ...[
+            InkWell(
+              onTap: () => context.pop(),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                ),
+                child: const Tooltip(
+                  message: 'Atrás',
+                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: DesignTokens.primary),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+          InkWell(
+            onTap: () => context.go('/home'),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.black.withOpacity(0.05)),
+              ),
+              child: const Tooltip(
+                message: 'Volver al Inicio',
+                child: Icon(Icons.home_rounded, size: 20, color: DesignTokens.primary),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Inventario de Productos',
+                maxLines: 1,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w800,
+                  fontSize: isDesktop ? 24 : 18,
+                  color: DesignTokens.primary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+          ),
+          if (isDesktop && (_userRole == 'CEO' || _userRole == 'Gerente' || _userRole == 'Compras')) ...[
+            ElevatedButton.icon(
+              onPressed: _addProduct,
+              style: DesignTokens.primaryButtonStyle,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('NUEVO PRODUCTO'),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
