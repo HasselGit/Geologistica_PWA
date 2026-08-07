@@ -26,7 +26,16 @@ class _LoggedWidgetState extends State<LoggedWidget> {
       if (mounted) context.go('/');
       return;
     }
-    if (mounted) context.go('/home');
+    final role = (prefs.getString('user_puesto') ?? '').toLowerCase().trim();
+    if (role.contains('chofer')) {
+      if (mounted) context.go('/choferHome');
+    } else if (role.contains('gerente') || role.contains('ceo') || role.contains('operaciones') || role.contains('director') || role.contains('admin') || role.contains('compras')) {
+      if (mounted) context.go('/gerenteHome');
+    } else if (role.contains('deposito')) {
+      if (mounted) context.go('/depositoHome');
+    } else {
+      if (mounted) context.go('/gerenteHome');
+    }
   }
 
   @override
