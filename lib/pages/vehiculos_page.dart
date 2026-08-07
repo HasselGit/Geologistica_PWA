@@ -379,7 +379,7 @@ class _VehiculosPageWidgetState extends State<VehiculosPageWidget> {
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
