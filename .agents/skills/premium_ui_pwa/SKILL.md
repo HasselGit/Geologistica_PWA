@@ -57,14 +57,18 @@ return Scaffold(
 
 ---
 
-### 3. Encabezado Móvil (Header) - Botones Dobles `<` y `🏠`
+### 3. Encabezado Móvil (Header) - Alineación y Título Responsivo
 
 En la parte superior de pantallas móviles:
-- **Botón Menú / Hamburguesa (`≡`):** Abre `Scaffold.of(context).openDrawer()`.
-- **Botón Atrás (`<`):** `InkWell` de 36x36px blanco redondeado (radius 10) que llama a `context.pop()`.
-- **Botón Home (`🏠`):** `InkWell` de 36x36px blanco redondeado (radius 10) que llama a `context.go('/home')`.
-- **Título de Pantalla:** `Text('NOMBRE DE SECCIÓN', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 20-24, color: DesignTokens.primary))`.
-- **Subtítulo Caps:** `Text('SUBTÍTULO OPERATIVO', style: TextStyle(fontFamily: 'Work Sans', fontWeight: FontWeight.w800, fontSize: 10, letterSpacing: 1, color: DesignTokens.primary.withOpacity(0.5)))`.
+- **Margen Superior Inset (Status Bar / Notch):** Usar `EdgeInsets.fromLTRB(16, isDesktop ? 40 : (MediaQuery.of(context).padding.top + 8), 16, 8)` para evitar que la barra de estado o el agujero de la cámara tapen el título o los botones.
+- **Botones de Navegación Alineados (36x36px):**
+  1. **Menú / Hamburguesa (`≡`):** `InkWell` en tarjeta blanca 36x36px con borde fino y `Icons.menu_rounded` para abrir el `Scaffold.of(context).openDrawer()`.
+  2. **Botón Atrás (`<`):** `InkWell` en tarjeta blanca 36x36px llamando a `context.pop()`.
+  3. **Botón Home (`🏠`):** `InkWell` en tarjeta blanca 36x36px llamando a `context.go('/home')`.
+  - *Separación:* `const SizedBox(width: 6)` entre cada botón.
+- **Título Responsivo (18px Single-Line):**
+  - **Tamaño:** `fontSize: isDesktop ? 24 : 18`, `Manrope w800`, `letterSpacing: -0.5`.
+  - **Ajuste:** Envolver en `FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft)` con `maxLines: 1` para garantizar que títulos largos (ej. `Gestión de Solicitudes`, `Control de Pesajes`) NUNCA se partan en 2 líneas ni se solapen con los botones.
 
 ---
 

@@ -235,14 +235,38 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
   }
 
   Widget _buildHeader(bool isDesktop) {
+    final double topPadding = isDesktop ? 40 : (MediaQuery.of(context).padding.top + 8);
+
     return Container(
       color: Colors.transparent,
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, isDesktop ? 40 : 10, isDesktop ? 0 : 16, 8),
+            padding: EdgeInsets.fromLTRB(isDesktop ? 0 : 16, topPadding, isDesktop ? 0 : 16, 8),
             child: Row(
               children: [
+                if (!isDesktop) ...[
+                  Builder(
+                    builder: (context) => InkWell(
+                      onTap: () => Scaffold.of(context).openDrawer(),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black.withOpacity(0.05)),
+                        ),
+                        child: const Tooltip(
+                          message: 'Menú',
+                          child: Icon(Icons.menu_rounded, size: 20, color: DesignTokens.primary),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 if (context.canPop()) ...[
                   InkWell(
                     onTap: () => context.pop(),
@@ -261,7 +285,7 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                 ],
                 InkWell(
                   onTap: () => context.go('/home'),
@@ -280,11 +304,22 @@ class _ViajesPageWidgetState extends State<ViajesPageWidget> with SingleTickerPr
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Control de Viajes',
-                    style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800, fontSize: 24, color: DesignTokens.primary, letterSpacing: -0.5),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Control de Viajes',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontWeight: FontWeight.w800,
+                        fontSize: isDesktop ? 24 : 18,
+                        color: DesignTokens.primary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
                   ),
                 ),
                 if (isDesktop) ...[
