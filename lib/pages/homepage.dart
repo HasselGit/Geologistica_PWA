@@ -1817,37 +1817,44 @@ class _ModuleCardWidgetState extends State<_ModuleCardWidget> {
               ),
               // Capa 3: Contenido Frontal
               Padding(
-                padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 18.0 : 32.0),
+                padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 14.0 : 32.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 12 : 16),
+                      padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 10 : 16),
                       decoration: BoxDecoration(
                         color: baseAccent.withOpacity(_isHovered ? 0.15 : 0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(widget.icon, size: MediaQuery.of(context).size.width < 600 ? 24 : 32, color: baseAccent),
+                      child: Icon(widget.icon, size: MediaQuery.of(context).size.width < 600 ? 22 : 32, color: baseAccent),
                     ),
-                    SizedBox(height: MediaQuery.of(context).size.width < 600 ? 14 : 32),
-                    Text(
-                      widget.title,
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontWeight: FontWeight.w900,
-                        fontSize: MediaQuery.of(context).size.width < 600 ? 18 : 26,
-                        color: const Color(0xFF08201A),
-                        letterSpacing: -0.5,
+                    SizedBox(height: MediaQuery.of(context).size.width < 600 ? 12 : 32),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        widget.title,
+                        maxLines: 2,
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w900,
+                          fontSize: MediaQuery.of(context).size.width < 600 ? 14 : 26,
+                          color: const Color(0xFF08201A),
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       widget.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontWeight: FontWeight.w500,
-                        fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 15,
+                        fontSize: MediaQuery.of(context).size.width < 600 ? 11 : 15,
                         color: const Color(0xFF08201A).withOpacity(0.6),
                       ),
                     ),
