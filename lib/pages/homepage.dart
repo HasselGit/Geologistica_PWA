@@ -1016,8 +1016,8 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
     else if (_isAdmin || _isManagement) {
       leftModules.add(_moduleCard(
         icon: Icons.alt_route_rounded, 
-        title: 'Gestión de Viajes', 
-        subtitle: 'Todas las rutas', 
+        title: 'Gestión de Viajes',
+        subtitle: 'Rutas', 
         bgColor: Colors.white, 
         accentColor: DesignTokens.secondary, 
         onTap: () => context.push('/viajes')
@@ -1025,8 +1025,8 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       leftModules.add(const SizedBox(height: 16));
       leftModules.add(_moduleCard(
         icon: Icons.list_alt_rounded,
-        title: 'Solicitudes', 
-        subtitle: 'Recolección y Distribución', 
+        title: 'Solicitudes',
+        subtitle: 'Recolección', 
         bgColor: Colors.white, 
         accentColor: DesignTokens.secondary, 
         onTap: () => context.push('/necesidades')
@@ -1043,8 +1043,8 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
       rightModules.add(const SizedBox(height: 16));
       rightModules.add(_moduleCard(
         icon: Icons.group_rounded, 
-        title: 'Apicultores', 
-        subtitle: 'Gestión de productores', 
+        title: 'Apicultores',
+        subtitle: 'Productores', 
         bgColor: Colors.white, 
         accentColor: DesignTokens.secondary, 
         onTap: () => context.push('/apicultores')
@@ -1345,7 +1345,7 @@ class _HomePageWidgetState extends State<HomePageWidget> with WidgetsBindingObse
                   ),
                 ],
               ),
-              Positioned(
+              if (isDesktop) Positioned(
                 bottom: 24,
                 right: 24,
                 child: _buildSyncMonitorFloating(),
